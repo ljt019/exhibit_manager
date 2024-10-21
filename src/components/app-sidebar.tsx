@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Command, Frame, Send, Settings2, SquareTerminal } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavMain } from "@/components/nav/nav-main";
+import { NavSecondary } from "@/components/nav/nav-secondary";
+import { NavUser } from "@/components/nav/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -13,14 +13,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useGetUserProfile } from "@/hooks/useGetProfileInfo";
 
 const data = {
-  user: {
-    name: "Lucien Thomas",
-    email: null,
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
     {
       title: "E",

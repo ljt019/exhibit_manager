@@ -49,12 +49,17 @@ fn get_user_info(window: tauri::Window) -> Result<UserProfile, String> {
     }
 }
 
+#[tauri::command]
+fn test_emit(window: tauri::Window) {
+    window.emit("test-event", Some("Hello from Rust!")).unwrap();
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(Tokens(Arc::new(Mutex::new(TokenStore {
             access_token: None,
         }))))
-        .invoke_handler(tauri::generate_handler![sign_in, get_user_info])
+        .invoke_handler(tauri::generate_handler![sign_in, get_user_info, test_emit])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

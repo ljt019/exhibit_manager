@@ -1,7 +1,7 @@
-export default function Exhibits() {
+export default function Issues() {
   return (
     <div className="flex h-screen justify-center items-center">
-      <h1>Exhibits</h1>
+      <h1>Issues</h1>
     </div>
   );
 }

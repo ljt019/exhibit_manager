@@ -3,53 +3,11 @@ import {
   Routes as PrimitiveRoutes,
   Route,
 } from "react-router-dom";
-import Index from "@/screens/index";
-import Parts from "@/screens/parts";
-import Dashboard from "@/screens/exhibits";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { Frame, SquareTerminal } from "lucide-react";
 
-export interface RouteConfig {
-  url: string;
-  screen: React.ComponentType;
-  isActive: boolean;
-  title: string;
-  sidebar: boolean;
-  icon?: React.ComponentType;
-  items?: {
-    title: string;
-    url: string;
-    isActive: boolean;
-  }[];
-}
-
-const routes: RouteConfig[] = [
-  {
-    url: "/",
-    screen: Index,
-    title: "Sign In",
-    isActive: false,
-    sidebar: false,
-  },
-  {
-    url: "/exhibits",
-    screen: Dashboard,
-    title: "Exhibits",
-    icon: SquareTerminal,
-    isActive: true,
-    sidebar: true,
-  },
-  {
-    url: "/parts",
-    screen: Parts,
-    title: "Parts",
-    icon: Frame,
-    isActive: false,
-    sidebar: true,
-  },
-];
+import { routes } from "@/routes";
 
 function Routes() {
   return (

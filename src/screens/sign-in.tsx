@@ -3,7 +3,7 @@ import { invoke } from "@tauri-apps/api";
 import { useNavigate } from "react-router-dom";
 import useListen from "@/hooks/useListen";
 
-export default function Index() {
+export default function SignIn() {
   const navigate = useNavigate();
 
   useListen({

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useNavigate } from "react-router-dom";
 
-import type { RouteConfig } from "@/App";
+import type { RouteConfig } from "@/routes";
 
 const data = {
   navSecondary: [

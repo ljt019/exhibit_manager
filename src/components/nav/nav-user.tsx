@@ -17,9 +17,20 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useGetUserProfile } from "@/hooks/useGetProfileInfo";
+import { invoke } from "@tauri-apps/api";
+import useListen from "@/hooks/useListen";
+import { useNavigate } from "react-router-dom";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
+  const navigate = useNavigate();
+
+  useListen({
+    event: "sign_out_complete",
+    callback: () => {
+      navigate("/");
+    },
+  });
 
   const {
     data: userProfile,
@@ -92,7 +103,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => invoke("sign_out")}>
               <LogOut />
               Log out
             </DropdownMenuItem>

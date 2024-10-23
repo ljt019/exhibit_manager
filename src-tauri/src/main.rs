@@ -1,18 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod auth;
+mod store;
 
 use auth::commands::sign_in;
 
-use std::sync::{Arc, Mutex};
-
 use tauri::Manager;
 
-struct Tokens(Arc<Mutex<TokenStore>>);
-
-struct TokenStore {
-    access_token: Option<String>,
-}
+use store::tokens::{TokenStore, Tokens};
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct UserProfile {
@@ -23,12 +18,22 @@ pub struct UserProfile {
     pub picture: Option<String>,
 }
 
+fn get_token_store(window: tauri::Window) -> TokenStore {
+    // Access the shared state to get token store
+    let binding = window.state::<Tokens>();
+    let tokens = binding.lock();
+
+    // Get a copy of the tokenstore data
+    let token_store = tokens.clone();
+
+    return token_store;
+}
+
 #[tauri::command]
 fn get_user_info(window: tauri::Window) -> Result<UserProfile, String> {
-    // Access the shared state to get the access token.
-    let binding = window.state::<Tokens>();
-    let tokens = binding.0.lock().unwrap();
-    let access_token = tokens.access_token.clone();
+    let token_store = get_token_store(window);
+
+    let access_token = token_store.access_token;
 
     if let Some(access_token) = access_token {
         // Use the access token to fetch user info.
@@ -50,16 +55,24 @@ fn get_user_info(window: tauri::Window) -> Result<UserProfile, String> {
 }
 
 #[tauri::command]
-fn test_emit(window: tauri::Window) {
-    window.emit("test-event", Some("Hello from Rust!")).unwrap();
+fn sign_out(window: tauri::Window) {
+    // Access the shared state to get token store
+    let binding = window.state::<Tokens>();
+    let mut tokens = binding.lock();
+
+    // Flush the token store
+    tokens.flush();
+
+    // Emit a sign out event
+    window
+        .emit("sign_out_complete", None::<()>)
+        .expect("Failed to emit sign-out event");
 }
 
 fn main() {
     tauri::Builder::default()
-        .manage(Tokens(Arc::new(Mutex::new(TokenStore {
-            access_token: None,
-        }))))
-        .invoke_handler(tauri::generate_handler![sign_in, get_user_info, test_emit])
+        .manage(Tokens::new())
+        .invoke_handler(tauri::generate_handler![sign_in, sign_out, get_user_info])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

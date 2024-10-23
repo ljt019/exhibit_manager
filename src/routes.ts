@@ -1,9 +1,10 @@
 import SignIn from "@/screens/sign-in";
-import Parts from "@/screens/parts";
 import Exhibits from "@/screens/exhibits";
+import Parts from "@/screens/parts";
 import Issues from "@/screens/issues";
+import Jotforms from "@/screens/jotforms";
 
-import { Atom, Bolt, CircleDot } from "lucide-react";
+import { Atom, Bolt, CircleDot, NotebookPen } from "lucide-react";
 
 export interface RouteConfig {
   url: string;
@@ -17,7 +18,6 @@ export interface RouteConfig {
     url: string;
     isActive: boolean;
   }[];
-  disabled?: boolean;
 }
 
 export const routes: RouteConfig[] = [
@@ -43,7 +43,6 @@ export const routes: RouteConfig[] = [
     icon: Bolt,
     isActive: false,
     sidebar: true,
-    disabled: true,
   },
   {
     url: "/issues",
@@ -52,6 +51,13 @@ export const routes: RouteConfig[] = [
     icon: CircleDot,
     isActive: false,
     sidebar: true,
-    disabled: true,
+  },
+  {
+    url: "/jotforms",
+    screen: Jotforms,
+    title: "Jotforms",
+    icon: NotebookPen,
+    isActive: false,
+    sidebar: true,
   },
 ];

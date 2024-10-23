@@ -53,7 +53,7 @@ export function NavMain({ items }: NavMainProps) {
                   >
                     <a onClick={() => navigate(item.url)}>
                       {item.icon && <item.icon />}
-                      <span>{item.title}</span>
+                      <span className="text-lg">{item.title}</span>
                     </a>
                   </SidebarMenuButton>
                   {item.items?.length ? (

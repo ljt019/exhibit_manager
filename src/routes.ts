@@ -3,7 +3,7 @@ import Parts from "@/screens/parts";
 import Exhibits from "@/screens/exhibits";
 import Issues from "@/screens/issues";
 
-import { Frame, SquareTerminal, RabbitIcon } from "lucide-react";
+import { Atom, Bolt, CircleDot } from "lucide-react";
 
 export interface RouteConfig {
   url: string;
@@ -31,7 +31,7 @@ export const routes: RouteConfig[] = [
     url: "/exhibits",
     screen: Exhibits,
     title: "Exhibits",
-    icon: SquareTerminal,
+    icon: Atom,
     isActive: true,
     sidebar: true,
   },
@@ -39,7 +39,7 @@ export const routes: RouteConfig[] = [
     url: "/parts",
     screen: Parts,
     title: "Parts",
-    icon: Frame,
+    icon: Bolt,
     isActive: false,
     sidebar: true,
   },
@@ -47,7 +47,7 @@ export const routes: RouteConfig[] = [
     url: "/issues",
     screen: Issues,
     title: "Issues",
-    icon: RabbitIcon,
+    icon: CircleDot,
     isActive: false,
     sidebar: true,
   },

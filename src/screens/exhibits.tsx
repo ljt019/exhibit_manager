@@ -11,13 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  Microscope,
   MapPin,
   Hammer,
   StickyNote,
   ChevronDown,
   Search,
   X,
+  Boxes,
 } from "lucide-react";
 import {
   Collapsible,
@@ -212,7 +212,7 @@ export default function ExhibitInventory() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
-                      <Microscope className="w-3 h-3" />
+                      <Boxes className="w-3 h-3" />
                       <span>{exhibit.cluster}</span>
                     </div>
                     <div className="flex items-center gap-1">

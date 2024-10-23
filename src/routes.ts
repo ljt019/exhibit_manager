@@ -17,6 +17,7 @@ export interface RouteConfig {
     url: string;
     isActive: boolean;
   }[];
+  disabled?: boolean;
 }
 
 export const routes: RouteConfig[] = [
@@ -42,6 +43,7 @@ export const routes: RouteConfig[] = [
     icon: Bolt,
     isActive: false,
     sidebar: true,
+    disabled: true,
   },
   {
     url: "/issues",
@@ -50,5 +52,6 @@ export const routes: RouteConfig[] = [
     icon: CircleDot,
     isActive: false,
     sidebar: true,
+    disabled: true,
   },
 ];

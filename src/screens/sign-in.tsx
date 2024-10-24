@@ -17,6 +17,16 @@ export default function SignIn() {
     await invoke("sign_in");
   }
 
+  async function checkAlreadySignedIn() {
+    let isSignedIn = await invoke("check_if_signed_in");
+
+    if (isSignedIn) {
+      navigate("/exhibits");
+    }
+  }
+
+  checkAlreadySignedIn();
+
   return (
     <div className="h-screen flex flex-col justify-center items-center">
       <Button onClick={signIn}>Sign In with Google</Button>

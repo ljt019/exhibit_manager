@@ -30,7 +30,7 @@ export const routes: RouteConfig[] = [
   },
   {
     url: "/exhibits",
-    screen: Exhibits,
+    screen: Parts,
     title: "Exhibits",
     icon: Atom,
     isActive: true,

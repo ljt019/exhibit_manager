@@ -13,7 +13,7 @@ pub struct UserProfile {
 pub fn get_user_info(window: tauri::Window) -> Result<UserProfile, String> {
     let token_store = get_token_store(window);
 
-    let access_token = token_store.access_token;
+    let access_token = token_store.get_token_data().access_token;
 
     if let Some(access_token) = access_token {
         // Use the access token to fetch user info.

@@ -13,9 +13,9 @@ use token_manager::tokens::TokenManager;
 fn main() {
     tauri::Builder::default()
         .setup(|app| {
-            let app_handle = app.handle().clone();
-            let token_manager = TokenManager::new(app_handle.clone());
+            let token_manager = TokenManager::new(app.handle().clone());
             token_manager.load_tokens();
+
             app.manage(token_manager);
 
             Ok(())

@@ -1,4 +1,5 @@
-use crate::get_token_store;
+use crate::token_manager::tokens::TokenManager;
+use tauri::Manager;
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct UserProfile {
@@ -11,9 +12,9 @@ pub struct UserProfile {
 
 #[tauri::command]
 pub fn get_user_info(window: tauri::Window) -> Result<UserProfile, String> {
-    let token_store = get_token_store(window);
+    let token_manager = window.state::<TokenManager>();
 
-    let access_token = token_store.get_token_data().access_token;
+    let access_token = token_manager.get_token_data().access_token;
 
     if let Some(access_token) = access_token {
         // Use the access token to fetch user info.

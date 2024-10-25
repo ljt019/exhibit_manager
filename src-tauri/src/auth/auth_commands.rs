@@ -5,8 +5,6 @@ use tauri::api::shell;
 use tauri::Manager;
 use url::Url;
 
-use crate::get_token_store;
-
 use crate::TokenManager;
 use chrono::Utc;
 
@@ -35,9 +33,7 @@ pub fn sign_in(window: tauri::Window) {
 
     // Get existing token store
     let token_manager = window.state::<TokenManager>();
-    let token_store = token_manager.lock_store();
-    let client = token_store.oauth_client.clone();
-    drop(token_store); // Release the lock early
+    let client = token_manager.get_oauth_client();
 
     // Generate PKCE challenge
     let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
@@ -114,24 +110,19 @@ pub fn sign_in(window: tauri::Window) {
         }
     };
 
-    let mut token_store = token_manager.lock_store();
-
     let access_token = token_result.access_token().secret().clone();
     let refresh_token = token_result.refresh_token().map(|t| t.secret().clone());
     let expires_in = token_result.expires_in().expect("No expires in set");
 
-    let mut tokens = token_store.get_token_data();
+    let mut tokens = token_manager.get_token_data();
 
     tokens.access_token = Some(access_token);
     tokens.refresh_token = refresh_token.clone();
     tokens.expires_at = Some(Utc::now() + expires_in);
 
-    token_store.set_token_data(tokens.clone());
+    token_manager.set_token_data(tokens.clone());
 
-    let mut persisted_store = token_manager.lock_persisted_store();
-
-    persisted_store.save_tokens(&tokens);
-
+    token_manager.save_persisted_tokens();
     println!("[OAuth] Sign in successful, notifying frontend");
 
     window
@@ -141,9 +132,9 @@ pub fn sign_in(window: tauri::Window) {
 
 #[tauri::command]
 pub fn check_if_signed_in(window: tauri::Window) -> bool {
-    let token_store = get_token_store(window);
+    let token_manager = window.state::<TokenManager>();
 
-    let response = token_store.get_token_data().access_token.is_some();
+    let response = token_manager.get_token_data().access_token.is_some();
 
     response
 }
@@ -151,11 +142,10 @@ pub fn check_if_signed_in(window: tauri::Window) -> bool {
 #[tauri::command]
 pub fn sign_out(window: tauri::Window) {
     // Access the shared state to get token store
-    let binding = window.state::<TokenManager>();
-    let mut tokens = binding.lock_store();
+    let token_manager = window.state::<TokenManager>();
 
     // Flush the token store
-    tokens.flush();
+    token_manager.flush();
 
     // Emit a sign out event
     window

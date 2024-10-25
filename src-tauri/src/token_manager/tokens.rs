@@ -31,6 +31,11 @@ impl TokenManager {
         }
     }
 
+    pub fn get_oauth_client(&self) -> oauth2::basic::BasicClient {
+        let store = self.lock_store();
+        store.oauth_client.clone()
+    }
+
     pub fn lock_store(&self) -> std::sync::MutexGuard<'_, OAuthTokenStore> {
         self.store.lock().expect("Failed to lock OAuthTokenStore")
     }
@@ -39,6 +44,16 @@ impl TokenManager {
         self.persisted_store
             .lock()
             .expect("Failed to lock PersistedStore")
+    }
+
+    pub fn get_token_data(&self) -> TokenData {
+        let store = self.lock_store();
+        store.get_token_data()
+    }
+
+    pub fn set_token_data(&self, token_data: TokenData) {
+        let mut store = self.lock_store();
+        store.set_token_data(token_data);
     }
 
     pub fn save_persisted_tokens(&self) {
@@ -66,12 +81,12 @@ impl TokenManager {
 
 #[derive(Clone)]
 pub struct OAuthTokenStore {
-    pub oauth_client: oauth2::basic::BasicClient,
+    oauth_client: oauth2::basic::BasicClient,
     token_data: TokenData,
 }
 
 impl OAuthTokenStore {
-    pub fn new() -> Self {
+    fn new() -> Self {
         let client = oauth2::basic::BasicClient::new(
             oauth2::ClientId::new(CLIENT_ID.to_string()),
             Some(oauth2::ClientSecret::new(CLIENT_SECRET.to_string())),
@@ -92,15 +107,15 @@ impl OAuthTokenStore {
         }
     }
 
-    pub fn get_token_data(&self) -> TokenData {
+    fn get_token_data(&self) -> TokenData {
         self.token_data.clone()
     }
 
-    pub fn set_token_data(&mut self, token_data: TokenData) {
+    fn set_token_data(&mut self, token_data: TokenData) {
         self.token_data = token_data;
     }
 
-    pub fn flush(&mut self) {
+    fn flush(&mut self) {
         self.token_data = TokenData {
             access_token: None,
             refresh_token: None,
@@ -122,7 +137,7 @@ impl PersistedStore {
         Self { store }
     }
 
-    pub fn save_tokens(&mut self, token_data: &TokenData) {
+    fn save_tokens(&mut self, token_data: &TokenData) {
         println!("Saving tokens: {:?}", token_data);
 
         if let Some(access_token) = &token_data.access_token {
@@ -155,7 +170,7 @@ impl PersistedStore {
         self.store.save().expect("Failed to save token store");
     }
 
-    pub fn load_tokens(&mut self) -> TokenData {
+    fn load_tokens(&mut self) -> TokenData {
         self.store.load().expect("Failed to load token store");
 
         let access_token = self
@@ -188,7 +203,7 @@ impl PersistedStore {
         }
     }
 
-    pub fn flush(&mut self) {
+    fn flush(&mut self) {
         self.store.clear().expect("Failed to clear token store");
         self.store.save().expect("Failed to save token store");
     }

@@ -1,25 +1,14 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod auth;
-mod store;
+mod token_manager;
 
 use auth::auth_commands::{check_if_signed_in, sign_in, sign_out};
 use auth::data_commands::get_user_info;
 
 use tauri::Manager;
 
-use store::tokens::{OAuthTokenStore, TokenManager};
-
-pub fn get_token_store(window: tauri::Window) -> OAuthTokenStore {
-    // Access the shared state to get token store
-    let binding = window.state::<TokenManager>();
-    let tokens = binding.lock_store();
-
-    // Get a copy of the tokenstore data
-    let token_store = tokens.clone();
-
-    return token_store;
-}
+use token_manager::tokens::TokenManager;
 
 fn main() {
     tauri::Builder::default()

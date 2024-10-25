@@ -122,7 +122,7 @@ pub fn sign_in(window: tauri::Window) {
 
     token_manager.set_token_data(tokens.clone());
 
-    token_manager.save_persisted_tokens();
+    token_manager.save_tokens();
     println!("[OAuth] Sign in successful, notifying frontend");
 
     window

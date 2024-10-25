@@ -15,7 +15,7 @@ fn main() {
         .setup(|app| {
             let app_handle = app.handle().clone();
             let token_manager = TokenManager::new(app_handle.clone());
-            token_manager.load_persisted_tokens();
+            token_manager.load_tokens();
             app.manage(token_manager);
 
             Ok(())

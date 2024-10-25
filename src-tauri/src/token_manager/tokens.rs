@@ -31,16 +31,20 @@ impl TokenManager {
         }
     }
 
+    pub fn refresh_access_token(&self) {
+        todo!();
+    }
+
     pub fn get_oauth_client(&self) -> oauth2::basic::BasicClient {
         let store = self.lock_store();
         store.oauth_client.clone()
     }
 
-    pub fn lock_store(&self) -> std::sync::MutexGuard<'_, OAuthTokenStore> {
+    fn lock_store(&self) -> std::sync::MutexGuard<'_, OAuthTokenStore> {
         self.store.lock().expect("Failed to lock OAuthTokenStore")
     }
 
-    pub fn lock_persisted_store(&self) -> std::sync::MutexGuard<'_, PersistedStore> {
+    fn lock_persisted_store(&self) -> std::sync::MutexGuard<'_, PersistedStore> {
         self.persisted_store
             .lock()
             .expect("Failed to lock PersistedStore")
@@ -56,14 +60,14 @@ impl TokenManager {
         store.set_token_data(token_data);
     }
 
-    pub fn save_persisted_tokens(&self) {
+    pub fn save_tokens(&self) {
         let store = self.lock_store();
         let token_data = store.get_token_data();
         let mut persisted_store = self.lock_persisted_store();
         persisted_store.save_tokens(&token_data);
     }
 
-    pub fn load_persisted_tokens(&self) {
+    pub fn load_tokens(&self) {
         let mut persisted_store = self.lock_persisted_store();
         let token_data = persisted_store.load_tokens();
         let mut store = self.lock_store();

@@ -5,6 +5,8 @@ use tauri::api::shell;
 use tauri::Manager;
 use url::Url;
 
+use crate::get_token_store;
+
 use crate::Tokens;
 use chrono::Utc;
 
@@ -139,4 +141,28 @@ pub fn sign_in(window: tauri::Window) {
     window
         .emit("sign_in_complete", None::<()>)
         .expect("Failed to emit sign-in event");
+}
+
+#[tauri::command]
+pub fn check_if_signed_in(window: tauri::Window) -> bool {
+    let token_store = get_token_store(window);
+
+    let response = token_store.access_token.is_some();
+
+    response
+}
+
+#[tauri::command]
+pub fn sign_out(window: tauri::Window) {
+    // Access the shared state to get token store
+    let binding = window.state::<Tokens>();
+    let mut tokens = binding.lock();
+
+    // Flush the token store
+    tokens.flush(window.app_handle());
+
+    // Emit a sign out event
+    window
+        .emit("sign_out_complete", None::<()>)
+        .expect("Failed to emit sign-out event");
 }

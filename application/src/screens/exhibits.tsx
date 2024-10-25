@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import useGetExhibits from "@/hooks/useGetExhibits";
 import { ExhibitCard } from "@/components/exhibit-card";
 
@@ -35,15 +35,6 @@ export default function ExhibitInventory() {
       return nameMatch && clusterMatch && locationMatch && statusMatch;
     });
   }, [exhibits, searchTerm, clusterFilter, locationFilter, statusFilter]);
-
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const rowVirtualizer = useVirtualizer({
-    count: Math.ceil(filteredExhibits.length / 3),
-    getScrollElement: () => parentRef.current,
-    estimateSize: () => 300,
-    overscan: 5,
-  });
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -104,37 +95,13 @@ export default function ExhibitInventory() {
           </Button>
         )}
       </div>
-      <div ref={parentRef} className="h-[calc(100vh-200px)] overflow-auto">
-        <div
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
-          }}
-        >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => (
-            <div
-              key={virtualRow.index}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: `${virtualRow.size}px`,
-                transform: `translateY(${virtualRow.start}px)`,
-              }}
-            >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredExhibits
-                  .slice(virtualRow.index * 3, virtualRow.index * 3 + 3)
-                  .map((exhibit) => (
-                    <ExhibitCard key={exhibit.id} exhibit={exhibit} />
-                  ))}
-              </div>
-            </div>
+      <ScrollArea className="h-[calc(100vh-200px)]">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-1">
+          {filteredExhibits.map((exhibit) => (
+            <ExhibitCard key={exhibit.id} exhibit={exhibit} />
           ))}
         </div>
-      </div>
+      </ScrollArea>
     </div>
   );
 }

@@ -43,7 +43,7 @@ export type Exhibit = {
   cluster: string;
   location: string;
   status: "operational" | "needs repair" | "out of service";
-  parts: string[];
+  part_ids: Array<string>;
   notes: Array<{ timestamp: string; text: string }>;
   imageUrl: string | undefined;
   sponsorship?: Sponsorship;
@@ -101,7 +101,7 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
       <CardContent className="p-4 pt-0">
         <div className="mt-4 space-y-2">
           <SponsorshipButton sponsorship={exhibit.sponsorship} />
-          <PartsButton parts={exhibit.parts} />
+          <PartsButton parts={exhibit.part_ids} />
           <NotesButton name={exhibit.name} notes={exhibit.notes} />
         </div>
       </CardContent>

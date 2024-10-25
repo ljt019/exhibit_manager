@@ -44,6 +44,7 @@ export const routes: RouteConfig[] = [
     isActive: false,
     sidebar: true,
   },
+  /* 
   {
     url: "/issues",
     screen: Issues,
@@ -60,4 +61,5 @@ export const routes: RouteConfig[] = [
     isActive: false,
     sidebar: true,
   },
+  */
 ];

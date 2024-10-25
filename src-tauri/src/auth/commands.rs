@@ -5,23 +5,54 @@ use tauri::api::shell;
 use tauri::Manager;
 use url::Url;
 
-use std::sync::mpsc;
-
-use super::auth::get_client;
 use crate::Tokens;
-
 use chrono::Utc;
 
+fn start_server(tx: std::sync::mpsc::Sender<String>) -> Result<u16, String> {
+    let result = tauri_plugin_oauth::start(move |url| {
+        if let Err(e) = tx.send(url) {
+            println!("[OAuth] Error: Failed to send URL through channel: {}", e);
+        }
+    });
+
+    match result {
+        Ok(port) => {
+            println!("[OAuth] Server started on port {}", port);
+            Ok(port)
+        }
+        Err(e) => {
+            println!("[OAuth] Error: Failed to start server: {}", e);
+            Err(e.to_string())
+        }
+    }
+}
+
 #[tauri::command]
-pub async fn sign_in(window: tauri::Window) {
-    let (tx, rx) = mpsc::channel();
+pub fn sign_in(window: tauri::Window) {
+    println!("[OAuth] Starting sign-in process");
 
-    let client = get_client(window.clone(), tx).expect("Failed to get client");
+    // Get existing token store
+    let tokens = window.state::<Tokens>();
+    let token_store = tokens.0.lock().expect("Failed to lock token store");
 
-    // Create a PKCE code verifier and SHA-256 encode it as a code challenge.
+    let client = token_store.oauth_client.clone();
+    drop(token_store); // Release the lock early
+
+    // Generate PKCE challenge
     let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
 
-    // Generate the authorization URL to which we'll redirect the user.
+    // Start the server
+    let (tx, rx) = std::sync::mpsc::channel();
+
+    let port = start_server(tx).expect("Failed to start server");
+
+    // Set up redirect URL
+    let redirect_url = format!("http://localhost:{}", port);
+    let client = client.set_redirect_uri(
+        oauth2::RedirectUrl::new(redirect_url.clone()).expect("Invalid redirect URL"),
+    );
+
+    // Generate authorization URL
     let (authorize_url, csrf_state) = client
         .authorize_url(CsrfToken::new_random)
         .add_scope(Scope::new(
@@ -30,110 +61,82 @@ pub async fn sign_in(window: tauri::Window) {
         .set_pkce_challenge(pkce_code_challenge)
         .url();
 
-    // Open the authorization URL in the user's default browser.
     shell::open(&window.shell_scope(), authorize_url.to_string(), None)
         .expect("Failed to open browser");
 
-    // Wait for the redirect URL containing the authorization code.
-    let redirect_url = rx.recv().expect("Failed to receive redirect URL");
+    // Wait for redirect
+    let redirect_url = match rx.recv() {
+        Ok(url) => url,
+        Err(e) => {
+            println!("[OAuth] Error: Failed to receive redirect URL: {}", e);
+            return;
+        }
+    };
+
     let url = Url::parse(&redirect_url).expect("Invalid redirect URL");
 
-    // Extract the authorization code and state from the redirect URL.
-    let code_pair = url
-        .query_pairs()
-        .find(|pair| pair.0 == "code")
-        .expect("Authorization code not found");
+    // Extract authorization code
+    let code_pair = match url.query_pairs().find(|pair| pair.0 == "code") {
+        Some(pair) => pair,
+        None => {
+            println!("[OAuth] Error: Authorization code not found in redirect URL");
+            return;
+        }
+    };
     let code = AuthorizationCode::new(code_pair.1.into_owned());
 
-    let state_pair = url
-        .query_pairs()
-        .find(|pair| pair.0 == "state")
-        .expect("State not found");
+    let state_pair = match url.query_pairs().find(|pair| pair.0 == "state") {
+        Some(pair) => pair,
+        None => {
+            println!("[OAuth] Error: State not found in redirect URL");
+            return;
+        }
+    };
     let state = CsrfToken::new(state_pair.1.into_owned());
 
-    // Verify the CSRF state.
     if state.secret() != csrf_state.secret() {
-        panic!("CSRF state mismatch");
+        println!("[OAuth] Error: CSRF state mismatch");
+        return;
     }
 
-    // Exchange the authorization code for an access token.
-    let token_result = client
+    let token_result = match client
         .exchange_code(code)
         .set_pkce_verifier(PkceCodeVerifier::new(
             pkce_code_verifier.secret().to_string(),
         ))
         .request(oauth2::reqwest::http_client)
-        .expect("Failed to exchange code for token");
+    {
+        Ok(result) => result,
+        Err(e) => {
+            println!("[OAuth] Error: Failed to exchange code for token: {}", e);
+            return;
+        }
+    };
 
-    // Store the access token securely
-    // Just storing in memory for now, eventually should be persisted securely
+    let mut token_store = match tokens.0.lock() {
+        Ok(store) => store,
+        Err(e) => {
+            println!(
+                "[OAuth] Error: Failed to lock token store for saving: {}",
+                e
+            );
+            return;
+        }
+    };
+
     let access_token = token_result.access_token().secret().clone();
     let refresh_token = token_result.refresh_token().map(|t| t.secret().clone());
+    let expires_in = token_result.expires_in().expect("No expires in set");
 
-    let expires_in = token_result.expires_in().expect("No expires_in");
-    let expires_at = Utc::now() + expires_in;
+    token_store.access_token = Some(access_token);
+    token_store.refresh_token = refresh_token.clone();
+    token_store.expires_at = Some(Utc::now() + expires_in);
 
-    {
-        // Store the state in a variable to extend its lifetime
-        let tokens_state = window.state::<Tokens>();
-        let mut tokens = tokens_state.0.lock().expect("Failed to lock tokens");
-        tokens.access_token = Some(access_token.clone());
-        tokens.refresh_token = Some(refresh_token.clone().expect("No refresh token"));
-        tokens.expires_at = Some(expires_at);
+    token_store.save_tokens(window.app_handle());
 
-        // Save the tokens to the token store
-        tokens.save_tokens(window.app_handle());
-    }
+    println!("[OAuth] Sign in successful, notifying frontend");
 
-    // Emit event to let the frontend know that the user is signed in
     window
         .emit("sign_in_complete", None::<()>)
-        .expect("Failed to emit signed-in event");
+        .expect("Failed to emit sign-in event");
 }
-
-/*
-#[tauri::command]
-pub fn sign_in_in(window: tauri::Window) {
-    // Get existing token store
-    let tokens = window.state::<Tokens>();
-    let token_store = tokens.0.lock().expect("Failed to lock token store");
-
-    // Get oauth client from token store
-    let client = token_store.oauth_client.clone().expect("No oauth client");
-
-    // Get rx and tx
-    let (tx, rx) = token_store.get_channel();
-
-    // Generate PCKE code verifier and challenge
-    let (pkce_code_challenge, pkce_code_verifier) = PkceCodeChallenge::new_random_sha256();
-
-    // Generate authorization URL
-    todo!();
-
-    // Open authorization URL in default browser
-    //shell::open(&window.shell_scope(), authorization_url.to_string(), None)
-    //    .expect("Failed to open browser");
-
-    // Wait for the redirect URL containing the authorization code.
-    let redirect_url = rx.recv().expect("Failed to receive redirect URL");
-    let url = Url::parse(&redirect_url).expect("Invalid redirect URL");
-
-    // Extract authorization code and state from redirect URL
-    todo!();
-
-    // Verify the CSRF state.
-    todo!();
-
-    // Exchange authorization code for token result that contains the access token and refresh token
-    todo!();
-
-    // Get the access token, refresh token, and expiration time from the token result
-    todo!();
-
-    // Store the access token, refresh token, and expiration time in the token store
-    todo!();
-
-    // Emit event to tell the frontend to navigate to the home page (exhibits page)
-    todo!();
-}
-    */

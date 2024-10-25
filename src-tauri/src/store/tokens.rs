@@ -1,6 +1,13 @@
 use chrono::{DateTime, Utc};
 use std::sync::{Arc, Mutex};
 
+/* Constants */
+const CLIENT_ID: &str = "883531815886-cr4nl5k7v4hf81bhmfjhe39j3r2ic5lm.apps.googleusercontent.com";
+const CLIENT_SECRET: &str = "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";
+const AUTH_URL: &str = "https://accounts.google.com/o/oauth2/auth";
+const TOKEN_URL: &str = "https://accounts.google.com/o/oauth2/token";
+const REVOCATION_URL: &str = "https://oauth2.googleapis.com/revoke";
+
 pub struct Tokens(pub Arc<Mutex<TokenStore>>);
 
 impl Tokens {
@@ -13,25 +20,9 @@ impl Tokens {
     }
 }
 
-pub struct Channels {
-    pub tx: std::sync::mpsc::Sender<String>,
-    pub rx: Arc<Mutex<std::sync::mpsc::Receiver<String>>>,
-}
-
-impl Clone for Channels {
-    fn clone(&self) -> Self {
-        let (tx, rx) = std::sync::mpsc::channel();
-        Self {
-            tx,
-            rx: Arc::new(Mutex::new(rx)),
-        }
-    }
-}
-
 #[derive(Clone)]
 pub struct TokenStore {
-    pub oauth_client: Option<oauth2::basic::BasicClient>,
-    pub channel: Option<Channels>,
+    pub oauth_client: oauth2::basic::BasicClient,
     pub access_token: Option<String>,
     pub refresh_token: Option<String>,
     pub expires_at: Option<DateTime<Utc>>,
@@ -39,22 +30,22 @@ pub struct TokenStore {
 
 impl TokenStore {
     pub fn new() -> Self {
+        let client = oauth2::basic::BasicClient::new(
+            oauth2::ClientId::new(CLIENT_ID.to_string()),
+            Some(oauth2::ClientSecret::new(CLIENT_SECRET.to_string())),
+            oauth2::AuthUrl::new(AUTH_URL.to_string()).expect("Invalid authorization URL"),
+            Some(oauth2::TokenUrl::new(TOKEN_URL.to_string()).expect("Invalid token URL")),
+        )
+        .set_revocation_uri(
+            oauth2::RevocationUrl::new(REVOCATION_URL.to_string()).expect("Invalid revocation URL"),
+        );
+
         Self {
-            oauth_client: None,
-            channel: None,
+            oauth_client: client,
             access_token: None,
             refresh_token: None,
             expires_at: None,
         }
-    }
-
-    pub fn get_channel(
-        &self,
-    ) -> (
-        std::sync::mpsc::Sender<String>,
-        std::sync::mpsc::Receiver<String>,
-    ) {
-        todo!()
     }
 
     pub fn save_tokens(&mut self, app_handle: tauri::AppHandle) {
@@ -127,7 +118,6 @@ impl TokenStore {
     }
 
     pub fn flush(&mut self, app_handle: tauri::AppHandle) {
-        self.oauth_client = None;
         self.access_token = None;
         self.refresh_token = None;
         self.expires_at = None;

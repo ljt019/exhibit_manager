@@ -20,6 +20,7 @@ oauth2 = "4.4.2"
 url = "2.5.2"
 chrono = "0.4.38"
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tokio = { version = "1.28", features = ["full"] }
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!

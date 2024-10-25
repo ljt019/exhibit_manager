@@ -65,8 +65,6 @@ pub async fn sign_in(window: tauri::Window) {
         .request(oauth2::reqwest::http_client)
         .expect("Failed to exchange code for token");
 
-    println!("Access token: {:?}", token_result.access_token().secret());
-
     // Store the access token securely
     // Just storing in memory for now, eventually should be persisted securely
     let access_token = token_result.access_token().secret().clone();
@@ -82,10 +80,6 @@ pub async fn sign_in(window: tauri::Window) {
         tokens.access_token = Some(access_token.clone());
         tokens.refresh_token = Some(refresh_token.clone().expect("No refresh token"));
         tokens.expires_at = Some(expires_at);
-
-        println!("Stored access token: {:?}", tokens.access_token);
-        println!("Stored refresh token: {:?}", tokens.refresh_token);
-        println!("Stored expires_at: {:?}", tokens.expires_at);
 
         // Save the tokens to the token store
         tokens.save_tokens(window.app_handle());

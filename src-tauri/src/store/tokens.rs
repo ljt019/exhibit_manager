@@ -69,12 +69,6 @@ impl TokenStore {
         let refresh_token = self.refresh_token.clone().expect("No refresh token set");
         let expires_at = self.expires_at.clone().expect("No expires_at set");
 
-        // Print the tokens
-        println!(
-            "Saving tokens: access_token: {:?}, refresh_token: {:?}, expires_at: {:?}",
-            access_token, refresh_token, expires_at
-        );
-
         // Save the tokens to the store
         store
             .insert(
@@ -126,22 +120,27 @@ impl TokenStore {
             })
         });
 
-        // Print the tokens
-        println!(
-            "Loaded tokens: access_token: {:?}, refresh_token: {:?}, expires_at: {:?}",
-            access_token, refresh_token, expires_at
-        );
-
         // Set the tokens
         self.access_token = access_token;
         self.refresh_token = refresh_token;
         self.expires_at = expires_at;
     }
 
-    pub fn flush(&mut self) {
+    pub fn flush(&mut self, app_handle: tauri::AppHandle) {
         self.oauth_client = None;
         self.access_token = None;
         self.refresh_token = None;
         self.expires_at = None;
+
+        // Get path to the store
+        let appdata_local = tauri::api::path::app_local_data_dir(&app_handle.config()).unwrap();
+        let store_path = appdata_local.join("tokens.json");
+
+        // Create a new token store from tauri-plugin-store
+        let mut store = tauri_plugin_store::StoreBuilder::new(app_handle, store_path).build();
+
+        // Wipe the store
+        store.clear().expect("Failed to clear token store");
+        store.save().expect("Failed to save token store");
     }
 }

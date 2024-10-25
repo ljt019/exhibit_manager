@@ -61,7 +61,7 @@ fn sign_out(window: tauri::Window) {
     let mut tokens = binding.lock();
 
     // Flush the token store
-    tokens.flush();
+    tokens.flush(window.app_handle());
 
     // Emit a sign out event
     window
@@ -74,8 +74,6 @@ fn check_if_signed_in(window: tauri::Window) -> bool {
     let token_store = get_token_store(window);
 
     let response = token_store.access_token.is_some();
-
-    println!("Checking if signed in: {}", response);
 
     response
 }

@@ -13,7 +13,7 @@ use crate::Tokens;
 use chrono::Utc;
 
 #[tauri::command]
-pub fn sign_in(window: tauri::Window) {
+pub async fn sign_in(window: tauri::Window) {
     let (tx, rx) = mpsc::channel();
 
     let client = get_client(window.clone(), tx).expect("Failed to get client");
@@ -97,6 +97,7 @@ pub fn sign_in(window: tauri::Window) {
         .expect("Failed to emit signed-in event");
 }
 
+/*
 #[tauri::command]
 pub fn sign_in_in(window: tauri::Window) {
     // Get existing token store
@@ -141,3 +142,4 @@ pub fn sign_in_in(window: tauri::Window) {
     // Emit event to tell the frontend to navigate to the home page (exhibits page)
     todo!();
 }
+    */

@@ -1,5 +1,4 @@
 use chrono::{DateTime, Utc};
-use serde_json::json;
 use std::sync::{Arc, Mutex};
 
 pub struct Tokens(pub Arc<Mutex<TokenStore>>);
@@ -58,10 +57,6 @@ impl TokenStore {
         todo!()
     }
 
-    fn refresh_access_token(&self) -> Result<(), String> {
-        todo!()
-    }
-
     pub fn save_tokens(&mut self, app_handle: tauri::AppHandle) {
         // Get path to the store
         let appdata_local = tauri::api::path::app_local_data_dir(&app_handle.config()).unwrap();
@@ -70,19 +65,35 @@ impl TokenStore {
         // Create a new token store from tauri-plugin-store
         let mut store = tauri_plugin_store::StoreBuilder::new(app_handle, store_path).build();
 
+        let access_token = self.access_token.clone().expect("No access token set");
+        let refresh_token = self.refresh_token.clone().expect("No refresh token set");
+        let expires_at = self.expires_at.clone().expect("No expires_at set");
+
+        // Print the tokens
+        println!(
+            "Saving tokens: access_token: {:?}, refresh_token: {:?}, expires_at: {:?}",
+            access_token, refresh_token, expires_at
+        );
+
         // Save the tokens to the store
-        store.insert(
-            "access_token".to_string(),
-            serde_json::Value::String(self.access_token.clone().expect("No access token set")),
-        );
-        store.insert(
-            "refresh_token".to_string(),
-            serde_json::Value::String(self.refresh_token.clone().expect("No refresh token set")),
-        );
-        store.insert(
-            "expires_at".to_string(),
-            serde_json::Value::String(self.expires_at.expect("No expires_at set").to_rfc3339()),
-        );
+        store
+            .insert(
+                "access_token".to_string(),
+                serde_json::Value::String(access_token),
+            )
+            .expect("Failed to insert tokens into store");
+        store
+            .insert(
+                "refresh_token".to_string(),
+                serde_json::Value::String(refresh_token),
+            )
+            .expect("Failed to insert tokens into store");
+        store
+            .insert(
+                "expires_at".to_string(),
+                serde_json::Value::String(expires_at.to_rfc3339()),
+            )
+            .expect("Failed to insert tokens into store");
 
         // Save the store
         store.save().expect("Failed to save token store");
@@ -94,22 +105,37 @@ impl TokenStore {
         let store_path = appdata_local.join("tokens.json");
 
         // Create a new token store from tauri-plugin-store
-        let store = tauri_plugin_store::StoreBuilder::new(app_handle, store_path).build();
+        let mut store = tauri_plugin_store::StoreBuilder::new(app_handle, store_path).build();
+
+        store.load().expect("Failed to load token store");
 
         // Load the tokens from the store
-        self.access_token = store
+        let access_token = store
             .get("access_token")
             .and_then(|v| v.as_str().map(|s| s.to_string()));
-        self.refresh_token = store
+
+        let refresh_token = store
             .get("refresh_token")
             .and_then(|v| v.as_str().map(|s| s.to_string()));
-        self.expires_at = store.get("expires_at").and_then(|v| {
+
+        let expires_at = store.get("expires_at").and_then(|v| {
             v.as_str().map(|s| {
                 DateTime::parse_from_rfc3339(s)
                     .expect("Failed to parse expires_at")
                     .with_timezone(&Utc)
             })
         });
+
+        // Print the tokens
+        println!(
+            "Loaded tokens: access_token: {:?}, refresh_token: {:?}, expires_at: {:?}",
+            access_token, refresh_token, expires_at
+        );
+
+        // Set the tokens
+        self.access_token = access_token;
+        self.refresh_token = refresh_token;
+        self.expires_at = expires_at;
     }
 
     pub fn flush(&mut self) {

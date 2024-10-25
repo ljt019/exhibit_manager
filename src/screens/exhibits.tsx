@@ -14,27 +14,27 @@ import useGetExhibits from "@/hooks/useGetExhibits";
 import { ExhibitCard } from "@/components/exhibit-card";
 
 export default function ExhibitInventory() {
-  const exhibits = useGetExhibits();
+  const { data: exhibits, isLoading, isError, error } = useGetExhibits();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [clusterFilter, setClusterFilter] = useState<string>("all");
-  const [locationFilter, setLocationFilter] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [clusterFilter, setClusterFilter] = useState<string | null>(null);
+  const [locationFilter, setLocationFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
 
   const filteredExhibits = useMemo(() => {
+    if (!exhibits) return [];
+
     return exhibits.filter((exhibit) => {
       const nameMatch = exhibit.name
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
-      const clusterMatch =
-        clusterFilter === "all" || exhibit.cluster === clusterFilter;
+      const clusterMatch = !clusterFilter || exhibit.cluster === clusterFilter;
       const locationMatch =
-        locationFilter === "all" || exhibit.location === locationFilter;
-      const statusMatch =
-        statusFilter === "all" || exhibit.status === statusFilter;
+        !locationFilter || exhibit.location === locationFilter;
+      const statusMatch = !statusFilter || exhibit.status === statusFilter;
       return nameMatch && clusterMatch && locationMatch && statusMatch;
     });
-  }, [searchTerm, clusterFilter, locationFilter, statusFilter]);
+  }, [exhibits, searchTerm, clusterFilter, locationFilter, statusFilter]);
 
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -45,19 +45,29 @@ export default function ExhibitInventory() {
     overscan: 5,
   });
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (isError || !exhibits) {
+    return (
+      <div>
+        Error fetching exhibits {error && <div>{error.toString()}</div>}
+      </div>
+    );
+  }
+
   const uniqueClusters = [...new Set(exhibits.map((e) => e.cluster))];
   const uniqueLocations = [...new Set(exhibits.map((e) => e.location))];
   const uniqueStatuses = [...new Set(exhibits.map((e) => e.status))];
 
   const isFilterApplied =
-    clusterFilter !== "all" ||
-    locationFilter !== "all" ||
-    statusFilter !== "all";
+    clusterFilter !== null || locationFilter !== null || statusFilter !== null;
 
   const clearFilters = () => {
-    setClusterFilter("all");
-    setLocationFilter("all");
-    setStatusFilter("all");
+    setClusterFilter(null);
+    setLocationFilter(null);
+    setStatusFilter(null);
   };
 
   return (
@@ -156,18 +166,17 @@ function FilterSelect({
   options,
   placeholder,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  value: string | null;
+  onChange: (value: string | null) => void;
   options: string[];
   placeholder: string;
 }) {
   return (
-    <Select value={value} onValueChange={onChange}>
+    <Select value={value || ""} onValueChange={(val) => onChange(val || null)}>
       <SelectTrigger className="w-full md:w-[180px]">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="all">All {placeholder.split(" ")[2]}s</SelectItem>
         {options.map((option) => (
           <SelectItem key={option} value={option}>
             {option}

@@ -37,6 +37,7 @@ export function NavMain({ items }: NavMainProps) {
       <SidebarMenu>
         {items.map((item) => (
           <div
+            key={item.url}
             className={`${
               isCurrentRoute(item.url)
                 ? "text-foreground"

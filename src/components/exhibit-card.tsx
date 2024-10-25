@@ -45,7 +45,7 @@ export type Exhibit = {
   status: "operational" | "needs repair" | "out of service";
   parts: string[];
   notes: Array<{ timestamp: string; text: string }>;
-  imageUrl: string;
+  imageUrl: string | undefined;
   sponsorship?: Sponsorship;
 };
 
@@ -59,45 +59,42 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="p-4 pb-0">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start space-x-4">
-            <img
-              src={exhibit.imageUrl}
-              alt={exhibit.name}
-              className="w-20 h-20 object-cover rounded-md"
-            />
-            <div>
+        <div className="flex items-start space-x-4">
+          <img
+            src={exhibit.imageUrl}
+            alt={exhibit.name}
+            className="w-36 h-36 object-cover rounded-md"
+          />
+          <div className="flex-1">
+            <div className="flex items-center justify-between w-full">
               <h3 className="font-semibold text-lg">{exhibit.name}</h3>
-              <div className="text-sm text-muted-foreground mt-1 space-y-1">
-                <div className="flex items-center gap-1">
-                  <Boxes className="w-3 h-3" />
-                  <span className="truncate">{exhibit.cluster}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-3 h-3" />
-                  <span className="truncate">{exhibit.location}</span>
-                </div>
+              <div className="flex items-center space-x-2">
+                <Badge className={`${statusColors[exhibit.status]} text-white`}>
+                  {exhibit.status}
+                </Badge>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
-          </div>
-          <div className="flex flex-col items-end space-y-2">
-            <Badge
-              className={`${statusColors[exhibit.status]} text-white px-2 py-1`}
-            >
-              {exhibit.status}
-            </Badge>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreVertical className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Edit</DropdownMenuItem>
-                <DropdownMenuItem>Delete</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="text-sm text-muted-foreground mt-1 space-y-1">
+              <div className="flex items-center gap-1">
+                <Boxes className="w-3 h-3" />
+                <span className="truncate">{exhibit.cluster}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" />
+                <span className="truncate">{exhibit.location}</span>
+              </div>
+            </div>
           </div>
         </div>
       </CardHeader>

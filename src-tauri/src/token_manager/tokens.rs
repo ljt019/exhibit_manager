@@ -58,9 +58,11 @@ impl TokenManager {
     pub fn set_token_data(&self, token_data: TokenData) {
         let mut store = self.lock_store();
         store.set_token_data(token_data);
+        drop(store);
+        self.save_tokens();
     }
 
-    pub fn save_tokens(&self) {
+    fn save_tokens(&self) {
         let store = self.lock_store();
         let token_data = store.get_token_data();
         let mut persisted_store = self.lock_persisted_store();

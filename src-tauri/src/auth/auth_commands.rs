@@ -70,9 +70,10 @@ pub fn sign_in(window: tauri::Window) {
         }
     };
 
+    // Parse redirect URL
     let url = Url::parse(&redirect_url).expect("Invalid redirect URL");
 
-    // Extract authorization code
+    // Extract authorization code from redirect URL
     let code_pair = match url.query_pairs().find(|pair| pair.0 == "code") {
         Some(pair) => pair,
         None => {
@@ -82,6 +83,7 @@ pub fn sign_in(window: tauri::Window) {
     };
     let code = AuthorizationCode::new(code_pair.1.into_owned());
 
+    // Extract state and verify CSRF
     let state_pair = match url.query_pairs().find(|pair| pair.0 == "state") {
         Some(pair) => pair,
         None => {
@@ -96,6 +98,7 @@ pub fn sign_in(window: tauri::Window) {
         return;
     }
 
+    // Exchange authorization code for token
     let token_result = match client
         .exchange_code(code)
         .set_pkce_verifier(PkceCodeVerifier::new(
@@ -110,19 +113,21 @@ pub fn sign_in(window: tauri::Window) {
         }
     };
 
+    // Get tokens from the token result
     let access_token = token_result.access_token().secret().clone();
     let refresh_token = token_result.refresh_token().map(|t| t.secret().clone());
     let expires_in = token_result.expires_in().expect("No expires in set");
 
-    let mut tokens = token_manager.get_token_data();
+    // Create token data
+    let tokens = crate::token_manager::tokens::TokenData {
+        access_token: Some(access_token),
+        refresh_token: refresh_token.clone(),
+        expires_at: Some(Utc::now() + expires_in),
+    };
 
-    tokens.access_token = Some(access_token);
-    tokens.refresh_token = refresh_token.clone();
-    tokens.expires_at = Some(Utc::now() + expires_in);
+    // Store the tokens (this also saves them to the persisted store)
+    token_manager.set_token_data(tokens);
 
-    token_manager.set_token_data(tokens.clone());
-
-    token_manager.save_tokens();
     println!("[OAuth] Sign in successful, notifying frontend");
 
     window
@@ -141,10 +146,10 @@ pub fn check_if_signed_in(window: tauri::Window) -> bool {
 
 #[tauri::command]
 pub fn sign_out(window: tauri::Window) {
-    // Access the shared state to get token store
+    // Access the shared state to get token manager
     let token_manager = window.state::<TokenManager>();
 
-    // Flush the token store
+    // Flush the token manager
     token_manager.flush();
 
     // Emit a sign out event

@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use oauth2::TokenResponse;
 use std::sync::{Arc, Mutex};
 use tauri::AppHandle;
 
@@ -31,8 +32,82 @@ impl TokenManager {
         }
     }
 
-    pub fn refresh_access_token(&self) {
-        todo!();
+    pub fn refresh_access_token(&self) -> Result<(), String> {
+        let token_data = self.get_token_data();
+
+        // Check if we have a refresh token
+        let refresh_token = match token_data.refresh_token {
+            Some(token) => oauth2::RefreshToken::new(token),
+            None => return Err("No refresh token available".to_string()),
+        };
+
+        // Check if the token needs refreshing
+        if let Some(expires_at) = token_data.expires_at {
+            // Add some buffer time (e.g., 5 minutes) to prevent edge cases
+            if expires_at > Utc::now() + chrono::Duration::minutes(5) {
+                return Ok(()); // Token is still valid
+            }
+        }
+
+        println!("[OAuth] Refreshing access token");
+
+        // Get the OAuth client
+        let client = self.get_oauth_client();
+
+        // Perform the refresh token request
+        let token_result = match client
+            .exchange_refresh_token(&refresh_token)
+            .request(oauth2::reqwest::http_client)
+        {
+            Ok(result) => result,
+            Err(e) => {
+                println!("[OAuth] Error: Failed to refresh token: {}", e);
+                return Err("Failed to refresh token".to_string());
+            }
+        };
+
+        // Get tokens from the token result
+        let access_token = token_result.access_token().secret().clone();
+        let refresh_token = token_result.refresh_token().map(|t| t.secret().clone());
+        let expires_in = token_result.expires_in().expect("No expires in set");
+
+        // Create new token data
+        let new_token_data = TokenData {
+            access_token: Some(access_token),
+            refresh_token: refresh_token,
+            expires_at: Some(Utc::now() + expires_in),
+        };
+
+        // Store the new tokenss
+        self.set_token_data(new_token_data);
+
+        println!("[OAuth] Successfully refreshed access token");
+        Ok(())
+    }
+
+    // Helper method to check if the token needs refreshing
+    fn needs_refresh(&self) -> bool {
+        let token_data = self.get_token_data();
+
+        if token_data.access_token.is_none() {
+            return false; // No token to refresh
+        }
+
+        match token_data.expires_at {
+            Some(expires_at) => expires_at <= Utc::now() + chrono::Duration::minutes(5),
+            None => false, // No expiration time, assume token is valid
+        }
+    }
+
+    // Wrapper method to get a valid access token
+    pub fn get_valid_access_token(&self) -> Result<String, String> {
+        if self.needs_refresh() {
+            self.refresh_access_token()?;
+        }
+
+        self.get_token_data()
+            .access_token
+            .ok_or_else(|| "No access token available".to_string())
     }
 
     pub fn get_oauth_client(&self) -> oauth2::basic::BasicClient {

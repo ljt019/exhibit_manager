@@ -1,10 +1,8 @@
 import SignIn from "@/screens/sign-in";
 import Exhibits from "@/screens/exhibits";
 import Parts from "@/screens/parts";
-import Issues from "@/screens/issues";
-import Jotforms from "@/screens/jotforms";
 
-import { Atom, Bolt, CircleDot, NotebookPen } from "lucide-react";
+import { Atom, Bolt } from "lucide-react";
 
 export interface RouteConfig {
   url: string;

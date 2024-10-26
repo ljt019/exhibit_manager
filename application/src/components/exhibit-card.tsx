@@ -45,7 +45,7 @@ export type Exhibit = {
   status: "operational" | "needs repair" | "out of service";
   part_ids: Array<string>;
   notes: Array<{ timestamp: string; text: string }>;
-  imageUrl: string | undefined;
+  image_url: string | undefined;
   sponsorship?: Sponsorship;
 };
 
@@ -61,7 +61,7 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
       <CardHeader className="p-4 pb-0">
         <div className="flex items-start space-x-4">
           <img
-            src={exhibit.imageUrl}
+            src={exhibit.image_url}
             alt={exhibit.name}
             className="w-36 h-36 object-cover rounded-md"
           />
@@ -144,6 +144,8 @@ function SponsorshipButton({ sponsorship }: { sponsorship?: Sponsorship }) {
 }
 
 function PartsButton({ parts }: { parts: string[] }) {
+  if (!parts) return null;
+
   return (
     <Collapsible>
       <CollapsibleTrigger asChild>

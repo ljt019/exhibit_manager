@@ -76,7 +76,11 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
             <div className="flex items-center justify-between w-full">
               <h3 className="font-semibold text-lg">{exhibit.name}</h3>
               <div className="flex items-center space-x-2">
-                <Badge className={`${statusColors[exhibit.status]} text-white`}>
+                <Badge
+                  className={`${
+                    statusColors[exhibit.status]
+                  } text-white text-nowrap`}
+                >
                   {exhibit.status}
                 </Badge>
                 <DropdownMenu>

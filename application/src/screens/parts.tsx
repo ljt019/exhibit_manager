@@ -1,26 +1,13 @@
-import { useState, useMemo, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import {
-  Search,
-  X,
-  Filter,
-  ArrowUpDown,
-  ExternalLink,
-  Atom,
-  StickyNote,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { useState, useMemo, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import useGetParts from "@/hooks/useGetParts";
-import debounce from "lodash.debounce";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   ColumnDef,
   flexRender,
@@ -31,14 +18,8 @@ import {
   ColumnFiltersState,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ArrowUpDown, ExternalLink, Atom, StickyNote } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +28,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import useGetParts from "@/hooks/useGetParts";
+import { FilterSection } from "@/components/filter-section";
 
 export type Part = {
   id: string;
@@ -65,12 +48,12 @@ const columns: ColumnDef<Part>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Name
+          Part Name
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
     },
-    cell: ({ row }) => <div className="lowercase">{row.getValue("name")}</div>,
+    cell: ({ row }) => <div>{row.getValue("name")}</div>,
   },
   {
     accessorKey: "exhibit_ids",
@@ -160,7 +143,7 @@ const columns: ColumnDef<Part>[] = [
 ];
 
 export default function PartsInventory() {
-  const { data: parts, isLoading, isError, error } = useGetParts();
+  const { data: parts, isLoading, isError, error, refetch } = useGetParts();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [exhibitFilter, setExhibitFilter] = useState<string | null>(null);
@@ -168,10 +151,17 @@ export default function PartsInventory() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  const debouncedSetSearchTerm = useCallback(
-    debounce((value: string) => setSearchTerm(value), 300),
-    []
-  );
+  useEffect(() => {
+    // Refetch data when component mounts
+    refetch();
+
+    // Reset state
+    setSearchTerm("");
+    setExhibitFilter(null);
+    setShowFilters(false);
+    setSorting([]);
+    setColumnFilters([]);
+  }, [refetch]);
 
   const filteredParts = useMemo(() => {
     if (!parts) return [];
@@ -206,12 +196,13 @@ export default function PartsInventory() {
 
   const clearFilters = () => {
     setExhibitFilter(null);
+    setSearchTerm("");
     if (showFilters === true) {
       setShowFilters(false);
     }
   };
 
-  const isFilterApplied = exhibitFilter !== null;
+  const isFilterApplied = exhibitFilter !== null || searchTerm !== "";
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -225,64 +216,27 @@ export default function PartsInventory() {
 
   const uniqueExhibits = [...new Set(parts.flatMap((p) => p.exhibit_ids))];
 
+  const filterOptions = [
+    {
+      value: exhibitFilter,
+      onChange: setExhibitFilter,
+      options: uniqueExhibits,
+      placeholder: "Filter by Exhibit",
+    },
+  ];
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-6">Parts Inventory</h1>
-      <div className="mb-4 flex flex-col md:flex-row gap-4">
-        <div className="w-full md:w-[41.5rem]">
-          <SearchBar setSearchTerm={debouncedSetSearchTerm} />
-        </div>
-        <Button
-          onClick={() => {
-            setShowFilters(!showFilters);
-            clearFilters();
-          }}
-          className={`w-full md:w-auto ${
-            showFilters
-              ? "text-foreground outline outline-1 outline-foreground"
-              : "text-muted-foreground"
-          }`}
-          variant="outline"
-        >
-          <Filter className="w-4 h-4" />
-        </Button>
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="flex flex-wrap gap-2 overflow-hidden"
-            >
-              <FilterSelect
-                value={exhibitFilter}
-                onChange={setExhibitFilter}
-                options={uniqueExhibits}
-                placeholder="Filter by Exhibit"
-              />
-              <AnimatePresence>
-                {isFilterApplied && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                  >
-                    <Button
-                      variant="outline"
-                      onClick={clearFilters}
-                      className="w-full md:w-auto"
-                    >
-                      <X className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+      <FilterSection
+        showFilters={showFilters}
+        setShowFilters={setShowFilters}
+        clearFilters={clearFilters}
+        isFilterApplied={isFilterApplied}
+        setSearchTerm={setSearchTerm}
+        filterOptions={filterOptions}
+        searchBarName="parts"
+      />
       <ScrollArea className="h-[calc(100vh-200px)]">
         <div className="rounded-md border">
           <Table>
@@ -337,50 +291,5 @@ export default function PartsInventory() {
         Showing {filteredParts.length} of {parts.length} parts
       </div>
     </div>
-  );
-}
-
-function SearchBar({
-  setSearchTerm,
-}: {
-  setSearchTerm: (term: string) => void;
-}) {
-  return (
-    <div className="flex-1 relative">
-      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-      <Input
-        type="text"
-        placeholder="Search parts..."
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full pl-8"
-      />
-    </div>
-  );
-}
-
-function FilterSelect({
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  value: string | null;
-  onChange: (value: string | null) => void;
-  options: string[];
-  placeholder: string;
-}) {
-  return (
-    <Select value={value || ""} onValueChange={(val) => onChange(val || null)}>
-      <SelectTrigger className="w-full md:w-[180px]">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option} value={option}>
-            {option}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }

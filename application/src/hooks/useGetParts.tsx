@@ -9,7 +9,7 @@ async function getParts() {
 
 export default function useGetParts() {
   return useQuery<Part[]>({
-    queryKey: ["exhibits"],
+    queryKey: ["parts"],
     queryFn: getParts,
   });
 }

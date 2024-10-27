@@ -269,17 +269,17 @@ export default function ExhibitInventory() {
                       <div className="flex items-center justify-center w-full">
                         <label
                           htmlFor="dropzone-file"
-                          className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+                          className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-background hover:bg-accent hover:bg-opacity-70 border-border"
                         >
                           <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />
-                            <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                            <Upload className="w-8 h-8 mb-4 text-foreground" />
+                            <p className="mb-2 text-sm text-foreground">
                               <span className="font-semibold">
                                 Click to upload
                               </span>{" "}
                               or drag and drop
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-muted-foreground">
                               SVG, PNG, JPG or GIF (MAX. 800x400px)
                             </p>
                           </div>
@@ -297,7 +297,7 @@ export default function ExhibitInventory() {
                           <img
                             src={newExhibit.image_url}
                             alt="Uploaded exhibit"
-                            className="max-w-full h-auto"
+                            className="max-w-full h-auto rounded-lg border border-border"
                           />
                         </div>
                       )}
@@ -429,7 +429,7 @@ function SearchBar({
 }) {
   return (
     <div className="flex-1 relative">
-      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
       <Input
         type="text"
         placeholder="Search exhibits..."

@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  releases: write
 
 jobs:
   release:
@@ -43,7 +44,7 @@ jobs:
           node-version: "16" # Specify your Node.js version
           cache: "npm"
 
-      # Step 5: Install project dependencies "in application directory"
+      # Step 5: Install project dependencies in application directory
       - name: Install dependencies
         run: |
           cd application
@@ -141,8 +142,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release_app.outputs.upload_url }}
-          asset_path: ./application/src-tauri/target/release/your_application_build.exe # **Update this path**
-          asset_name: your_application_build.exe # **Update this name**
+          asset_path: ./application/src-tauri/target/release/bundle/nsis/exhibit_manager_${{ steps.app_info.outputs.version }}_x64-setup.exe
+          asset_name: exhibit_manager_${{ steps.app_info.outputs.version }}_x64-setup.exe
           asset_content_type: application/octet-stream
 
       # Step 12: Check if Backend Release Exists
@@ -192,6 +193,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release_backend.outputs.upload_url }}
-          asset_path: ./backend/target/release/your_backend_build.exe # **Update this path**
-          asset_name: your_backend_build.exe # **Update this name**
+          asset_path: ./backend/target/release/backend.exe
+          asset_name: backend.exe # **Update this name if needed**
           asset_content_type: application/octet-stream

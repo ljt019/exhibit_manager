@@ -6,6 +6,7 @@ import {
   AlertCircle,
   Plus,
   ChevronRight,
+  Scroll,
 } from "lucide-react";
 import useGetExhibitParts from "@/hooks/data/queries/useGetExhibitParts";
 import {
@@ -88,8 +89,8 @@ function PartsInnerDialog({ parts }: { parts: string[] }) {
   }
 
   return (
-    <ScrollArea className="flex-grow pr-4">
-      <div className="space-y-2">
+    <ScrollArea className="h-[50rem] rounded-md">
+      <div className="space-y-2 pr-4">
         {data.map((part) => (
           <PartItem key={part.id} part={part} />
         ))}

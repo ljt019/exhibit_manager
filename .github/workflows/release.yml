@@ -3,11 +3,11 @@ name: Build and Release
 on:
   push:
     branches:
-      - main # Adjust to your default branch
+      - main # Change to your default branch if different
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       # Step 1: Checkout the repository
@@ -20,102 +20,126 @@ jobs:
         with:
           rust-version: stable
 
-      # Step 3: Install jq for JSON parsing
-      - name: Install jq
-        run: sudo apt-get install -y jq
+      # Step 3: Install GitHub CLI
+      - name: Install GitHub CLI
+        run: |
+          winget install --id GitHub.cli -e --source winget
+        shell: pwsh
 
-      # Step 4: Extract Application Details from tauri.conf.json
+      # Step 4: Authenticate GitHub CLI
+      - name: Authenticate GitHub CLI
+        run: echo $env:GITHUB_TOKEN | gh auth login --with-token
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 5: Extract Application Version and Product Name
       - name: Get Application Version and Product Name
         id: app_info
+        shell: pwsh
         run: |
-          APP_CONF=application/src-tauri/tauri.conf.json
-          if [ ! -f "$APP_CONF" ]; then
-            echo "tauri.conf.json not found at $APP_CONF"
+          $appConf = "application/src-tauri/tauri.conf.json"
+          if (-Not (Test-Path $appConf)) {
+            Write-Error "tauri.conf.json not found at $appConf"
             exit 1
-          fi
-          PRODUCT_NAME=$(jq -r '.package.productName' "$APP_CONF")
-          VERSION=$(jq -r '.package.version' "$APP_CONF")
-          echo "::set-output name=product_name::$PRODUCT_NAME"
-          echo "::set-output name=version::$VERSION"
+          }
+          $json = Get-Content $appConf | ConvertFrom-Json
+          $productName = $json.package.productName
+          $version = $json.package.version
+          Write-Output "product_name=$productName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      # Step 5: Extract Backend Details from Cargo.toml
+      # Step 6: Extract Backend Version and Name
       - name: Get Backend Version and Name
         id: backend_info
+        shell: pwsh
         run: |
-          BACKEND_TOML=backend/Cargo.toml
-          if [ ! -f "$BACKEND_TOML" ]; then
-            echo "Cargo.toml not found at $BACKEND_TOML"
+          $backendToml = "backend/Cargo.toml"
+          if (-Not (Test-Path $backendToml)) {
+            Write-Error "Cargo.toml not found at $backendToml"
             exit 1
-          fi
+          }
+          $tomlContent = Get-Content $backendToml -Raw
+          # Extract name
+          if ($tomlContent -match 'name\s*=\s*"([^"]+)"') {
+            $name = $matches[1]
+          } else {
+            Write-Error "Package name not found in $backendToml"
+            exit 1
+          }
           # Extract version
-          VERSION=$(grep '^version' "$BACKEND_TOML" | head -1 | awk -F'=' '{print $2}' | tr -d ' "')
-          # Extract package name
-          NAME=$(grep '^name' "$BACKEND_TOML" | head -1 | awk -F'=' '{print $2}' | tr -d ' "')
-          echo "::set-output name=name::$NAME"
-          echo "::set-output name=version::$VERSION"
+          if ($tomlContent -match 'version\s*=\s*"([^"]+)"') {
+            $version = $matches[1]
+          } else {
+            Write-Error "Version not found in $backendToml"
+            exit 1
+          }
+          Write-Output "name=$name" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      # Step 6: Check and Create Release for Application
+      # Step 7: Create Release for Application
       - name: Create Release for Application
         if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
         run: |
-          APP_VERSION=${{ steps.app_info.outputs.version }}
-          PRODUCT_NAME=${{ steps.app_info.outputs.product_name }}
-          RELEASE_TAG="app-v${APP_VERSION}"
-          RELEASE_NAME="${PRODUCT_NAME} v${APP_VERSION}"
+          $appVersion = "${{ steps.app_info.outputs.version }}"
+          $productName = "${{ steps.app_info.outputs.product_name }}"
+          $releaseTag = "$productName-v$appVersion"
+          $releaseName = "$productName v$appVersion"
 
           # Check if release exists
-          RELEASE_EXISTS=$(gh release view "$RELEASE_TAG" 2>/dev/null || echo "not found")
-
-          if [ "$RELEASE_EXISTS" = "not found" ]; then
-            echo "Release $RELEASE_TAG does not exist. Creating release."
+          $releaseExists = gh release view $releaseTag -q exists 2>$null
+          if (-Not $releaseExists) {
+            Write-Host "Release $releaseTag does not exist. Creating release."
 
             # Build the Tauri application
             cd application
             cargo tauri build --release
             cd ..
 
+            # Optionally, package the build artifacts
+            # Example: Compress-Archive -Path application/target/release/* -DestinationPath build/app.zip
+
             # Create the release
-            gh release create "$RELEASE_TAG" \
-              --title "$RELEASE_NAME" \
-              --notes "Release $RELEASE_NAME" \
-              --generate-notes
+            gh release create $releaseTag --title "$releaseName" --notes "Release $releaseName" --generate-notes
 
-            echo "Application release $RELEASE_NAME created."
-          else
-            echo "Application release $RELEASE_TAG already exists. Skipping."
-          fi
+            Write-Host "Application release $releaseName created."
+          }
+          else {
+            Write-Host "Application release $releaseTag already exists. Skipping."
+          }
 
-      # Step 7: Check and Create Release for Backend
+      # Step 8: Create Release for Backend
       - name: Create Release for Backend
         if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
         run: |
-          BACKEND_VERSION=${{ steps.backend_info.outputs.version }}
-          BACKEND_NAME=${{ steps.backend_info.outputs.name }}
-          RELEASE_TAG="backend-v${BACKEND_VERSION}"
-          RELEASE_NAME="${BACKEND_NAME} v${BACKEND_VERSION}"
+          $backendVersion = "${{ steps.backend_info.outputs.version }}"
+          $backendName = "${{ steps.backend_info.outputs.name }}"
+          $releaseTag = "$backendName-v$backendVersion"
+          $releaseName = "$backendName v$backendVersion"
 
           # Check if release exists
-          RELEASE_EXISTS=$(gh release view "$RELEASE_TAG" 2>/dev/null || echo "not found")
-
-          if [ "$RELEASE_EXISTS" = "not found" ]; then
-            echo "Release $RELEASE_TAG does not exist. Creating release."
+          $releaseExists = gh release view $releaseTag -q exists 2>$null
+          if (-Not $releaseExists) {
+            Write-Host "Release $releaseTag does not exist. Creating release."
 
             # Build the backend
             cd backend
             cargo build --release
             cd ..
 
-            # Create the release
-            gh release create "$RELEASE_TAG" \
-              --title "$RELEASE_NAME" \
-              --notes "Release $RELEASE_NAME" \
-              --generate-notes
+            # Optionally, package the build artifacts
+            # Example: Compress-Archive -Path backend/target/release/* -DestinationPath build/backend.zip
 
-            echo "Backend release $RELEASE_NAME created."
-          else
-            echo "Backend release $RELEASE_TAG already exists. Skipping."
-          fi
+            # Create the release
+            gh release create $releaseTag --title "$releaseName" --notes "Release $releaseName" --generate-notes
+
+            Write-Host "Backend release $releaseName created."
+          }
+          else {
+            Write-Host "Backend release $releaseTag already exists. Skipping."
+          }

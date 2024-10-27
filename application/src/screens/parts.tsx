@@ -30,14 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import useGetParts from "@/hooks/data/queries/useGetParts";
 import { FilterSection } from "@/components/filter-section";
-
-export type Part = {
-  id: string;
-  name: string;
-  link: string;
-  exhibit_ids: Array<string>;
-  notes: Array<{ timestamp: string; note: string }>;
-};
+import { Part } from "@/types/types";
 
 const columns: ColumnDef<Part>[] = [
   {

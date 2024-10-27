@@ -35,24 +35,7 @@ import {
 import { calculateTimeUntilExpiration } from "@/lib/date";
 import useGetExhibitParts from "@/hooks/data/queries/useGetExhibitParts";
 import useDeleteExhibit from "@/hooks/data/mutations/useDeleteExhibit";
-
-type Sponsorship = {
-  sponsorName: string;
-  startDate: string;
-  endDate: string;
-};
-
-export type Exhibit = {
-  id: string;
-  name: string;
-  cluster: string;
-  location: string;
-  status: "operational" | "needs repair" | "out of service";
-  part_ids: Array<string>;
-  notes: Array<{ timestamp: string; note: string }>;
-  image_url: string | undefined;
-  sponsorship?: Sponsorship;
-};
+import type { Exhibit, Sponsorship, Note } from "@/types/types";
 
 const statusColors: Record<Exhibit["status"], string> = {
   operational: "bg-green-500",
@@ -224,7 +207,7 @@ export default function PartsInnerDialog({ parts }: { parts: string[] }) {
                   <div className="space-y-2">
                     <h4 className="font-semibold text-sm">Notes:</h4>
                     <ul className="space-y-1 text-sm">
-                      {part.notes.map((note, index) => (
+                      {part.notes.map((note: Note, index: any) => (
                         <li key={index} className="border-b pb-1">
                           <span className="font-medium">{note.timestamp}:</span>
                           {note.note}

@@ -1,9 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Part } from "@/types";
 import axios from "axios";
 
-async function createPart(part: Part) {
-  part.notes = [];
+export interface NewPart {
+  name: string;
+  link: string;
+  exhibit_ids?: Array<string>;
+  notes?: Array<{ timestamp: string; note: string }>;
+}
+
+async function createPart(part: NewPart) {
   axios.post("http://localhost:3030/parts", part);
 }
 

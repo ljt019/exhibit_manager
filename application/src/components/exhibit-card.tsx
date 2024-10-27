@@ -36,6 +36,8 @@ import { calculateTimeUntilExpiration } from "@/lib/date";
 import useGetExhibitParts from "@/hooks/data/queries/useGetExhibitParts";
 import useDeleteExhibit from "@/hooks/data/mutations/useDeleteExhibit";
 import type { Exhibit, Sponsorship, Note } from "@/types";
+import { CreatePartDialog } from "./create-part-dialog";
+import { PartsButton } from "@/components/parts-dialog";
 
 const statusColors: Record<Exhibit["status"], string> = {
   operational: "bg-green-500",
@@ -99,7 +101,11 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
       <CardContent className="p-4 pt-0">
         <div className="mt-4 space-y-2">
           <SponsorshipButton sponsorship={exhibit.sponsorship} />
-          <PartsButton name={exhibit.name} parts={exhibit.part_ids} />
+          <PartsButton
+            name={exhibit.name}
+            parts={exhibit.part_ids}
+            exhibitId={exhibit.id}
+          />
           <NotesButton name={exhibit.name} notes={exhibit.notes} />
         </div>
       </CardContent>
@@ -138,90 +144,6 @@ function SponsorshipButton({ sponsorship }: { sponsorship?: Sponsorship }) {
         </div>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function PartsButton({ name, parts }: { name: string; parts: string[] }) {
-  if (!parts || parts.length === 0) return null;
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
-          <Hammer className="w-4 h-4 mr-2" />
-          Parts ({parts.length})
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{name} - Parts</DialogTitle>
-        </DialogHeader>
-        <PartsInnerDialog parts={parts} />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-export default function PartsInnerDialog({ parts }: { parts: string[] }) {
-  const { data, isLoading, isError } = useGetExhibitParts(parts);
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (isError || !data) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-destructive">
-        <AlertCircle className="h-8 w-8 mb-2" />
-        <p>Error loading parts</p>
-      </div>
-    );
-  }
-
-  return (
-    <ScrollArea className="h-[60vh] mt-4 pr-4">
-      <Accordion type="single" collapsible className="w-full">
-        {data.map((part) => (
-          <AccordionItem key={part.id} value={part.id}>
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center justify-between w-full pr-4">
-                <span className="font-medium">{part.name}</span>
-                <Badge variant="outline">
-                  {part.exhibit_ids.length} exhibits
-                </Badge>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-2 pt-2">
-                <Button variant="outline" size="sm" className="w-full" asChild>
-                  <a href={part.link} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="mr-2 h-4 w-4" />
-                    Go to Part Link
-                  </a>
-                </Button>
-                {part.notes.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm">Notes:</h4>
-                    <ul className="space-y-1 text-sm">
-                      {part.notes.map((note: Note, index: any) => (
-                        <li key={index} className="border-b pb-1">
-                          <span className="font-medium">{note.timestamp}:</span>
-                          {note.note}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </ScrollArea>
   );
 }
 

@@ -6,6 +6,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/toaster";
 
 import { routes } from "@/routes";
 
@@ -57,6 +58,7 @@ function App() {
     <Router>
       <QueryClientProvider client={queryClient}>
         <Routes />
+        <Toaster />
       </QueryClientProvider>
     </Router>
   );

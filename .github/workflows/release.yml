@@ -1,0 +1,121 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main # Adjust to your default branch
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Rust environment
+      - name: Set up Rust
+        uses: actions/setup-rust@v3
+        with:
+          rust-version: stable
+
+      # Step 3: Install jq for JSON parsing
+      - name: Install jq
+        run: sudo apt-get install -y jq
+
+      # Step 4: Extract Application Details from tauri.conf.json
+      - name: Get Application Version and Product Name
+        id: app_info
+        run: |
+          APP_CONF=application/src-tauri/tauri.conf.json
+          if [ ! -f "$APP_CONF" ]; then
+            echo "tauri.conf.json not found at $APP_CONF"
+            exit 1
+          fi
+          PRODUCT_NAME=$(jq -r '.package.productName' "$APP_CONF")
+          VERSION=$(jq -r '.package.version' "$APP_CONF")
+          echo "::set-output name=product_name::$PRODUCT_NAME"
+          echo "::set-output name=version::$VERSION"
+
+      # Step 5: Extract Backend Details from Cargo.toml
+      - name: Get Backend Version and Name
+        id: backend_info
+        run: |
+          BACKEND_TOML=backend/Cargo.toml
+          if [ ! -f "$BACKEND_TOML" ]; then
+            echo "Cargo.toml not found at $BACKEND_TOML"
+            exit 1
+          fi
+          # Extract version
+          VERSION=$(grep '^version' "$BACKEND_TOML" | head -1 | awk -F'=' '{print $2}' | tr -d ' "')
+          # Extract package name
+          NAME=$(grep '^name' "$BACKEND_TOML" | head -1 | awk -F'=' '{print $2}' | tr -d ' "')
+          echo "::set-output name=name::$NAME"
+          echo "::set-output name=version::$VERSION"
+
+      # Step 6: Check and Create Release for Application
+      - name: Create Release for Application
+        if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          APP_VERSION=${{ steps.app_info.outputs.version }}
+          PRODUCT_NAME=${{ steps.app_info.outputs.product_name }}
+          RELEASE_TAG="app-v${APP_VERSION}"
+          RELEASE_NAME="${PRODUCT_NAME} v${APP_VERSION}"
+
+          # Check if release exists
+          RELEASE_EXISTS=$(gh release view "$RELEASE_TAG" 2>/dev/null || echo "not found")
+
+          if [ "$RELEASE_EXISTS" = "not found" ]; then
+            echo "Release $RELEASE_TAG does not exist. Creating release."
+
+            # Build the Tauri application
+            cd application
+            cargo tauri build --release
+            cd ..
+
+            # Create the release
+            gh release create "$RELEASE_TAG" \
+              --title "$RELEASE_NAME" \
+              --notes "Release $RELEASE_NAME" \
+              --generate-notes
+
+            echo "Application release $RELEASE_NAME created."
+          else
+            echo "Application release $RELEASE_TAG already exists. Skipping."
+          fi
+
+      # Step 7: Check and Create Release for Backend
+      - name: Create Release for Backend
+        if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BACKEND_VERSION=${{ steps.backend_info.outputs.version }}
+          BACKEND_NAME=${{ steps.backend_info.outputs.name }}
+          RELEASE_TAG="backend-v${BACKEND_VERSION}"
+          RELEASE_NAME="${BACKEND_NAME} v${BACKEND_VERSION}"
+
+          # Check if release exists
+          RELEASE_EXISTS=$(gh release view "$RELEASE_TAG" 2>/dev/null || echo "not found")
+
+          if [ "$RELEASE_EXISTS" = "not found" ]; then
+            echo "Release $RELEASE_TAG does not exist. Creating release."
+
+            # Build the backend
+            cd backend
+            cargo build --release
+            cd ..
+
+            # Create the release
+            gh release create "$RELEASE_TAG" \
+              --title "$RELEASE_NAME" \
+              --notes "Release $RELEASE_NAME" \
+              --generate-notes
+
+            echo "Backend release $RELEASE_NAME created."
+          else
+            echo "Backend release $RELEASE_TAG already exists. Skipping."
+          fi

@@ -15,10 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import useCreateExhibit from "@/hooks/data/useCreateExhibit";
 import type { Exhibit } from "@/components/exhibit-card";
+import { useEffect } from "react";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function CreateExhibitDialog() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -62,6 +65,7 @@ import {
   FormControl,
 } from "@/components/ui/form";
 import { useQueryClient } from "@tanstack/react-query";
+import { useGetUniqueClustersAndLocations } from "@/hooks/util/useGetUniqueClustersAndLocations";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -81,10 +85,19 @@ interface CreateExhibitFormProps {
   onSuccess: () => void;
 }
 
+interface CreateExhibitFormProps {
+  onSuccess: () => void;
+}
+
 export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
   const createExhibitMutation = useCreateExhibit();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
+  const { locations, clusters, isLoading, isError } =
+    useGetUniqueClustersAndLocations();
+
+  const [isNewCluster, setIsNewCluster] = useState(false);
+  const [isNewLocation, setIsNewLocation] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -97,6 +110,17 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
     },
   });
 
+  useEffect(() => {
+    if (form.getValues("cluster") === "new") {
+      setIsNewCluster(true);
+      form.setValue("cluster", "");
+    }
+    if (form.getValues("location") === "new") {
+      setIsNewLocation(true);
+      form.setValue("location", "");
+    }
+  }, [form.getValues("cluster"), form.getValues("location")]);
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
     try {
@@ -107,6 +131,8 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
       });
       onSuccess();
       form.reset();
+      setIsNewCluster(false);
+      setIsNewLocation(false);
     } catch (error) {
       console.error("Failed to create exhibit:", error);
       toast({
@@ -130,6 +156,19 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
       reader.readAsDataURL(file);
     }
   };
+
+  const CustomSelectContent = ({
+    children,
+    ...props
+  }: React.ComponentProps<typeof SelectContent>) => (
+    <SelectContent {...props}>
+      <ScrollArea className="h-[200px]">{children}</ScrollArea>
+      <Separator className="my-1" />
+      <div className="bg-background p-1">
+        <SelectItem value="new">Create new</SelectItem>
+      </div>
+    </SelectContent>
+  );
 
   return (
     <Form {...form}>
@@ -155,10 +194,58 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
             <FormItem>
               <FormLabel>Cluster</FormLabel>
               <FormControl>
-                <Input placeholder="Enter cluster name" {...field} />
+                {isNewCluster || clusters.length === 0 ? (
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      placeholder="Enter new cluster name"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setIsNewCluster(true);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setIsNewCluster(false);
+                        field.onChange(clusters[0] || "");
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Cancel new cluster</span>
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    onValueChange={(value) => {
+                      if (value === "new") {
+                        setIsNewCluster(true);
+                        field.onChange("");
+                      } else {
+                        field.onChange(value);
+                      }
+                    }}
+                    value={field.value}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a cluster" />
+                    </SelectTrigger>
+                    <CustomSelectContent>
+                      {clusters.map((cluster) => (
+                        <SelectItem key={cluster} value={cluster}>
+                          {cluster}
+                        </SelectItem>
+                      ))}
+                    </CustomSelectContent>
+                  </Select>
+                )}
               </FormControl>
               <FormDescription>
-                The cluster this exhibit belongs to.
+                {isNewCluster
+                  ? "Enter a new cluster name"
+                  : "Select an existing cluster or create a new one"}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -171,10 +258,58 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
             <FormItem>
               <FormLabel>Location</FormLabel>
               <FormControl>
-                <Input placeholder="Enter exhibit location" {...field} />
+                {isNewLocation || locations.length === 0 ? (
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      placeholder="Enter new location"
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        setIsNewLocation(true);
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setIsNewLocation(false);
+                        field.onChange(locations[0] || "");
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                      <span className="sr-only">Cancel new location</span>
+                    </Button>
+                  </div>
+                ) : (
+                  <Select
+                    onValueChange={(value) => {
+                      if (value === "new") {
+                        setIsNewLocation(true);
+                        field.onChange("");
+                      } else {
+                        field.onChange(value);
+                      }
+                    }}
+                    value={field.value}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a location" />
+                    </SelectTrigger>
+                    <CustomSelectContent>
+                      {locations.map((location) => (
+                        <SelectItem key={location} value={location}>
+                          {location}
+                        </SelectItem>
+                      ))}
+                    </CustomSelectContent>
+                  </Select>
+                )}
               </FormControl>
               <FormDescription>
-                The specific location of the exhibit.
+                {isNewLocation
+                  ? "Enter a new location"
+                  : "Select an existing location or create a new one"}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -208,7 +343,6 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
         <FormField
           control={form.control}
           name="image_url"
-          // @ts-ignore
           render={({ field }) => (
             <FormItem>
               <FormLabel>Image</FormLabel>

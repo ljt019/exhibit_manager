@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Exhibit } from "@/components/exhibit-card";
+import type { Exhibit } from "@/types";
 import axios from "axios";
 
 async function createExhibit(exhibit: Exhibit) {

@@ -1,6 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ExhibitCard } from "@/components/exhibit-card";
-import type { Exhibit } from "@/components/exhibit-card";
+import type { Exhibit } from "@/types";
 
 interface ExhibitListProps {
   filteredExhibits: Exhibit[];

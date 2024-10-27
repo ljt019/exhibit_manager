@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import useCreateExhibit from "@/hooks/data/mutations/useCreateExhibit";
-import type { Exhibit } from "@/components/exhibit-card";
+import type { Exhibit } from "@/types";
 import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";

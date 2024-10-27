@@ -35,7 +35,7 @@ import {
 import { calculateTimeUntilExpiration } from "@/lib/date";
 import useGetExhibitParts from "@/hooks/data/queries/useGetExhibitParts";
 import useDeleteExhibit from "@/hooks/data/mutations/useDeleteExhibit";
-import type { Exhibit, Sponsorship, Note } from "@/types/types";
+import type { Exhibit, Sponsorship, Note } from "@/types";
 
 const statusColors: Record<Exhibit["status"], string> = {
   operational: "bg-green-500",

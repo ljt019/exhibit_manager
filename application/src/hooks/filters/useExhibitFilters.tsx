@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import type { Exhibit } from "@/components/exhibit-card";
+import type { Exhibit } from "@/types";
 
 export function useExhibitFilters(exhibits: Exhibit[]) {
   const [searchTerm, setSearchTerm] = useState("");

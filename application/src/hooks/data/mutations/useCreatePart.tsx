@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Part } from "@/screens/parts";
+import type { Part } from "@/types";
 import axios from "axios";
 
 async function createPart(part: Part) {

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
@@ -15,8 +15,6 @@ import {
   useReactTable,
   SortingState,
   getSortedRowModel,
-  ColumnFiltersState,
-  getFilteredRowModel,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { ArrowUpDown, ExternalLink, Atom, StickyNote } from "lucide-react";
@@ -32,6 +30,7 @@ import useGetParts from "@/hooks/data/queries/useGetParts";
 import { FilterSection } from "@/components/filter-section";
 import { Part } from "@/types/types";
 import { CreatePartDialog } from "@/components/create-part-dialog";
+import { Error, Loading } from "@/components/loading-and-error";
 
 const columns: ColumnDef<Part>[] = [
   {
@@ -137,30 +136,16 @@ const columns: ColumnDef<Part>[] = [
 ];
 
 export default function PartsInventory() {
-  const { data: parts, isLoading, isError, error, refetch } = useGetParts();
+  const { data: parts, isLoading, isError, error } = useGetParts();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [exhibitFilter, setExhibitFilter] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  useEffect(() => {
-    // Refetch data when component mounts
-    refetch();
-
-    // Reset state
-    setSearchTerm("");
-    setExhibitFilter(null);
-    setShowFilters(false);
-    setSorting([]);
-    setColumnFilters([]);
-  }, [refetch]);
-
-  const filteredParts = useMemo(() => {
-    if (!parts) return [];
-
-    return parts.filter((part) => {
+  // Filter the parts data before passing it to the table
+  const filteredParts =
+    parts?.filter((part) => {
       if (
         searchTerm &&
         !part.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -171,20 +156,17 @@ export default function PartsInventory() {
         return false;
       }
       return true;
-    });
-  }, [parts, searchTerm, exhibitFilter]);
+    }) || [];
 
+  // Pass the filtered data to the table
   const table = useReactTable({
     data: filteredParts,
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
     state: {
       sorting,
-      columnFilters,
     },
   });
 
@@ -199,13 +181,11 @@ export default function PartsInventory() {
   const isFilterApplied = exhibitFilter !== null || searchTerm !== "";
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   if (isError || !parts) {
-    return (
-      <div>Error fetching parts {error && <div>{error.toString()}</div>}</div>
-    );
+    return <Error error={error} name="parts" />;
   }
 
   const uniqueExhibits = [...new Set(parts.flatMap((p) => p.exhibit_ids))];
@@ -218,6 +198,8 @@ export default function PartsInventory() {
       placeholder: "Filter by Exhibit",
     },
   ];
+
+  const filteredPartsCount = filteredParts.length;
 
   return (
     <div className="container mx-auto p-4">
@@ -285,7 +267,7 @@ export default function PartsInventory() {
         </div>
       </ScrollArea>
       <div className="mt-4 text-sm text-muted-foreground">
-        Showing {filteredParts.length} of {parts.length} parts
+        Showing {filteredPartsCount} of {parts.length} parts
       </div>
     </div>
   );

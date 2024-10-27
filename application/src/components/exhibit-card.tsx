@@ -1,20 +1,4 @@
-import {
-  Hammer,
-  MapPin,
-  Star,
-  StickyNote,
-  Boxes,
-  MoreVertical,
-  Loader2,
-  ExternalLink,
-  AlertCircle,
-} from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { MapPin, Star, StickyNote, Boxes, MoreVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -33,10 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { calculateTimeUntilExpiration } from "@/lib/date";
-import useGetExhibitParts from "@/hooks/data/queries/useGetExhibitParts";
 import useDeleteExhibit from "@/hooks/data/mutations/useDeleteExhibit";
-import type { Exhibit, Sponsorship, Note } from "@/types";
-import { CreatePartDialog } from "./create-part-dialog";
+import type { Exhibit, Sponsorship } from "@/types";
 import { PartsButton } from "@/components/parts-dialog";
 
 const statusColors: Record<Exhibit["status"], string> = {

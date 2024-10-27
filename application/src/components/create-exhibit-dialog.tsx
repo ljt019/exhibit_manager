@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
-import useCreateExhibit from "@/hooks/data/useCreateExhibit";
+import useCreateExhibit from "@/hooks/data/mutations/useCreateExhibit";
 import type { Exhibit } from "@/components/exhibit-card";
 import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
@@ -93,8 +93,7 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
   const createExhibitMutation = useCreateExhibit();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
-  const { locations, clusters, isLoading, isError } =
-    useGetUniqueClustersAndLocations();
+  const { locations, clusters } = useGetUniqueClustersAndLocations();
 
   const [isNewCluster, setIsNewCluster] = useState(false);
   const [isNewLocation, setIsNewLocation] = useState(false);
@@ -343,6 +342,7 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
         <FormField
           control={form.control}
           name="image_url"
+          // @ts-ignore
           render={({ field }) => (
             <FormItem>
               <FormLabel>Image</FormLabel>

@@ -5,7 +5,7 @@ import useListen from "@/hooks/util/useListen";
 import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
-import useGetRandomExhibit from "@/hooks/data/useGetRandomExhibit";
+import useGetRandomExhibit from "@/hooks/data/queries/useGetRandomExhibit";
 
 export default function SignIn() {
   const navigate = useNavigate();

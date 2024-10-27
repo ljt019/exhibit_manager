@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import useGetExhibits from "@/hooks/data/useGetExhibits";
+import useGetExhibits from "@/hooks/data/queries/useGetExhibits";
 
 export function useGetUniqueClustersAndLocations() {
   const { data: exhibits, isLoading, isError, error } = useGetExhibits();

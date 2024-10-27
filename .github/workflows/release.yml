@@ -20,19 +20,7 @@ jobs:
         with:
           rust-version: stable
 
-      # Step 3: Install GitHub CLI
-      - name: Install GitHub CLI
-        run: |
-          winget install --id GitHub.cli -e --source winget
-        shell: pwsh
-
-      # Step 4: Authenticate GitHub CLI
-      - name: Authenticate GitHub CLI
-        run: echo $env:GITHUB_TOKEN | gh auth login --with-token
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Step 5: Extract Application Version and Product Name
+      # Step 3: Extract Application Version and Product Name
       - name: Get Application Version and Product Name
         id: app_info
         shell: pwsh
@@ -48,7 +36,7 @@ jobs:
           Write-Output "product_name=$productName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      # Step 6: Extract Backend Version and Name
+      # Step 4: Extract Backend Version and Name
       - name: Get Backend Version and Name
         id: backend_info
         shell: pwsh
@@ -76,70 +64,70 @@ jobs:
           Write-Output "name=$name" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      # Step 7: Create Release for Application
+      # Step 5: Create Release for Application
       - name: Create Release for Application
         if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: app-v${{ steps.app_info.outputs.version }}
+          release_name: ${{ steps.app_info.outputs.product_name }} v${{ steps.app_info.outputs.version }}
+          body: "Release ${{ steps.app_info.outputs.product_name }} v${{ steps.app_info.outputs.version }}"
+          draft: false
+          prerelease: false
+
+      # Step 6: Upload Release Asset for Application
+      - name: Upload Release Asset for Application
+        if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release_app.outputs.upload_url }}
+          asset_path: ./application/target/release/your_application_build.exe # Update the path to your build artifact
+          asset_name: your_application_build.exe # Update the name as desired
+          asset_content_type: application/octet-stream
+
+      # Step 7: Build the Tauri Application
+      - name: Build Tauri Application
+        if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
         shell: pwsh
         run: |
-          $appVersion = "${{ steps.app_info.outputs.version }}"
-          $productName = "${{ steps.app_info.outputs.product_name }}"
-          $releaseTag = "$productName-v$appVersion"
-          $releaseName = "$productName v$appVersion"
-
-          # Check if release exists
-          $releaseExists = gh release view $releaseTag -q exists 2>$null
-          if (-Not $releaseExists) {
-            Write-Host "Release $releaseTag does not exist. Creating release."
-
-            # Build the Tauri application
-            cd application
-            cargo tauri build --release
-            cd ..
-
-            # Optionally, package the build artifacts
-            # Example: Compress-Archive -Path application/target/release/* -DestinationPath build/app.zip
-
-            # Create the release
-            gh release create $releaseTag --title "$releaseName" --notes "Release $releaseName" --generate-notes
-
-            Write-Host "Application release $releaseName created."
-          }
-          else {
-            Write-Host "Application release $releaseTag already exists. Skipping."
-          }
+          cd application
+          cargo tauri build --release
+          cd ..
 
       # Step 8: Create Release for Backend
       - name: Create Release for Backend
         if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: backend-v${{ steps.backend_info.outputs.version }}
+          release_name: ${{ steps.backend_info.outputs.name }} v${{ steps.backend_info.outputs.version }}
+          body: "Release ${{ steps.backend_info.outputs.name }} v${{ steps.backend_info.outputs.version }}"
+          draft: false
+          prerelease: false
+
+      # Step 9: Upload Release Asset for Backend
+      - name: Upload Release Asset for Backend
+        if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release_backend.outputs.upload_url }}
+          asset_path: ./backend/target/release/your_backend_build.exe # Update the path to your build artifact
+          asset_name: your_backend_build.exe # Update the name as desired
+          asset_content_type: application/octet-stream
+
+      # Step 10: Build the Backend
+      - name: Build Backend
+        if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
         shell: pwsh
         run: |
-          $backendVersion = "${{ steps.backend_info.outputs.version }}"
-          $backendName = "${{ steps.backend_info.outputs.name }}"
-          $releaseTag = "$backendName-v$backendVersion"
-          $releaseName = "$backendName v$backendVersion"
-
-          # Check if release exists
-          $releaseExists = gh release view $releaseTag -q exists 2>$null
-          if (-Not $releaseExists) {
-            Write-Host "Release $releaseTag does not exist. Creating release."
-
-            # Build the backend
-            cd backend
-            cargo build --release
-            cd ..
-
-            # Optionally, package the build artifacts
-            # Example: Compress-Archive -Path backend/target/release/* -DestinationPath build/backend.zip
-
-            # Create the release
-            gh release create $releaseTag --title "$releaseName" --notes "Release $releaseName" --generate-notes
-
-            Write-Host "Backend release $releaseName created."
-          }
-          else {
-            Write-Host "Backend release $releaseTag already exists. Skipping."
-          }
+          cd backend
+          cargo build --release
+          cd ..

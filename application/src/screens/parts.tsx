@@ -31,6 +31,7 @@ import {
 import useGetParts from "@/hooks/data/queries/useGetParts";
 import { FilterSection } from "@/components/filter-section";
 import { Part } from "@/types/types";
+import { CreatePartDialog } from "@/components/create-part-dialog";
 
 const columns: ColumnDef<Part>[] = [
   {
@@ -220,7 +221,10 @@ export default function PartsInventory() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Parts Inventory</h1>
+      <div className="flex justify-between w-full">
+        <h1 className="text-2xl font-bold mb-6">Parts Inventory</h1>
+        <CreatePartDialog />
+      </div>
       <FilterSection
         showFilters={showFilters}
         setShowFilters={setShowFilters}

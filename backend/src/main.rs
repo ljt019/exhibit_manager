@@ -547,7 +547,7 @@ async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, warp:
 
     // Step 2: Create the issue with both labels
     let payload = serde_json::json!({
-        "title": format!("Bug Report: {}", report.title), // Updated title without the name
+        "title": format!("[bug-report] {}", report.title), // Updated title without the name
         "body": report.description,
         "labels": ["bug report", report.name]
     });

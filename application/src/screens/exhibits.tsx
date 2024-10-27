@@ -1,7 +1,13 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useRef,
+  useEffect,
+} from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Search, X, Filter } from "lucide-react";
+import { Search, X, Filter, Plus, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -11,18 +17,40 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import useGetExhibits from "@/hooks/useGetExhibits";
+import useCreateExhibit from "@/hooks/useCreateExhibit";
 import { ExhibitCard } from "@/components/exhibit-card";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import debounce from "lodash.debounce";
+import type { Exhibit } from "@/components/exhibit-card";
 
-export default function Component() {
+export default function ExhibitInventory() {
   const { data: exhibits, isLoading, isError, error } = useGetExhibits();
+  const createExhibitMutation = useCreateExhibit();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [clusterFilter, setClusterFilter] = useState<string | null>(null);
   const [locationFilter, setLocationFilter] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newExhibit, setNewExhibit] = useState<Partial<Exhibit>>({
+    name: "",
+    cluster: "",
+    location: "",
+    status: "operational",
+    image_url: "",
+  });
 
   const debouncedSetSearchTerm = useCallback(
     debounce((value: string) => setSearchTerm(value), 300),
@@ -51,8 +79,6 @@ export default function Component() {
       return true;
     });
   }, [exhibits, searchTerm, clusterFilter, locationFilter, statusFilter]);
-
-  const [showFilters, setShowFilters] = useState<boolean>(false);
 
   const parentRef = useRef<HTMLDivElement>(null);
   const [rowHeight, setRowHeight] = useState(300);
@@ -99,6 +125,34 @@ export default function Component() {
   const isFilterApplied =
     clusterFilter !== null || locationFilter !== null || statusFilter !== null;
 
+  const handleCreateExhibit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await createExhibitMutation.mutateAsync(newExhibit as Exhibit);
+      setIsDialogOpen(false);
+      setNewExhibit({
+        name: "",
+        cluster: "",
+        location: "",
+        status: "operational",
+        image_url: "",
+      });
+    } catch (error) {
+      console.error("Failed to create exhibit:", error);
+    }
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewExhibit({ ...newExhibit, image_url: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -117,7 +171,138 @@ export default function Component() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Exhibit Inventory</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Exhibit Inventory</h1>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              Add New Exhibit
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Exhibit</DialogTitle>
+              <DialogDescription>
+                Fill in the details for the new exhibit.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleCreateExhibit}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input
+                    id="name"
+                    value={newExhibit.name}
+                    onChange={(e) =>
+                      setNewExhibit({ ...newExhibit, name: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="cluster" className="text-right">
+                    Cluster
+                  </Label>
+                  <Input
+                    id="cluster"
+                    value={newExhibit.cluster}
+                    onChange={(e) =>
+                      setNewExhibit({ ...newExhibit, cluster: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="location" className="text-right">
+                    Location
+                  </Label>
+                  <Input
+                    id="location"
+                    value={newExhibit.location}
+                    onChange={(e) =>
+                      setNewExhibit({ ...newExhibit, location: e.target.value })
+                    }
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select
+                    value={newExhibit.status}
+                    onValueChange={(value) =>
+                      setNewExhibit({
+                        ...newExhibit,
+                        status: value as Exhibit["status"],
+                      })
+                    }
+                  >
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="operational">Operational</SelectItem>
+                      <SelectItem value="needs repair">Needs Repair</SelectItem>
+                      <SelectItem value="out of service">
+                        Out of Service
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="image" className="text-right">
+                    Image
+                  </Label>
+                  <div className="col-span-3">
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="dropzone-file"
+                        className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600"
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <Upload className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />
+                          <p className="mb-2 text-sm text-gray-500 dark:text-gray-400">
+                            <span className="font-semibold">
+                              Click to upload
+                            </span>{" "}
+                            or drag and drop
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            SVG, PNG, JPG or GIF (MAX. 800x400px)
+                          </p>
+                        </div>
+                        <input
+                          id="dropzone-file"
+                          type="file"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                        />
+                      </label>
+                    </div>
+                    {newExhibit.image_url && (
+                      <div className="mt-4">
+                        <img
+                          src={newExhibit.image_url}
+                          alt="Uploaded exhibit"
+                          className="max-w-full h-auto"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit">Create Exhibit</Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
       <div className="mb-4 flex flex-col md:flex-row gap-4">
         <div className="w-full md:w-[41.5rem]">
           <SearchBar setSearchTerm={debouncedSetSearchTerm} />

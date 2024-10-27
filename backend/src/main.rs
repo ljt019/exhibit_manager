@@ -14,10 +14,17 @@ use rand::seq::SliceRandom;
 
 use log::{error, info};
 
+use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+
 #[tokio::main]
 async fn main() {
     // Initialize the logger
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+
+    // Check if images directory exists, if not create it
+    if !std::path::Path::new("images").exists() {
+        std::fs::create_dir("images").expect("Failed to create images directory");
+    }
 
     // Initialize the database connection wrapped in Arc and Mutex for thread-safe access
     let db = std::sync::Arc::new(tokio::sync::Mutex::new(
@@ -36,6 +43,9 @@ async fn main() {
         .allow_any_origin()
         .allow_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
         .allow_headers(vec!["Content-Type"]);
+
+    // === Image Hosting Routes ===
+    let host_images = warp::path("images").and(warp::fs::dir("images"));
 
     // ==== Exhibit Routes ====
 
@@ -146,6 +156,7 @@ async fn main() {
 
     // Combine all routes
     let routes = create_exhibit
+        .or(host_images)
         .or(get_exhibit)
         .or(update_exhibit)
         .or(delete_exhibit)
@@ -234,15 +245,59 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Reje
     ))
 }
 
+/// Save base64 image data to a file and return the filename
+async fn save_image(image_data: &str) -> Result<String, Box<dyn std::error::Error>> {
+    info!("image_data: {}", image_data);
+
+    // Strip the data URL prefix if present (e.g., "data:image/jpeg;base64,")
+    let base64_data = image_data.split(",").last().unwrap_or(image_data);
+
+    // Decode base64 data
+    let image_bytes = BASE64
+        .decode(base64_data)
+        .expect("Failed to decode base64 data");
+
+    // Generate a unique filename using UUID
+    let filename = format!("{}.jpg", uuid::Uuid::new_v4());
+    let path = std::path::PathBuf::from("images").join(&filename);
+
+    // Save the image file
+    tokio::fs::write(&path, image_bytes).await?;
+
+    Ok(filename)
+}
+
 /// Handler to create a new exhibit
 async fn create_exhibit_handler(
-    new_exhibit: Exhibit,
+    mut new_exhibit: Exhibit,
     db: Db,
 ) -> Result<impl warp::Reply, warp::Rejection> {
+    // Handle image upload if image_data is present
+    let image_data = new_exhibit.image_url;
+
+    match save_image(&image_data).await {
+        Ok(filename) => {
+            // Update image_url with the saved image path
+            new_exhibit.image_url = format!("http://localhost:3030/images/{}", filename);
+        }
+        Err(e) => {
+            error!("Failed to save image: {}", e);
+            return Err(warp::reject::custom(Error::ImageProcessingError));
+        }
+    }
+
     let db = db.lock().await;
+
+    // Save the new exhibit to the database
     match db.create_exhibit(&new_exhibit) {
-        Ok(id) => Ok(warp::reply::json(&id)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
+        Ok(id) => Ok(warp::reply::with_status(
+            warp::reply::json(&id),
+            StatusCode::CREATED,
+        )),
+        Err(e) => {
+            error!("Database error: {}", e);
+            Err(warp::reject::custom(Error::DatabaseError))
+        }
     }
 }
 
@@ -389,6 +444,8 @@ async fn get_parts_by_ids_handler(
 enum Error {
     #[error("An error occurred with the database")]
     DatabaseError,
+    #[error("Failed to process image")]
+    ImageProcessingError,
 }
 
 /// Implementing Warp's Reject trait for the custom error

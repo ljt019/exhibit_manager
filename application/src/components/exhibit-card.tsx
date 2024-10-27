@@ -1,20 +1,23 @@
 import {
-  ChevronDown,
   Hammer,
   MapPin,
   Star,
   StickyNote,
   Boxes,
   MoreVertical,
+  Loader2,
+  ExternalLink,
+  AlertCircle,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { calculateTimeUntilExpiration } from "@/lib/date";
+import useGetExhibitParts from "@/hooks/useGetExhibitParts";
 
 type Sponsorship = {
   sponsorName: string;
@@ -44,7 +48,7 @@ export type Exhibit = {
   location: string;
   status: "operational" | "needs repair" | "out of service";
   part_ids: Array<string>;
-  notes: Array<{ timestamp: string; text: string }>;
+  notes: Array<{ timestamp: string; note: string }>;
   image_url: string | undefined;
   sponsorship?: Sponsorship;
 };
@@ -101,7 +105,7 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
       <CardContent className="p-4 pt-0">
         <div className="mt-4 space-y-2">
           <SponsorshipButton sponsorship={exhibit.sponsorship} />
-          <PartsButton parts={exhibit.part_ids} />
+          <PartsButton name={exhibit.name} parts={exhibit.part_ids} />
           <NotesButton name={exhibit.name} notes={exhibit.notes} />
         </div>
       </CardContent>
@@ -143,28 +147,87 @@ function SponsorshipButton({ sponsorship }: { sponsorship?: Sponsorship }) {
   );
 }
 
-function PartsButton({ parts }: { parts: string[] }) {
-  if (!parts) return null;
+function PartsButton({ name, parts }: { name: string; parts: string[] }) {
+  if (!parts || parts.length === 0) return null;
 
   return (
-    <Collapsible>
-      <CollapsibleTrigger asChild>
+    <Dialog>
+      <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="w-full">
           <Hammer className="w-4 h-4 mr-2" />
           Parts ({parts.length})
-          <ChevronDown className="w-4 h-4 ml-auto" />
         </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-2 bg-background border rounded-md shadow-lg z-10">
-        <ScrollArea className="h-32 w-full p-2">
-          <ul className="text-sm space-y-1">
-            {parts.map((part, index) => (
-              <li key={index}>{part}</li>
-            ))}
-          </ul>
-        </ScrollArea>
-      </CollapsibleContent>
-    </Collapsible>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{name} - Parts</DialogTitle>
+        </DialogHeader>
+        <PartsInnerDialog parts={parts} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export default function PartsInnerDialog({ parts }: { parts: string[] }) {
+  const { data, isLoading, isError } = useGetExhibitParts(parts);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[60vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (isError || !data) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-destructive">
+        <AlertCircle className="h-8 w-8 mb-2" />
+        <p>Error loading parts</p>
+      </div>
+    );
+  }
+
+  return (
+    <ScrollArea className="h-[60vh] mt-4 pr-4">
+      <Accordion type="single" collapsible className="w-full">
+        {data.map((part) => (
+          <AccordionItem key={part.id} value={part.id}>
+            <AccordionTrigger className="hover:no-underline">
+              <div className="flex items-center justify-between w-full pr-4">
+                <span className="font-medium">{part.name}</span>
+                <Badge variant="outline">
+                  {part.exhibit_ids.length} exhibits
+                </Badge>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-2 pt-2">
+                <Button variant="outline" size="sm" className="w-full" asChild>
+                  <a href={part.link} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                    Go to Part Link
+                  </a>
+                </Button>
+                {part.notes.length > 0 && (
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Notes:</h4>
+                    <ul className="space-y-1 text-sm">
+                      {part.notes.map((note, index) => (
+                        <li key={index} className="border-b pb-1">
+                          <span className="font-medium">{note.timestamp}:</span>
+                          {note.note}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </ScrollArea>
   );
 }
 
@@ -173,7 +236,7 @@ function NotesButton({
   notes,
 }: {
   name: string;
-  notes: Array<{ timestamp: string; text: string }>;
+  notes: Array<{ timestamp: string; note: string }>;
 }) {
   return (
     <Dialog>
@@ -192,7 +255,7 @@ function NotesButton({
             {notes.map((note, index) => (
               <li key={index} className="border-b pb-2">
                 <span className="font-medium">{note.timestamp}:</span>{" "}
-                {note.text}
+                {note.note}
               </li>
             ))}
           </ul>

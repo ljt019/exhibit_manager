@@ -79,6 +79,72 @@ impl DbConnection {
         Ok(DbConnection(conn))
     }
 
+    pub fn setup_tables(&self) -> SqliteResult<()> {
+        // Create exhibits table
+        self.0.execute(
+            "CREATE TABLE IF NOT EXISTS exhibits (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                cluster TEXT NOT NULL,
+                location TEXT NOT NULL,
+                status TEXT NOT NULL,
+                image_url TEXT NOT NULL,
+                sponsor_name TEXT,
+                sponsor_start_date TEXT,
+                sponsor_end_date TEXT
+            )",
+            [],
+        )?;
+
+        // Create parts table
+        self.0.execute(
+            "CREATE TABLE IF NOT EXISTS parts (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                link TEXT NOT NULL
+            )",
+            [],
+        )?;
+
+        // Create exhibit_parts join table for many-to-many relationship
+        self.0.execute(
+            "CREATE TABLE IF NOT EXISTS exhibit_parts (
+                exhibit_id INTEGER NOT NULL,
+                part_id INTEGER NOT NULL,
+                FOREIGN KEY (exhibit_id) REFERENCES exhibits(id) ON DELETE CASCADE,
+                FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE CASCADE,
+                PRIMARY KEY (exhibit_id, part_id)
+            )",
+            [],
+        )?;
+
+        // Create notes table for exhibits
+        self.0.execute(
+            "CREATE TABLE IF NOT EXISTS exhibit_notes (
+                id INTEGER PRIMARY KEY,
+                exhibit_id INTEGER NOT NULL,
+                timestamp TEXT NOT NULL,
+                note TEXT NOT NULL,
+                FOREIGN KEY (exhibit_id) REFERENCES exhibits(id) ON DELETE CASCADE
+            )",
+            [],
+        )?;
+
+        // Create notes table for parts
+        self.0.execute(
+            "CREATE TABLE IF NOT EXISTS part_notes (
+                id INTEGER PRIMARY KEY,
+                part_id INTEGER NOT NULL,
+                timestamp TEXT NOT NULL,
+                note TEXT NOT NULL,
+                FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE CASCADE
+            )",
+            [],
+        )?;
+
+        Ok(())
+    }
+
     /// Creates a new exhibit in the database.
     pub fn create_exhibit(&self, exhibit: &Exhibit) -> SqliteResult<i64> {
         self.0.execute(
@@ -422,6 +488,64 @@ impl DbConnection {
         Ok(parts)
     }
 
+    pub fn get_parts_by_ids(&self, ids: &[i64]) -> SqliteResult<Vec<Part>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        // Prepare the SQL query with the appropriate number of placeholders
+        let placeholders = ids.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
+        let query = format!(
+            "SELECT id, name, link FROM parts WHERE id IN ({})",
+            placeholders
+        );
+
+        let mut stmt = self.0.prepare(&query)?;
+
+        // Convert ids to a vector of references for parameter binding
+        let id_refs: Vec<&dyn rusqlite::ToSql> =
+            ids.iter().map(|id| id as &dyn rusqlite::ToSql).collect();
+
+        let part_iter = stmt.query_map(&*id_refs, |row| {
+            Ok(Part {
+                id: Some(row.get(0)?),
+                name: row.get(1)?,
+                link: row.get(2)?,
+                exhibit_ids: Vec::new(), // To be populated
+                notes: Vec::new(),       // To be populated
+            })
+        })?;
+
+        let mut parts = Vec::new();
+        for part_res in part_iter {
+            let mut part = part_res?;
+            let id = part.id.unwrap();
+
+            // Fetch associated exhibit IDs
+            let mut stmt_exhibits = self
+                .0
+                .prepare("SELECT exhibit_id FROM exhibit_parts WHERE part_id = ?1")?;
+            let exhibit_ids_iter = stmt_exhibits.query_map(params![id], |row| row.get(0))?;
+            part.exhibit_ids = exhibit_ids_iter.collect::<Result<Vec<i64>, _>>()?;
+
+            // Fetch associated notes
+            let mut stmt_notes = self
+                .0
+                .prepare("SELECT timestamp, note FROM part_notes WHERE part_id = ?1")?;
+            let notes_iter = stmt_notes.query_map(params![id], |row| {
+                Ok(Note {
+                    timestamp: row.get(0)?,
+                    note: row.get(1)?,
+                })
+            })?;
+            part.notes = notes_iter.collect::<Result<Vec<Note>, _>>()?;
+
+            parts.push(part);
+        }
+
+        Ok(parts)
+    }
+
     /// Generates and inserts 100 exhibits with associated parts and notes into the database.
     pub fn generate_and_insert_exhibits(&self) -> SqliteResult<()> {
         let clusters = vec![
@@ -526,6 +650,26 @@ impl DbConnection {
                 )?;
             }
         }
+
+        Ok(())
+    }
+
+    /// Wipes the database by dropping all tables.
+    pub fn wipe_database(&self) -> SqliteResult<()> {
+        // Drop the exhibit_parts table
+        self.0.execute("DROP TABLE IF EXISTS exhibit_parts", [])?;
+
+        // Drop the exhibit_notes table
+        self.0.execute("DROP TABLE IF EXISTS exhibit_notes", [])?;
+
+        // Drop the part_notes table
+        self.0.execute("DROP TABLE IF EXISTS part_notes", [])?;
+
+        // Drop the parts table
+        self.0.execute("DROP TABLE IF EXISTS parts", [])?;
+
+        // Drop the exhibits table
+        self.0.execute("DROP TABLE IF EXISTS exhibits", [])?;
 
         Ok(())
     }

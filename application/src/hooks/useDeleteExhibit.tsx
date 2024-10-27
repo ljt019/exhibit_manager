@@ -1,19 +1,16 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Exhibit } from "@/components/exhibit-card";
 import axios from "axios";
 
-async function createExhibit(exhibit: Exhibit) {
-  exhibit.part_ids = [];
-  exhibit.notes = [];
-  axios.post("http://localhost:3030/exhibits", exhibit);
+async function deleteExhibit(exhibit_id: string) {
+  axios.delete("http://localhost:3030/exhibits/" + exhibit_id);
 }
 
-export default function useCreateExhibit() {
+export default function useDeleteExhibit() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["createExhibit"],
-    mutationFn: createExhibit,
+    mutationKey: ["deleteExhibit"],
+    mutationFn: deleteExhibit,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["exhibits"] });
     },

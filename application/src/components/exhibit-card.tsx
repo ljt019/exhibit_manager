@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { calculateTimeUntilExpiration } from "@/lib/date";
 import useGetExhibitParts from "@/hooks/useGetExhibitParts";
+import useDeleteExhibit from "@/hooks/useDeleteExhibit";
 
 type Sponsorship = {
   sponsorName: string;
@@ -60,6 +61,8 @@ const statusColors: Record<Exhibit["status"], string> = {
 };
 
 export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
+  const deleteExhibitMutation = useDeleteExhibit();
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="p-4 pb-0">
@@ -84,7 +87,11 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => deleteExhibitMutation.mutate(exhibit.id)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

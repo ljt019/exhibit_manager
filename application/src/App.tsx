@@ -50,9 +50,9 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-function App() {
-  let queryClient = new QueryClient();
+let queryClient = new QueryClient();
 
+function App() {
   return (
     <Router>
       <QueryClientProvider client={queryClient}>

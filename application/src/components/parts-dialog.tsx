@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Plus,
   ChevronRight,
-  Scroll,
 } from "lucide-react";
 import useGetExhibitParts from "@/hooks/data/queries/useGetExhibitParts";
 import {

@@ -1,4 +1,4 @@
-import useGetExhibits from "@/hooks/useGetExhibits";
+import useGetExhibits from "@/hooks/data/useGetExhibits";
 import { ExhibitList } from "@/components/exhibit-list";
 import { FilterSection } from "@/components/filter-section";
 import { CreateExhibitDialog } from "@/components/create-exhibit-dialog";

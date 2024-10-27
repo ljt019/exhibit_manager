@@ -16,9 +16,9 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useGetUserProfile } from "@/hooks/useGetProfileInfo";
+import { useGetUserProfile } from "@/hooks/data/useGetProfileInfo";
 import { invoke } from "@tauri-apps/api";
-import useListen from "@/hooks/useListen";
+import useListen from "@/hooks/util/useListen";
 import { useNavigate } from "react-router-dom";
 
 export function NavUser() {

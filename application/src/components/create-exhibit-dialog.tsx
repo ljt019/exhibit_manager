@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState } from "react";
-import useCreateExhibit from "@/hooks/useCreateExhibit";
+import useCreateExhibit from "@/hooks/data/useCreateExhibit";
 import type { Exhibit } from "@/components/exhibit-card";
 
 export function CreateExhibitDialog() {

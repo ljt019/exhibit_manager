@@ -33,8 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { calculateTimeUntilExpiration } from "@/lib/date";
-import useGetExhibitParts from "@/hooks/useGetExhibitParts";
-import useDeleteExhibit from "@/hooks/useDeleteExhibit";
+import useGetExhibitParts from "@/hooks/data/useGetExhibitParts";
+import useDeleteExhibit from "@/hooks/data/useDeleteExhibit";
 
 type Sponsorship = {
   sponsorName: string;

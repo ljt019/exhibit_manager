@@ -28,7 +28,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import useGetParts from "@/hooks/useGetParts";
+import useGetParts from "@/hooks/data/useGetParts";
 import { FilterSection } from "@/components/filter-section";
 
 export type Part = {

@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { invoke } from "@tauri-apps/api";
 import { useNavigate } from "react-router-dom";
-import useListen from "@/hooks/useListen";
+import useListen from "@/hooks/util/useListen";
 import { useEffect, useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
-import useGetRandomExhibit from "@/hooks/useGetRandomExhibit";
+import useGetRandomExhibit from "@/hooks/data/useGetRandomExhibit";
 
 export default function SignIn() {
   const navigate = useNavigate();

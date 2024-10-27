@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Command, Bug, Settings2 } from "lucide-react";
+import { Command, Settings2 } from "lucide-react";
 
 import { NavMain } from "@/components/nav/nav-main";
 import { NavSecondary } from "@/components/nav/nav-secondary";
@@ -19,11 +19,6 @@ import type { RouteConfig } from "@/routes";
 
 const data = {
   navSecondary: [
-    {
-      title: "Report a Bug",
-      url: "#",
-      icon: Bug,
-    },
     {
       title: "Settings",
       url: "#",

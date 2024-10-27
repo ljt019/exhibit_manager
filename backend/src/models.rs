@@ -29,3 +29,10 @@ pub struct Note {
     pub timestamp: String,
     pub note: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct BugReport {
+    pub name: String,
+    pub title: String,
+    pub description: String,
+}

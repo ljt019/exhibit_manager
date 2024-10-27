@@ -18,8 +18,6 @@ export interface RouteConfig {
   }[];
 }
 
-// t
-
 export const routes: RouteConfig[] = [
   {
     url: "/",

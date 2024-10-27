@@ -10,6 +10,8 @@ use db::Db;
 
 use models::{Exhibit, Part};
 
+use rand::seq::SliceRandom;
+
 use log::{error, info};
 
 #[tokio::main]
@@ -77,6 +79,13 @@ async fn main() {
         .and(with_db(db.clone()))
         .and_then(list_exhibits_handler);
 
+    let random_exhibit = warp::get()
+        .and(warp::path("exhibits"))
+        .and(warp::path("random"))
+        .and(warp::path::end()) // Ensure exact match
+        .and(with_db(db.clone()))
+        .and_then(handle_random_exhibit);
+
     // ==== Part Routes ====
 
     // Create Part: POST /parts
@@ -141,6 +150,7 @@ async fn main() {
         .or(update_exhibit)
         .or(delete_exhibit)
         .or(list_exhibits)
+        .or(random_exhibit)
         .or(create_part)
         .or(get_part)
         .or(update_part)
@@ -173,6 +183,17 @@ async fn handle_reset_db(db: Db) -> Result<impl Reply, warp::Rejection> {
     Ok(warp::reply::json(&serde_json::json!({
         "message": "Database reset successful"
     })))
+}
+
+async fn handle_random_exhibit(db: Db) -> Result<impl Reply, warp::Rejection> {
+    let db = db.lock().await;
+    let exhibits = db.list_exhibits().expect("Failed to list exhibits");
+
+    let random_exhibit = exhibits
+        .choose(&mut rand::thread_rng())
+        .expect("Failed to choose random exhibit");
+
+    Ok(warp::reply::json(&random_exhibit))
 }
 
 async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Rejection> {

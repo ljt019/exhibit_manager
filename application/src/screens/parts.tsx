@@ -8,7 +8,7 @@ import {
   ArrowUpDown,
   ExternalLink,
   Atom,
-  FileText,
+  StickyNote,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -118,7 +118,7 @@ const columns: ColumnDef<Part>[] = [
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm">
-              <FileText className="w-4 h-4 mr-2" />
+              <StickyNote className="w-4 h-4 mr-2" />
               {notes.length}
             </Button>
           </DialogTrigger>

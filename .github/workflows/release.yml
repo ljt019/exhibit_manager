@@ -43,10 +43,12 @@ jobs:
           node-version: "16" # Specify your Node.js version
           cache: "npm"
 
-      # Step 5: Install project dependencies
+      # Step 5: Install project dependencies "in application directory"
       - name: Install dependencies
-        run: npm install
-        shell: pwsh
+        run: |
+          cd application
+          npm install
+          cd ..
 
       # Step 6: Extract Application Version and Product Name
       - name: Get Application Version and Product Name

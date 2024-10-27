@@ -5,6 +5,9 @@ on:
     branches:
       - main # Change to your default branch if different
 
+permissions:
+  contents: write
+
 jobs:
   release:
     runs-on: windows-latest
@@ -18,9 +21,34 @@ jobs:
       - name: Set up Rust
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          rust-version: stable
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+          cache: cargo
 
-      # Step 3: Extract Application Version and Product Name
+      # Step 3: Cache npm dependencies
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.npm
+            !~/.npm/_logs
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
+
+      # Step 4: Install Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16" # Specify your Node.js version
+          cache: "npm"
+
+      # Step 5: Install project dependencies
+      - name: Install dependencies
+        run: npm install
+        shell: pwsh
+
+      # Step 6: Extract Application Version and Product Name
       - name: Get Application Version and Product Name
         id: app_info
         shell: pwsh
@@ -36,7 +64,7 @@ jobs:
           Write-Output "product_name=$productName" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      # Step 4: Extract Backend Version and Name
+      # Step 7: Extract Backend Version and Name
       - name: Get Backend Version and Name
         id: backend_info
         shell: pwsh
@@ -64,9 +92,26 @@ jobs:
           Write-Output "name=$name" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
           Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
-      # Step 5: Create Release for Application
+      # Step 8: Check if Application Release Exists
+      - name: Check if Application Release Exists
+        id: check_release_app
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const tag = `app-v${process.env.APP_VERSION}`;
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const exists = releases.data.some(release => release.tag_name === tag);
+            return exists;
+        env:
+          APP_VERSION: ${{ steps.app_info.outputs.version }}
+
+      # Step 9: Create Release for Application if Not Exists
       - name: Create Release for Application
-        if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
+        if: steps.check_release_app.outputs.result == 'false'
+        id: create_release_app
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -77,30 +122,45 @@ jobs:
           draft: false
           prerelease: false
 
-      # Step 6: Upload Release Asset for Application
+      # Step 10: Build the Tauri Application
+      - name: Build Tauri Application
+        if: steps.check_release_app.outputs.result == 'false'
+        shell: pwsh
+        run: |
+          npm run tauri:build
+
+      # Step 11: Upload Release Asset for Application
       - name: Upload Release Asset for Application
-        if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
+        if: steps.check_release_app.outputs.result == 'false'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release_app.outputs.upload_url }}
-          asset_path: ./application/target/release/your_application_build.exe # Update the path to your build artifact
-          asset_name: your_application_build.exe # Update the name as desired
+          asset_path: ./application/src-tauri/target/release/your_application_build.exe # **Update this path**
+          asset_name: your_application_build.exe # **Update this name**
           asset_content_type: application/octet-stream
 
-      # Step 7: Build the Tauri Application
-      - name: Build Tauri Application
-        if: steps.app_info.outputs.version && steps.app_info.outputs.version != ''
-        shell: pwsh
-        run: |
-          cd application
-          cargo tauri build --release
-          cd ..
+      # Step 12: Check if Backend Release Exists
+      - name: Check if Backend Release Exists
+        id: check_release_backend
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const tag = `backend-v${process.env.BACKEND_VERSION}`;
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const exists = releases.data.some(release => release.tag_name === tag);
+            return exists;
+        env:
+          BACKEND_VERSION: ${{ steps.backend_info.outputs.version }}
 
-      # Step 8: Create Release for Backend
+      # Step 13: Create Release for Backend if Not Exists
       - name: Create Release for Backend
-        if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
+        if: steps.check_release_backend.outputs.result == 'false'
+        id: create_release_backend
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,23 +171,23 @@ jobs:
           draft: false
           prerelease: false
 
-      # Step 9: Upload Release Asset for Backend
-      - name: Upload Release Asset for Backend
-        if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release_backend.outputs.upload_url }}
-          asset_path: ./backend/target/release/your_backend_build.exe # Update the path to your build artifact
-          asset_name: your_backend_build.exe # Update the name as desired
-          asset_content_type: application/octet-stream
-
-      # Step 10: Build the Backend
+      # Step 14: Build the Backend
       - name: Build Backend
-        if: steps.backend_info.outputs.version && steps.backend_info.outputs.version != ''
+        if: steps.check_release_backend.outputs.result == 'false'
         shell: pwsh
         run: |
           cd backend
           cargo build --release
           cd ..
+
+      # Step 15: Upload Release Asset for Backend
+      - name: Upload Release Asset for Backend
+        if: steps.check_release_backend.outputs.result == 'false'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release_backend.outputs.upload_url }}
+          asset_path: ./backend/target/release/your_backend_build.exe # **Update this path**
+          asset_name: your_backend_build.exe # **Update this name**
+          asset_content_type: application/octet-stream

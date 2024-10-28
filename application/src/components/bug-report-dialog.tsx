@@ -115,8 +115,8 @@ export function BugReportDialog() {
         <DialogHeader>
           <DialogTitle>Report a Bug</DialogTitle>
           <DialogDescription>
-            Describe the issue you're experiencing. We'll look into it as soon
-            as possible.
+            Describe the issue you're experiencing. I'll look into it as soon as
+            possible.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -126,15 +126,12 @@ export function BugReportDialog() {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Title</FormLabel>
+                  <FormLabel>Subject</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Brief description of the issue"
-                      {...field}
-                    />
+                    <Input placeholder="Can't login" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Provide a short, descriptive title for the bug.
+                    Provide a short, descriptive subject for the bug.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

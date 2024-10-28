@@ -6,7 +6,7 @@ import { Bug } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { useGetUserProfile } from "@/hooks/data/queries/useGetProfileInfo";
-import axios from "axios";
+import { axiosInstance } from "@/api/axiosInstance";
 import {
   Dialog,
   DialogContent,
@@ -45,7 +45,7 @@ interface BugReportPayload extends FormSchema {
 }
 
 async function reportBug(bug_report: BugReportPayload) {
-  await axios.post("http://localhost:3030/report-bug", bug_report);
+  await axiosInstance.post("/report-bug", bug_report);
 }
 
 export function BugReportDialog() {

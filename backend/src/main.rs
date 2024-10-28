@@ -39,13 +39,6 @@ async fn main() {
         DbConnection::new().expect("Failed to create database connection"),
     ));
 
-    // Generate and insert exhibits (only once or conditionally)
-    {
-        let test = db.lock().await;
-        test.generate_and_insert_exhibits()
-            .expect("Failed to generate and insert exhibits");
-    }
-
     // Configure CORS to allow any origin and specific methods and headers
     let cors = warp::cors()
         .allow_any_origin()
@@ -56,6 +49,13 @@ async fn main() {
     let host_images = warp::path("images").and(warp::fs::dir("images"));
 
     // ==== Exhibit Routes ====
+
+    // Create Dummy Exhibits: GET /create-dummy-exhibits
+    let create_dummy_exhibits = warp::get()
+        .and(warp::path("create-dummy-exhibits"))
+        .and(warp::path::end()) // Ensure exact match
+        .and(with_db(db.clone()))
+        .and_then(create_dummy_exhibits_handler);
 
     // Create Exhibit: POST /exhibits
     let create_exhibit = warp::post()
@@ -184,6 +184,7 @@ async fn main() {
         .or(list_parts)
         .or(get_parts_by_ids)
         .or(reset_db)
+        .or(create_dummy_exhibits)
         .or(report_bug)
         .with(cors)
         .recover(handle_rejection);
@@ -203,9 +204,6 @@ async fn handle_reset_db(db: Db) -> Result<impl Reply, warp::Rejection> {
     db.wipe_database().expect("Failed to wipe database");
 
     db.setup_tables().expect("Failed to setup tables");
-
-    db.generate_and_insert_exhibits()
-        .expect("Failed to generate and insert exhibits");
 
     Ok(warp::reply::json(&serde_json::json!({
         "message": "Database reset successful"
@@ -259,6 +257,19 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Reje
         json,
         StatusCode::INTERNAL_SERVER_ERROR,
     ))
+}
+
+async fn create_dummy_exhibits_handler(
+    db: Db,
+) -> Result<warp::reply::Json, std::convert::Infallible> {
+    let db = db.lock().await;
+
+    db.generate_and_insert_exhibits()
+        .expect("Failed to generate and insert exhibits");
+
+    Ok(warp::reply::json(&serde_json::json!({
+        "message": "Dummy exhibits created successfully"
+    })))
 }
 
 /// Save base64 image data to a file and return the filename

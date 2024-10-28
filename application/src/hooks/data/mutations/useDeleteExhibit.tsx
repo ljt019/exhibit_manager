@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { axiosInstance } from "@/api/axiosInstance";
 
 async function deleteExhibit(exhibit_id: string) {
-  axios.delete("http://localhost:3030/exhibits/" + exhibit_id);
+  axiosInstance.delete("/exhibits/" + exhibit_id);
 }
 
 export default function useDeleteExhibit() {

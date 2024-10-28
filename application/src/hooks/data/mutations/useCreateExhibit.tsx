@@ -1,11 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Exhibit } from "@/types";
-import axios from "axios";
+import { axiosInstance } from "@/api/axiosInstance";
 
 async function createExhibit(exhibit: Exhibit) {
   exhibit.part_ids = [];
   exhibit.notes = [];
-  axios.post("http://localhost:3030/exhibits", exhibit);
+  axiosInstance.post("/exhibits", exhibit);
 }
 
 export default function useCreateExhibit() {

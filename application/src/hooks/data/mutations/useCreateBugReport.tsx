@@ -1,6 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { useGetUserProfile } from "@/hooks/data/queries/useGetProfileInfo";
-import axios from "axios";
+import { axiosInstance } from "@/api/axiosInstance";
 
 interface ReportBugPayload {
   name?: string;
@@ -9,7 +9,7 @@ interface ReportBugPayload {
 }
 
 async function reportBug(bug_report: ReportBugPayload) {
-  await axios.post("http://localhost:3030/report-bug", bug_report);
+  await axiosInstance.post("http://localhost:3030/report-bug", bug_report);
 }
 
 export default function useCreateBugReport() {

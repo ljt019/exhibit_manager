@@ -180,15 +180,9 @@ export default function PartsInventory() {
 
   const isFilterApplied = exhibitFilter !== null || searchTerm !== "";
 
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  if (isError || !parts) {
-    return <Error error={error} name="parts" />;
-  }
-
-  const uniqueExhibits = [...new Set(parts.flatMap((p) => p.exhibit_ids))];
+  const uniqueExhibits = [
+    ...new Set((parts ?? []).flatMap((p) => p.exhibit_ids)),
+  ];
 
   const filterOptions = [
     {
@@ -215,59 +209,65 @@ export default function PartsInventory() {
         setSearchTerm={setSearchTerm}
         filterOptions={filterOptions}
         searchBarName="parts"
-      />
-      <ScrollArea className="h-[calc(100vh-200px)]">
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <TableRow
-                    key={row.id}
-                    data-state={row.getIsSelected() && "selected"}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
+      />{" "}
+      {isLoading ? (
+        <Loading />
+      ) : isError || !parts ? (
+        <Error error={error} name="exhibits" />
+      ) : (
+        <ScrollArea className="h-[calc(100vh-200px)]">
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
                     ))}
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={columns.length}
-                    className="h-24 text-center"
-                  >
-                    No results.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </ScrollArea>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No results.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </ScrollArea>
+      )}
       <div className="mt-4 text-sm text-muted-foreground">
-        Showing {filteredPartsCount} of {parts.length} parts
+        Showing {filteredPartsCount} of {parts ? parts.length : 0} parts
       </div>
     </div>
   );

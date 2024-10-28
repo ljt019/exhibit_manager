@@ -39,8 +39,6 @@ function PartsButton({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!parts || parts.length === 0) return null;
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -50,7 +48,7 @@ function PartsButton({
           className="w-full transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
         >
           <Hammer className="w-4 h-4 mr-2" />
-          Parts ({parts.length})
+          {parts ? `Parts(${parts.length})` : "Add a Part"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
@@ -77,7 +75,7 @@ function PartsInnerDialog({ parts }: { parts: string[] }) {
     );
   }
 
-  if (isError || !data) {
+  if (isError) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-destructive">
         <AlertCircle className="h-12 w-12 mb-4" />
@@ -90,9 +88,13 @@ function PartsInnerDialog({ parts }: { parts: string[] }) {
   return (
     <ScrollArea className="h-[50rem] rounded-md">
       <div className="space-y-2 pr-4">
-        {data.map((part) => (
-          <PartItem key={part.id} part={part} />
-        ))}
+        {data ? (
+          data.map((part) => <PartItem key={part.id} part={part} />)
+        ) : (
+          <p className="text-lg font-semibold text-center text-muted-foreground">
+            No parts found
+          </p>
+        )}
       </div>
     </ScrollArea>
   );

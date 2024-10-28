@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
+import { axiosInstance } from "@/api/axiosInstance";
 
 export interface NewPart {
   name: string;
@@ -9,7 +9,7 @@ export interface NewPart {
 }
 
 async function createPart(part: NewPart) {
-  axios.post("http://localhost:3030/parts", part);
+  axiosInstance.post("/parts", part);
 }
 
 export default function useCreatePart() {

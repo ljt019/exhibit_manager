@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { axiosInstance } from "@/api/axiosInstance";
 import type { Exhibit } from "@/types";
 
 async function getExhibits() {
-  const response = await axios.get<Exhibit[]>("http://localhost:3030/exhibits");
+  const response = await axiosInstance.get<Exhibit[]>("/exhibits");
   return response.data;
 }
 

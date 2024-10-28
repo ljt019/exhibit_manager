@@ -1,17 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Part } from "@/types";
-import axios from "axios";
+import { axiosInstance } from "@/api/axiosInstance";
 
 export async function getPartsByIds(partIds: string[]): Promise<Part[]> {
-  const response = await axios.post<Part[]>(
-    "http://localhost:3030/parts/batch",
-    partIds,
-    {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
+  const response = await axiosInstance.post<Part[]>("/parts/batch", partIds, {
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
   return response.data;
 }
 

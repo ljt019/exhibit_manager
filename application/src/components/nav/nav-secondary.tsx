@@ -1,5 +1,6 @@
 import * as React from "react";
 import { type LucideIcon } from "lucide-react";
+import { isDev } from "@/lib/is-dev";
 
 import {
   SidebarGroup,
@@ -24,6 +25,7 @@ export function NavSecondary({
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
+          {isDev && <DevTools />}
           <BugReportDialog />
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
@@ -43,5 +45,32 @@ export function NavSecondary({
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
+  );
+}
+
+import { axiosInstance } from "@/api/axiosInstance";
+
+function DevTools() {
+  return (
+    <>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          size="sm"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => axiosInstance.get("/create-dummy-exhibits")}
+        >
+          Generate Dummy Exhibits
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          size="sm"
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => axiosInstance.get("/reset")}
+        >
+          Reset Database
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </>
   );
 }

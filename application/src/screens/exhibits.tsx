@@ -17,9 +17,6 @@ export default function ExhibitInventory() {
     filterOptions,
   } = useExhibitFilters(exhibits || []);
 
-  if (isLoading) return <Loading />;
-  if (isError || !exhibits) return <Error error={error} name="exhibits" />;
-
   return (
     <div className="container mx-auto p-4">
       <Header />
@@ -32,9 +29,15 @@ export default function ExhibitInventory() {
         filterOptions={filterOptions}
         searchBarName="exhibits"
       />
-      <ExhibitList filteredExhibits={filteredExhibits} />
+      {isLoading ? (
+        <Loading />
+      ) : isError || !exhibits ? (
+        <Error error={error} name="exhibits" />
+      ) : (
+        <ExhibitList filteredExhibits={filteredExhibits} />
+      )}
       <Footer
-        totalExhibits={exhibits.length}
+        totalExhibits={exhibits ? exhibits.length : 0}
         filteredExhibits={filteredExhibits.length}
       />
     </div>

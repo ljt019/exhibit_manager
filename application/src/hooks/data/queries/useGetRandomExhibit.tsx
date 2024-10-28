@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import type { Exhibit } from "@/types";
+import { axiosInstance } from "@/api/axiosInstance";
 
 async function getRandomExhibit() {
-  const response = await axios.get<Exhibit>(
-    "http://localhost:3030/exhibits/random"
-  );
+  const response = await axiosInstance.get<Exhibit>("/exhibits/random");
   return response.data;
 }
 

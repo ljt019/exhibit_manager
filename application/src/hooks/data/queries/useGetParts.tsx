@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import type { Part } from "@/types";
+import { axiosInstance } from "@/api/axiosInstance";
 
 async function getParts() {
-  const response = await axios.get<Part[]>("http://localhost:3030/parts");
+  const response = await axiosInstance.get<Part[]>("/parts");
   return response.data;
 }
 

@@ -37,7 +37,7 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
           <img
             src={exhibit.image_url}
             alt={exhibit.name}
-            className="w-36 h-36 object-cover rounded-md"
+            className="w-36 h-36 object-fill rounded-md"
           />
           <div className="flex-1">
             <div className="flex items-center justify-between w-full">

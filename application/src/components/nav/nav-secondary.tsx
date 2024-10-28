@@ -49,6 +49,7 @@ export function NavSecondary({
 }
 
 import { axiosInstance } from "@/api/axiosInstance";
+import { DatabaseZap, DatabaseBackup } from "lucide-react";
 
 function DevTools() {
   return (
@@ -59,7 +60,8 @@ function DevTools() {
           className="text-muted-foreground hover:text-foreground"
           onClick={() => axiosInstance.get("/create-dummy-exhibits")}
         >
-          Generate Dummy Exhibits
+          <DatabaseBackup />
+          Fill DB
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
@@ -68,7 +70,8 @@ function DevTools() {
           className="text-muted-foreground hover:text-foreground"
           onClick={() => axiosInstance.get("/reset")}
         >
-          Reset Database
+          <DatabaseZap />
+          Flush DB
         </SidebarMenuButton>
       </SidebarMenuItem>
     </>

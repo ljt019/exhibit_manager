@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Exhibit {
     pub id: Option<i64>,
     pub name: String,
@@ -15,7 +15,7 @@ pub struct Exhibit {
     pub sponsor_end_date: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Part {
     pub id: Option<i64>,
     pub name: String,
@@ -24,13 +24,13 @@ pub struct Part {
     pub notes: Vec<Note>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Note {
     pub timestamp: String,
     pub note: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, PartialEq, Eq)]
 pub struct BugReport {
     pub name: String,
     pub title: String,

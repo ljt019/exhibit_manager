@@ -145,6 +145,14 @@ jobs:
           asset_name: exhibit_manager_${{ steps.app_info.outputs.version }}_x64-setup.exe
           asset_content_type: application/octet-stream
 
+      # Step TEST: Testthe Backend
+      - name: Test Backend
+        shell: pwsh
+        run: |
+          cd backend
+          cargo test
+          cd ..
+
       # Step 12: Check if Backend Release Exists
       - name: Check if Backend Release Exists
         id: check_release_backend

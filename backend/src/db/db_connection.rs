@@ -79,6 +79,15 @@ impl DbConnection {
         Ok(DbConnection(conn))
     }
 
+    pub fn new_test_db() -> SqliteResult<Self> {
+        let conn = Connection::open_in_memory()?;
+
+        // Enable foreign key support
+        conn.execute("PRAGMA foreign_keys = ON;", [])?;
+
+        Ok(DbConnection(conn))
+    }
+
     pub fn setup_tables(&self) -> SqliteResult<()> {
         // Create exhibits table
         self.0.execute(
@@ -672,5 +681,131 @@ impl DbConnection {
         self.0.execute("DROP TABLE IF EXISTS exhibits", [])?;
 
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    #[test]
+    fn test_setup_tables() {
+        let conn = super::DbConnection::new_test_db().unwrap();
+        conn.setup_tables().unwrap();
+
+        // Check that tables have been created
+        let tables = conn
+            .0
+            .prepare("SELECT name FROM sqlite_master WHERE type='table'") // Query for table names
+            .unwrap()
+            .query_map([], |row| row.get(0)) // Extract table names
+            .unwrap()
+            .collect::<Result<Vec<String>, _>>()
+            .unwrap();
+
+        assert_eq!(
+            tables,
+            vec![
+                "exhibits",
+                "parts",
+                "exhibit_parts",
+                "exhibit_notes",
+                "part_notes"
+            ]
+        );
+    }
+
+    #[test]
+    fn test_create_exhibit() {
+        let conn = super::DbConnection::new_test_db().unwrap();
+        conn.setup_tables().unwrap();
+
+        // Create part
+        let part = crate::models::Part {
+            id: None,
+            name: "Part 1".to_string(),
+            link: "https://example.com/part/1".to_string(),
+            exhibit_ids: Vec::new(),
+            notes: Vec::new(),
+        };
+
+        let part_id = conn.create_part(&part).unwrap();
+
+        // Create exhibit
+        let mut exhibit = crate::models::Exhibit {
+            id: None,
+            name: "Exhibit 1".to_string(),
+            cluster: "Biology".to_string(),
+            location: "Hall A".to_string(),
+            status: "operational".to_string(),
+            image_url: "https://example.com/exhibit/1.jpg".to_string(),
+            sponsor_name: None,
+            sponsor_start_date: None,
+            sponsor_end_date: None,
+            part_ids: vec![part_id],
+            notes: Vec::new(),
+        };
+
+        let exhibit_id = conn.create_exhibit(&exhibit).unwrap();
+        exhibit.id = Some(exhibit_id);
+
+        // Check that the exhibit was created
+        let retrieved_exhibit = conn.get_exhibit(exhibit_id).unwrap().unwrap();
+
+        assert_eq!(retrieved_exhibit, exhibit);
+    }
+
+    #[test]
+    fn test_delete_exhibit() {
+        let conn = super::DbConnection::new_test_db().unwrap();
+        conn.setup_tables().unwrap();
+
+        // Create part
+        let part = crate::models::Part {
+            id: None,
+            name: "Part 1".to_string(),
+            link: "https://example.com/part/1".to_string(),
+            exhibit_ids: Vec::new(),
+            notes: Vec::new(),
+        };
+
+        let part_id = conn.create_part(&part).unwrap();
+
+        // Create exhibit
+        let mut exhibit = crate::models::Exhibit {
+            id: None,
+            name: "Exhibit 1".to_string(),
+            cluster: "Biology".to_string(),
+            location: "Hall A".to_string(),
+            status: "operational".to_string(),
+            image_url: "https://example.com/exhibit/1.jpg".to_string(),
+            sponsor_name: None,
+            sponsor_start_date: None,
+            sponsor_end_date: None,
+            part_ids: vec![part_id],
+            notes: Vec::new(),
+        };
+
+        let exhibit_id = conn.create_exhibit(&exhibit).unwrap();
+        exhibit.id = Some(exhibit_id);
+
+        // Delete the exhibit
+        conn.delete_exhibit(exhibit_id).unwrap();
+
+        // Check that the exhibit was deleted
+        let retrieved_exhibit = conn.get_exhibit(exhibit_id).unwrap();
+
+        assert!(retrieved_exhibit.is_none());
+    }
+
+    #[test]
+    fn test_list_exhibit() {
+        let conn = super::DbConnection::new_test_db().unwrap();
+        conn.setup_tables().unwrap();
+
+        conn.generate_and_insert_exhibits().unwrap();
+
+        let exhibits = conn.list_exhibits().unwrap();
+
+        assert_eq!(exhibits.len(), 100);
     }
 }

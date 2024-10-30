@@ -134,11 +134,11 @@ async fn handle_reset_db(
 
     db_conn
         .wipe_database()
-        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
+        .map_err(|_| warp::reject::custom(Error::DatabaseError("Database Error".to_string())))?;
 
     db_conn
         .setup_tables()
-        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
+        .map_err(|_| warp::reject::custom(Error::DatabaseError("Database Error".to_string())))?;
 
     Ok(warp::reply::json(&serde_json::json!({
         "message": "Database reset successful"

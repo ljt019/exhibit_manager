@@ -29,7 +29,9 @@ pub async fn create_exhibit_handler(
         )),
         Err(e) => {
             error!("Database error: {}", e);
-            Err(warp::reject::custom(Error::DatabaseError))
+            Err(warp::reject::custom(Error::DatabaseError(
+                "Database Error".to_string(),
+            )))
         }
     }
 }
@@ -45,7 +47,9 @@ pub async fn get_exhibit_handler(
     match exhibit_repo.get_exhibit(id) {
         Ok(Some(exhibit)) => Ok(warp::reply::json(&exhibit)),
         Ok(None) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+            "Database Error".to_string(),
+        ))),
     }
 }
 
@@ -64,7 +68,9 @@ pub async fn update_exhibit_handler(
             StatusCode::OK,
         )),
         Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+            "Database Error".to_string(),
+        ))),
     }
 }
 
@@ -82,7 +88,9 @@ pub async fn delete_exhibit_handler(
             StatusCode::NO_CONTENT,
         )),
         Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+            "Database Error".to_string(),
+        ))),
     }
 }
 
@@ -95,7 +103,9 @@ pub async fn list_exhibits_handler(
 
     match exhibit_repo.list_exhibits() {
         Ok(exhibits) => Ok(warp::reply::json(&exhibits)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+            "Database Error".to_string(),
+        ))),
     }
 }
 
@@ -114,7 +124,9 @@ pub async fn handle_random_exhibit(
             let random_exhibit = exhibits.choose(&mut rand::thread_rng()).unwrap();
             Ok(warp::reply::json(random_exhibit))
         }
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+            "Database Error".to_string(),
+        ))),
     }
 }
 
@@ -130,6 +142,8 @@ pub async fn create_dummy_exhibits_handler(
         Ok(_) => Ok(warp::reply::json(&serde_json::json!({
             "message": "Dummy exhibits created successfully"
         }))),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
+        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+            "Database Error".to_string(),
+        ))),
     }
 }

@@ -7,8 +7,8 @@ use warp::Reply;
 
 use crate::db::repositories::ExhibitRepository;
 use crate::db::DbConnection;
+use crate::errors::Error;
 use crate::models::Exhibit;
-use crate::Error;
 use log::error;
 use rand::seq::SliceRandom;
 

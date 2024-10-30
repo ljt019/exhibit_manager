@@ -2,7 +2,10 @@
 
 mod api;
 mod db;
+mod errors;
 mod models;
+
+use errors::Error;
 
 use warp::Filter;
 use warp::Reply;
@@ -77,22 +80,6 @@ fn with_db(
 ) -> impl Filter<Extract = (Arc<Mutex<DbConnection>>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
 }
-
-/// Custom error type for handling various errors
-#[derive(Debug, thiserror::Error)]
-enum Error {
-    #[error("An error occurred with the database")]
-    DatabaseError,
-    #[error("Missing environment variable: {0}")]
-    MissingEnvVar(String),
-    #[error("GitHub request error: {0}")]
-    GitHubRequestError(String),
-    #[error("GitHub API error: {0}")]
-    GitHubApiError(String),
-}
-
-/// Implementing Warp's Reject trait for the custom error
-impl warp::reject::Reject for Error {}
 
 /// Error handling for Warp rejections
 async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Rejection> {

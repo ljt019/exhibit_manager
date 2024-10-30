@@ -6,8 +6,8 @@ use std::env;
 use urlencoding::encode;
 use warp::http::StatusCode;
 
+use crate::errors::Error;
 use crate::models::BugReport;
-use crate::Error;
 
 /// Handler to report a bug via GitHub Issues
 pub async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, warp::Rejection> {

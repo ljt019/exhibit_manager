@@ -6,8 +6,8 @@ use warp::http::StatusCode;
 
 use crate::db::repositories::PartRepository;
 use crate::db::DbConnection;
+use crate::errors::Error;
 use crate::models::Part;
-use crate::Error;
 use log::{error, info};
 
 /// Handler to create a new part

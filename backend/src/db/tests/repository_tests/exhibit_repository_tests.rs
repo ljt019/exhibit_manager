@@ -1,6 +1,6 @@
+use crate::db::repositories::ExhibitRepository;
 use crate::db::DbConnection;
-use crate::models::exhibit::Exhibit;
-use crate::repositories::exhibit_repository::ExhibitRepository;
+use crate::models::Exhibit;
 
 fn get_test_exhibit() -> Exhibit {
     let exhibit = Exhibit {

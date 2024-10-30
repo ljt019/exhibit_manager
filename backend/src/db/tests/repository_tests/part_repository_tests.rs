@@ -1,6 +1,6 @@
+use crate::db::repositories::PartRepository;
 use crate::db::DbConnection;
-use crate::models::part::Part;
-use crate::repositories::part_repository::PartRepository;
+use crate::models::Part;
 
 fn get_test_part() -> Part {
     let part = Part {

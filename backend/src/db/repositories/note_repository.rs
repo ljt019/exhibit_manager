@@ -1,5 +1,5 @@
 use crate::db::DbConnection;
-use crate::models::note::Note;
+use crate::models::Note;
 use rusqlite::{params, Result as SqliteResult};
 
 pub struct NoteRepository<'a> {

@@ -5,9 +5,9 @@ use tokio::sync::Mutex;
 use warp::http::StatusCode;
 use warp::Reply;
 
+use crate::db::repositories::ExhibitRepository;
 use crate::db::DbConnection;
 use crate::models::Exhibit;
-use crate::repositories::ExhibitRepository;
 use crate::Error;
 use log::error;
 use rand::seq::SliceRandom;

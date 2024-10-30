@@ -1,14 +1,8 @@
 // src/main.rs
 
+mod api;
 mod db;
-mod filters;
-mod handlers;
 mod models;
-mod repositories;
-mod routes;
-
-#[cfg(test)]
-mod tests;
 
 use warp::Filter;
 use warp::Reply;
@@ -52,9 +46,9 @@ async fn main() {
         .allow_headers(vec!["Content-Type"]);
 
     // Import route modules
-    let exhibit_routes = routes::exhibit_routes::exhibit_routes(db.clone());
-    let part_routes = routes::part_routes::part_routes(db.clone());
-    let bug_report_routes = routes::bug_report_routes::bug_report_routes();
+    let exhibit_routes = api::routes::exhibit_routes(db.clone());
+    let part_routes = api::routes::part_routes(db.clone());
+    let bug_report_routes = api::routes::bug_report_routes();
 
     // Additional routes that don't fit into resource-specific categories
     let host_images = warp::path("images").and(warp::fs::dir("images"));

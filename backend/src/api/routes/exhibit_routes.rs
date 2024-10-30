@@ -4,9 +4,12 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use warp::Filter;
 
+use crate::api::filters::with_db;
+use crate::api::handlers::{
+    create_exhibit_handler, delete_exhibit_handler, get_exhibit_handler, handle_random_exhibit,
+    list_exhibits_handler, update_exhibit_handler,
+};
 use crate::db::DbConnection;
-use crate::filters::db_filter::with_db;
-use crate::handlers::exhibit_handlers::*;
 
 pub fn exhibit_routes(
     db: Arc<Mutex<DbConnection>>,

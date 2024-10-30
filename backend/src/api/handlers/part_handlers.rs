@@ -4,9 +4,9 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use warp::http::StatusCode;
 
+use crate::db::repositories::PartRepository;
 use crate::db::DbConnection;
 use crate::models::Part;
-use crate::repositories::PartRepository;
 use crate::Error;
 use log::{error, info};
 

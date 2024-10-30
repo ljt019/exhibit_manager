@@ -1,8 +1,7 @@
 // src/repositories/exhibit_repository.rs
 
 use crate::db::DbConnection;
-use crate::models::exhibit::Exhibit;
-use crate::models::note::Note;
+use crate::models::{Exhibit, Note};
 use rusqlite::OptionalExtension;
 use rusqlite::{params, Result as SqliteResult};
 

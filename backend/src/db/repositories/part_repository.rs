@@ -1,6 +1,6 @@
 use crate::db::DbConnection;
-use crate::models::note::Note;
-use crate::models::part::Part;
+use crate::models::Note;
+use crate::models::Part;
 use rusqlite::OptionalExtension;
 use rusqlite::{params, Result as SqliteResult};
 

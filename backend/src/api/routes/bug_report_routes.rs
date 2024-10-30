@@ -2,7 +2,7 @@
 
 use warp::Filter;
 
-use crate::handlers::bug_report_handlers::*;
+use crate::api::handlers::report_bug_handler;
 
 pub fn bug_report_routes(
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {

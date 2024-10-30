@@ -4,12 +4,15 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use warp::Filter;
 
+use crate::api::handlers::{
+    create_part_handler, delete_part_handler, get_part_handler, get_parts_by_ids_handler,
+    list_parts_handler, update_part_handler,
+};
 use crate::db::DbConnection;
-use crate::handlers::part_handlers::*;
 // Removed unused imports
 // use crate::models::Part;
 // use crate::repositories::PartRepository;
-use crate::filters::db_filter::with_db; // Import the helper function
+use crate::api::filters::with_db; // Import the helper function
 
 pub fn part_routes(
     db: Arc<Mutex<DbConnection>>,

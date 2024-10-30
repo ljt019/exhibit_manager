@@ -1,28 +1,24 @@
 // src/main.rs
 
 mod db;
+mod filters;
+mod handlers;
 mod models;
 mod repositories;
+mod routes;
 
-use warp::http::StatusCode;
+#[cfg(test)]
+mod tests;
+
 use warp::Filter;
 use warp::Reply;
 
 use db::DbConnection;
-use models::{BugReport, Exhibit, Part};
-use repositories::{ExhibitRepository, PartRepository};
 
-use reqwest::Client;
-
-use rand::seq::SliceRandom;
-
-use log::{error, info};
-
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use log::error;
 
 use dotenv::dotenv;
 
-use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -55,148 +51,25 @@ async fn main() {
         .allow_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
         .allow_headers(vec!["Content-Type"]);
 
-    // === Image Hosting Routes ===
+    // Import route modules
+    let exhibit_routes = routes::exhibit_routes::exhibit_routes(db.clone());
+    let part_routes = routes::part_routes::part_routes(db.clone());
+    let bug_report_routes = routes::bug_report_routes::bug_report_routes();
+
+    // Additional routes that don't fit into resource-specific categories
     let host_images = warp::path("images").and(warp::fs::dir("images"));
-
-    // ==== Exhibit Routes ====
-
-    // Create Dummy Exhibits: GET /create-dummy-exhibits
-    let create_dummy_exhibits = warp::get()
-        .and(warp::path("create-dummy-exhibits"))
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(create_dummy_exhibits_handler);
-
-    // Create Exhibit: POST /exhibits
-    let create_exhibit = warp::post()
-        .and(warp::path("exhibits"))
-        .and(warp::path::end()) // Ensure exact match
-        .and(warp::body::json())
-        .and(with_db(db.clone()))
-        .and_then(create_exhibit_handler);
-
-    // Get Exhibit by ID: GET /exhibits/:id
-    let get_exhibit = warp::get()
-        .and(warp::path("exhibits"))
-        .and(warp::path::param::<i64>())
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(get_exhibit_handler);
-
-    // Update Exhibit: PUT /exhibits/:id
-    let update_exhibit = warp::put()
-        .and(warp::path("exhibits"))
-        .and(warp::path::param::<i64>())
-        .and(warp::path::end()) // Ensure exact match
-        .and(warp::body::json())
-        .and(with_db(db.clone()))
-        .and_then(update_exhibit_handler);
-
-    // Delete Exhibit: DELETE /exhibits/:id
-    let delete_exhibit = warp::delete()
-        .and(warp::path("exhibits"))
-        .and(warp::path::param::<i64>())
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(delete_exhibit_handler);
-
-    // List All Exhibits: GET /exhibits
-    let list_exhibits = warp::get()
-        .and(warp::path("exhibits"))
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(list_exhibits_handler);
-
-    // Get Random Exhibit: GET /exhibits/random
-    let random_exhibit = warp::get()
-        .and(warp::path("exhibits"))
-        .and(warp::path("random"))
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(handle_random_exhibit);
-
-    // ==== Part Routes ====
-
-    // Create Part: POST /parts
-    let create_part = warp::post()
-        .and(warp::path("parts"))
-        .and(warp::path::end()) // Ensures exact match to /parts
-        .and(warp::body::json())
-        .and(with_db(db.clone()))
-        .and_then(create_part_handler);
-
-    // Get Part by ID: GET /parts/:id
-    let get_part = warp::get()
-        .and(warp::path("parts"))
-        .and(warp::path::param::<i64>())
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(get_part_handler);
-
-    // Update Part: PUT /parts/:id
-    let update_part = warp::put()
-        .and(warp::path("parts"))
-        .and(warp::path::param::<i64>())
-        .and(warp::path::end()) // Ensure exact match
-        .and(warp::body::json())
-        .and(with_db(db.clone()))
-        .and_then(update_part_handler);
-
-    // Delete Part: DELETE /parts/:id
-    let delete_part = warp::delete()
-        .and(warp::path("parts"))
-        .and(warp::path::param::<i64>())
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(delete_part_handler);
-
-    // List All Parts: GET /parts
-    let list_parts = warp::get()
-        .and(warp::path("parts"))
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(list_parts_handler);
-
-    // Get Parts with list of IDs: POST /parts/batch
-    let get_parts_by_ids = warp::post()
-        .and(warp::path("parts"))
-        .and(warp::path("batch"))
-        .and(warp::path::end()) // Ensure exact match to /parts/batch
-        .and(warp::body::json()) // Expecting a JSON array of i64
-        .and(with_db(db.clone()))
-        .and_then(get_parts_by_ids_handler);
-
-    // Reset the database: GET /reset
     let reset_db = warp::get()
         .and(warp::path("reset"))
         .and(warp::path::end()) // Ensure exact match
         .and(with_db(db.clone()))
         .and_then(handle_reset_db);
 
-    // Define the /report-bug route
-    let report_bug = warp::post()
-        .and(warp::path("report-bug"))
-        .and(warp::path::end())
-        .and(warp::body::json())
-        .and_then(report_bug_handler);
-
     // Combine all routes
-    let routes = create_exhibit
+    let routes = exhibit_routes
+        .or(part_routes)
+        .or(bug_report_routes)
         .or(host_images)
-        .or(get_exhibit)
-        .or(update_exhibit)
-        .or(delete_exhibit)
-        .or(list_exhibits)
-        .or(random_exhibit)
-        .or(create_part)
-        .or(get_part)
-        .or(update_part)
-        .or(delete_part)
-        .or(list_parts)
-        .or(get_parts_by_ids)
         .or(reset_db)
-        .or(create_dummy_exhibits)
-        .or(report_bug)
         .with(cors)
         .recover(handle_rejection);
 
@@ -216,8 +89,6 @@ fn with_db(
 enum Error {
     #[error("An error occurred with the database")]
     DatabaseError,
-    #[error("Failed to process image")]
-    ImageProcessingError,
     #[error("Missing environment variable: {0}")]
     MissingEnvVar(String),
     #[error("GitHub request error: {0}")]
@@ -235,7 +106,10 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Reje
         let json = warp::reply::json(&serde_json::json!({
             "error": "Not Found"
         }));
-        return Ok(warp::reply::with_status(json, StatusCode::NOT_FOUND));
+        return Ok(warp::reply::with_status(
+            json,
+            warp::http::StatusCode::NOT_FOUND,
+        ));
     }
 
     if let Some(e) = err.find::<warp::filters::body::BodyDeserializeError>() {
@@ -243,7 +117,10 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Reje
         let json = warp::reply::json(&serde_json::json!({
             "error": "Invalid request body"
         }));
-        return Ok(warp::reply::with_status(json, StatusCode::BAD_REQUEST));
+        return Ok(warp::reply::with_status(
+            json,
+            warp::http::StatusCode::BAD_REQUEST,
+        ));
     }
 
     if let Some(custom_error) = err.find::<Error>() {
@@ -253,7 +130,7 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Reje
         }));
         return Ok(warp::reply::with_status(
             json,
-            StatusCode::INTERNAL_SERVER_ERROR,
+            warp::http::StatusCode::INTERNAL_SERVER_ERROR,
         ));
     }
 
@@ -264,7 +141,7 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Reje
     }));
     Ok(warp::reply::with_status(
         json,
-        StatusCode::INTERNAL_SERVER_ERROR,
+        warp::http::StatusCode::INTERNAL_SERVER_ERROR,
     ))
 }
 
@@ -285,429 +162,4 @@ async fn handle_reset_db(
     Ok(warp::reply::json(&serde_json::json!({
         "message": "Database reset successful"
     })))
-}
-
-/// Handler to get a random exhibit
-async fn handle_random_exhibit(
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the ExhibitRepository
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
-
-    let exhibits = exhibit_repo
-        .list_exhibits()
-        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
-
-    let random_exhibit = exhibits
-        .choose(&mut rand::thread_rng())
-        .ok_or_else(|| warp::reject::not_found())?;
-
-    Ok(warp::reply::json(random_exhibit))
-}
-
-/// Handler to create dummy exhibits
-async fn create_dummy_exhibits_handler(
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the ExhibitRepository
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
-
-    exhibit_repo
-        .generate_and_insert_exhibits()
-        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
-
-    Ok(warp::reply::json(&serde_json::json!({
-        "message": "Dummy exhibits created successfully"
-    })))
-}
-
-/// Save base64 image data to a file and return the filename
-async fn save_image(image_data: &str) -> Result<String, Box<dyn std::error::Error>> {
-    info!("image_data: {}", image_data);
-
-    // Strip the data URL prefix if present (e.g., "data:image/jpeg;base64,")
-    let base64_data = image_data.split(",").last().unwrap_or(image_data);
-
-    // Decode base64 data
-    let image_bytes = BASE64
-        .decode(base64_data)
-        .expect("Failed to decode base64 data");
-
-    // Generate a unique filename using UUID
-    let filename = format!("{}.jpg", uuid::Uuid::new_v4());
-    let path = std::path::PathBuf::from("images").join(&filename);
-
-    // Save the image file
-    tokio::fs::write(&path, image_bytes).await?;
-
-    Ok(filename)
-}
-
-/// Handler to create a new exhibit
-async fn create_exhibit_handler(
-    mut new_exhibit: Exhibit,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    // Handle image upload if image_data is present
-    let image_data = new_exhibit.image_url.clone();
-
-    match save_image(&image_data).await {
-        Ok(filename) => {
-            // Update image_url with the saved image path
-            new_exhibit.image_url = format!("http://localhost:3030/images/{}", filename);
-        }
-        Err(e) => {
-            error!("Failed to save image: {}", e);
-            return Err(warp::reject::custom(Error::ImageProcessingError));
-        }
-    }
-
-    let db_conn = db.lock().await;
-
-    // Initialize the ExhibitRepository
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
-
-    // Save the new exhibit to the database
-    match exhibit_repo.create_exhibit(&new_exhibit) {
-        Ok(id) => Ok(warp::reply::with_status(
-            warp::reply::json(&id),
-            StatusCode::CREATED,
-        )),
-        Err(e) => {
-            error!("Database error: {}", e);
-            Err(warp::reject::custom(Error::DatabaseError))
-        }
-    }
-}
-
-/// Handler to retrieve an exhibit by ID
-async fn get_exhibit_handler(
-    id: i64,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the ExhibitRepository
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
-
-    match exhibit_repo.get_exhibit(id) {
-        Ok(Some(exhibit)) => Ok(warp::reply::json(&exhibit)),
-        Ok(None) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to update an existing exhibit
-async fn update_exhibit_handler(
-    id: i64,
-    updated_exhibit: Exhibit,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the ExhibitRepository
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
-
-    match exhibit_repo.update_exhibit(id, &updated_exhibit) {
-        Ok(updated) if updated > 0 => Ok(warp::reply::with_status(
-            warp::reply::json(&()),
-            warp::http::StatusCode::OK,
-        )),
-        Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to delete an exhibit by ID
-async fn delete_exhibit_handler(
-    id: i64,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the ExhibitRepository
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
-
-    match exhibit_repo.delete_exhibit(id) {
-        Ok(deleted) if deleted > 0 => Ok(warp::reply::with_status(
-            warp::reply::json(&()),
-            warp::http::StatusCode::NO_CONTENT,
-        )),
-        Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to list all exhibits
-async fn list_exhibits_handler(
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the ExhibitRepository
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
-
-    match exhibit_repo.list_exhibits() {
-        Ok(exhibits) => Ok(warp::reply::json(&exhibits)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to create a new part
-async fn create_part_handler(
-    new_part: Part,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the PartRepository
-    let part_repo = PartRepository::new(&*db_conn);
-
-    match part_repo.create_part(&new_part) {
-        Ok(id) => Ok(warp::reply::json(&id)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to retrieve a part by ID
-async fn get_part_handler(
-    id: i64,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the PartRepository
-    let part_repo = PartRepository::new(&*db_conn);
-
-    match part_repo.get_part(id) {
-        Ok(Some(part)) => Ok(warp::reply::json(&part)),
-        Ok(None) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to update an existing part
-async fn update_part_handler(
-    id: i64,
-    updated_part: Part,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the PartRepository
-    let part_repo = PartRepository::new(&*db_conn);
-
-    match part_repo.update_part(id, &updated_part) {
-        Ok(updated) if updated > 0 => Ok(warp::reply::with_status(
-            warp::reply::json(&()),
-            warp::http::StatusCode::OK,
-        )),
-        Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to delete a part by ID
-async fn delete_part_handler(
-    id: i64,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the PartRepository
-    let part_repo = PartRepository::new(&*db_conn);
-
-    match part_repo.delete_part(id) {
-        Ok(deleted) if deleted > 0 => Ok(warp::reply::with_status(
-            warp::reply::json(&()),
-            warp::http::StatusCode::NO_CONTENT,
-        )),
-        Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to list all parts
-async fn list_parts_handler(
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    // Initialize the PartRepository
-    let part_repo = PartRepository::new(&*db_conn);
-
-    match part_repo.list_parts() {
-        Ok(parts) => Ok(warp::reply::json(&parts)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
-    }
-}
-
-/// Handler to get parts by a list of IDs
-async fn get_parts_by_ids_handler(
-    part_ids: Vec<i64>,
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    info!("Received /parts/batch request with IDs: {:?}", part_ids);
-
-    // Check if the list is empty
-    if part_ids.is_empty() {
-        info!("Empty part_ids received.");
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&serde_json::json!({
-                "error": "No part IDs provided"
-            })),
-            StatusCode::BAD_REQUEST,
-        ));
-    }
-
-    let db_conn = db.lock().await;
-
-    // Initialize the PartRepository
-    let part_repo = PartRepository::new(&*db_conn);
-
-    match part_repo.get_parts_by_ids(&part_ids) {
-        Ok(parts) => {
-            info!("Successfully retrieved {} parts.", parts.len());
-            Ok(warp::reply::with_status(
-                warp::reply::json(&parts),
-                StatusCode::OK,
-            ))
-        }
-        Err(e) => {
-            error!("Database error while fetching parts: {:?}", e);
-            Err(warp::reject::custom(Error::DatabaseError))
-        }
-    }
-}
-
-/// Handler to report a bug via GitHub Issues
-async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, warp::Rejection> {
-    // Load GitHub credentials from environment variables
-    let github_token = env::var("GITHUB_TOKEN")
-        .map_err(|_| warp::reject::custom(Error::MissingEnvVar("GITHUB_TOKEN".to_string())))?;
-    let repo_owner = env::var("GITHUB_REPO_OWNER")
-        .map_err(|_| warp::reject::custom(Error::MissingEnvVar("GITHUB_REPO_OWNER".to_string())))?;
-    let repo_name = env::var("GITHUB_REPO_NAME")
-        .map_err(|_| warp::reject::custom(Error::MissingEnvVar("GITHUB_REPO_NAME".to_string())))?;
-
-    // Prepare the GitHub API URLs
-    let issue_url = format!(
-        "https://api.github.com/repos/{}/{}/issues",
-        repo_owner, repo_name
-    );
-    let labels_url = format!(
-        "https://api.github.com/repos/{}/{}/labels/{}",
-        repo_owner,
-        repo_name,
-        urlencoding::encode(&report.name)
-    );
-
-    // Initialize the HTTP client
-    let client = Client::new();
-
-    // Step 1: Ensure the dynamic label exists
-    let label_creation_response = client
-        .get(&labels_url)
-        .header("Authorization", format!("token {}", github_token))
-        .header("User-Agent", "YourAppName") // Replace with your app's name
-        .send()
-        .await;
-
-    match label_creation_response {
-        Ok(response) => {
-            if response.status().as_u16() == warp::http::StatusCode::NOT_FOUND.as_u16() {
-                // Label does not exist; create it
-                let create_label_url = format!(
-                    "https://api.github.com/repos/{}/{}/labels",
-                    repo_owner, repo_name
-                );
-                let label_payload = serde_json::json!({
-                    "name": report.name,
-                    "color": "f29513", // You can choose an appropriate color
-                    "description": "Dynamic label from bug report"
-                });
-
-                let create_response = client
-                    .post(&create_label_url)
-                    .header("Authorization", format!("token {}", github_token))
-                    .header("User-Agent", "YourAppName") // Replace with your app's name
-                    .json(&label_payload)
-                    .send()
-                    .await;
-
-                match create_response {
-                    Ok(resp) => {
-                        if !resp.status().is_success() {
-                            let error_text = resp
-                                .text()
-                                .await
-                                .unwrap_or_else(|_| "Unknown error".to_string());
-                            error!("Failed to create label: {}", error_text);
-                            return Err(warp::reject::custom(Error::GitHubApiError(error_text)));
-                        }
-                    }
-                    Err(e) => {
-                        error!("Failed to create label: {}", e);
-                        return Err(warp::reject::custom(Error::GitHubRequestError(
-                            e.to_string(),
-                        )));
-                    }
-                }
-            } else if !response.status().is_success() {
-                let error_text = response
-                    .text()
-                    .await
-                    .unwrap_or_else(|_| "Unknown error".to_string());
-                error!("Error checking label existence: {}", error_text);
-                return Err(warp::reject::custom(Error::GitHubApiError(error_text)));
-            }
-            // If label exists, do nothing
-        }
-        Err(e) => {
-            error!("Failed to check label existence: {}", e);
-            return Err(warp::reject::custom(Error::GitHubRequestError(
-                e.to_string(),
-            )));
-        }
-    }
-
-    // Step 2: Create the issue with both labels
-    let payload = serde_json::json!({
-        "title": format!("[bug-report] {}", report.title), // Updated title without the name
-        "body": report.description,
-        "labels": ["bug report", report.name]
-    });
-
-    // Send the POST request to GitHub to create the issue
-    let response = client
-        .post(&issue_url)
-        .header("Authorization", format!("token {}", github_token))
-        .header("User-Agent", "YourAppName") // Replace with your app's name
-        .json(&payload)
-        .send()
-        .await
-        .map_err(|e| {
-            error!("Failed to send request to GitHub: {}", e);
-            warp::reject::custom(Error::GitHubRequestError(e.to_string()))
-        })?;
-
-    // Check the response status
-    if response.status().is_success() {
-        let issue: serde_json::Value = response.json().await.unwrap_or_default();
-        Ok(warp::reply::with_status(
-            warp::reply::json(&issue),
-            StatusCode::CREATED,
-        ))
-    } else {
-        let error_text = response
-            .text()
-            .await
-            .unwrap_or_else(|_| "Unknown error".to_string());
-        error!("GitHub API error: {}", error_text);
-        Err(warp::reject::custom(Error::GitHubApiError(error_text)))
-    }
 }

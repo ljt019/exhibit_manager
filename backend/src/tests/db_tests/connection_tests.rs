@@ -1,6 +1,8 @@
+use crate::db::DbConnection;
+
 #[test]
 fn test_setup_tables() {
-    let conn = super::connection::DbConnection::new_in_memory().unwrap();
+    let conn = DbConnection::new_in_memory().unwrap();
     conn.setup_tables().unwrap();
 
     // Check that tables have been created

@@ -1,18 +1,20 @@
+// src/main.rs
+
 mod db;
 mod models;
+mod repositories;
 
 use warp::http::StatusCode;
 use warp::Filter;
 use warp::Reply;
 
-use db::db_connection::DbConnection;
-use db::Db;
-
+use db::DbConnection;
 use models::{BugReport, Exhibit, Part};
-
-use rand::seq::SliceRandom;
+use repositories::{ExhibitRepository, PartRepository};
 
 use reqwest::Client;
+
+use rand::seq::SliceRandom;
 
 use log::{error, info};
 
@@ -21,6 +23,8 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use dotenv::dotenv;
 
 use std::env;
+use std::sync::Arc;
+use tokio::sync::Mutex;
 
 #[tokio::main]
 async fn main() {
@@ -35,9 +39,15 @@ async fn main() {
     }
 
     // Initialize the database connection wrapped in Arc and Mutex for thread-safe access
-    let db = std::sync::Arc::new(tokio::sync::Mutex::new(
-        DbConnection::new().expect("Failed to create database connection"),
+    let db = Arc::new(Mutex::new(
+        DbConnection::new("exhibits.db").expect("Failed to create database connection"),
     ));
+
+    // Set up the database tables
+    {
+        let db_conn = db.lock().await;
+        db_conn.setup_tables().expect("Failed to set up tables");
+    }
 
     // Configure CORS to allow any origin and specific methods and headers
     let cors = warp::cors()
@@ -97,6 +107,7 @@ async fn main() {
         .and(with_db(db.clone()))
         .and_then(list_exhibits_handler);
 
+    // Get Random Exhibit: GET /exhibits/random
     let random_exhibit = warp::get()
         .and(warp::path("exhibits"))
         .and(warp::path("random"))
@@ -155,7 +166,7 @@ async fn main() {
         .and(with_db(db.clone()))
         .and_then(get_parts_by_ids_handler);
 
-    // Reset the database: POST /reset
+    // Reset the database: GET /reset
     let reset_db = warp::get()
         .and(warp::path("reset"))
         .and(warp::path::end()) // Ensure exact match
@@ -194,33 +205,31 @@ async fn main() {
 }
 
 /// Helper function to pass the database connection to handlers
-fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = std::convert::Infallible> + Clone {
+fn with_db(
+    db: Arc<Mutex<DbConnection>>,
+) -> impl Filter<Extract = (Arc<Mutex<DbConnection>>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
 }
 
-async fn handle_reset_db(db: Db) -> Result<impl Reply, warp::Rejection> {
-    let db = db.lock().await;
-
-    db.wipe_database().expect("Failed to wipe database");
-
-    db.setup_tables().expect("Failed to setup tables");
-
-    Ok(warp::reply::json(&serde_json::json!({
-        "message": "Database reset successful"
-    })))
+/// Custom error type for handling various errors
+#[derive(Debug, thiserror::Error)]
+enum Error {
+    #[error("An error occurred with the database")]
+    DatabaseError,
+    #[error("Failed to process image")]
+    ImageProcessingError,
+    #[error("Missing environment variable: {0}")]
+    MissingEnvVar(String),
+    #[error("GitHub request error: {0}")]
+    GitHubRequestError(String),
+    #[error("GitHub API error: {0}")]
+    GitHubApiError(String),
 }
 
-async fn handle_random_exhibit(db: Db) -> Result<impl Reply, warp::Rejection> {
-    let db = db.lock().await;
-    let exhibits = db.list_exhibits().expect("Failed to list exhibits");
+/// Implementing Warp's Reject trait for the custom error
+impl warp::reject::Reject for Error {}
 
-    let random_exhibit = exhibits
-        .choose(&mut rand::thread_rng())
-        .expect("Failed to choose random exhibit");
-
-    Ok(warp::reply::json(&random_exhibit))
-}
-
+/// Error handling for Warp rejections
 async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Rejection> {
     if err.is_not_found() {
         let json = warp::reply::json(&serde_json::json!({
@@ -259,13 +268,57 @@ async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Reje
     ))
 }
 
-async fn create_dummy_exhibits_handler(
-    db: Db,
-) -> Result<warp::reply::Json, std::convert::Infallible> {
-    let db = db.lock().await;
+/// Handler to reset the database
+async fn handle_reset_db(
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
 
-    db.generate_and_insert_exhibits()
-        .expect("Failed to generate and insert exhibits");
+    db_conn
+        .wipe_database()
+        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
+
+    db_conn
+        .setup_tables()
+        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
+
+    Ok(warp::reply::json(&serde_json::json!({
+        "message": "Database reset successful"
+    })))
+}
+
+/// Handler to get a random exhibit
+async fn handle_random_exhibit(
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the ExhibitRepository
+    let exhibit_repo = ExhibitRepository::new(&*db_conn);
+
+    let exhibits = exhibit_repo
+        .list_exhibits()
+        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
+
+    let random_exhibit = exhibits
+        .choose(&mut rand::thread_rng())
+        .ok_or_else(|| warp::reject::not_found())?;
+
+    Ok(warp::reply::json(random_exhibit))
+}
+
+/// Handler to create dummy exhibits
+async fn create_dummy_exhibits_handler(
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the ExhibitRepository
+    let exhibit_repo = ExhibitRepository::new(&*db_conn);
+
+    exhibit_repo
+        .generate_and_insert_exhibits()
+        .map_err(|_| warp::reject::custom(Error::DatabaseError))?;
 
     Ok(warp::reply::json(&serde_json::json!({
         "message": "Dummy exhibits created successfully"
@@ -297,10 +350,10 @@ async fn save_image(image_data: &str) -> Result<String, Box<dyn std::error::Erro
 /// Handler to create a new exhibit
 async fn create_exhibit_handler(
     mut new_exhibit: Exhibit,
-    db: Db,
+    db: Arc<Mutex<DbConnection>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     // Handle image upload if image_data is present
-    let image_data = new_exhibit.image_url;
+    let image_data = new_exhibit.image_url.clone();
 
     match save_image(&image_data).await {
         Ok(filename) => {
@@ -313,10 +366,13 @@ async fn create_exhibit_handler(
         }
     }
 
-    let db = db.lock().await;
+    let db_conn = db.lock().await;
+
+    // Initialize the ExhibitRepository
+    let exhibit_repo = ExhibitRepository::new(&*db_conn);
 
     // Save the new exhibit to the database
-    match db.create_exhibit(&new_exhibit) {
+    match exhibit_repo.create_exhibit(&new_exhibit) {
         Ok(id) => Ok(warp::reply::with_status(
             warp::reply::json(&id),
             StatusCode::CREATED,
@@ -329,9 +385,16 @@ async fn create_exhibit_handler(
 }
 
 /// Handler to retrieve an exhibit by ID
-async fn get_exhibit_handler(id: i64, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.get_exhibit(id) {
+async fn get_exhibit_handler(
+    id: i64,
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the ExhibitRepository
+    let exhibit_repo = ExhibitRepository::new(&*db_conn);
+
+    match exhibit_repo.get_exhibit(id) {
         Ok(Some(exhibit)) => Ok(warp::reply::json(&exhibit)),
         Ok(None) => Err(warp::reject::not_found()),
         Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
@@ -342,10 +405,14 @@ async fn get_exhibit_handler(id: i64, db: Db) -> Result<impl warp::Reply, warp::
 async fn update_exhibit_handler(
     id: i64,
     updated_exhibit: Exhibit,
-    db: Db,
+    db: Arc<Mutex<DbConnection>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.update_exhibit(id, &updated_exhibit) {
+    let db_conn = db.lock().await;
+
+    // Initialize the ExhibitRepository
+    let exhibit_repo = ExhibitRepository::new(&*db_conn);
+
+    match exhibit_repo.update_exhibit(id, &updated_exhibit) {
         Ok(updated) if updated > 0 => Ok(warp::reply::with_status(
             warp::reply::json(&()),
             warp::http::StatusCode::OK,
@@ -356,9 +423,16 @@ async fn update_exhibit_handler(
 }
 
 /// Handler to delete an exhibit by ID
-async fn delete_exhibit_handler(id: i64, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.delete_exhibit(id) {
+async fn delete_exhibit_handler(
+    id: i64,
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the ExhibitRepository
+    let exhibit_repo = ExhibitRepository::new(&*db_conn);
+
+    match exhibit_repo.delete_exhibit(id) {
         Ok(deleted) if deleted > 0 => Ok(warp::reply::with_status(
             warp::reply::json(&()),
             warp::http::StatusCode::NO_CONTENT,
@@ -369,27 +443,47 @@ async fn delete_exhibit_handler(id: i64, db: Db) -> Result<impl warp::Reply, war
 }
 
 /// Handler to list all exhibits
-async fn list_exhibits_handler(db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.list_exhibits() {
+async fn list_exhibits_handler(
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the ExhibitRepository
+    let exhibit_repo = ExhibitRepository::new(&*db_conn);
+
+    match exhibit_repo.list_exhibits() {
         Ok(exhibits) => Ok(warp::reply::json(&exhibits)),
         Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
     }
 }
 
 /// Handler to create a new part
-async fn create_part_handler(new_part: Part, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.create_part(&new_part) {
+async fn create_part_handler(
+    new_part: Part,
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the PartRepository
+    let part_repo = PartRepository::new(&*db_conn);
+
+    match part_repo.create_part(&new_part) {
         Ok(id) => Ok(warp::reply::json(&id)),
         Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
     }
 }
 
 /// Handler to retrieve a part by ID
-async fn get_part_handler(id: i64, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.get_part(id) {
+async fn get_part_handler(
+    id: i64,
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the PartRepository
+    let part_repo = PartRepository::new(&*db_conn);
+
+    match part_repo.get_part(id) {
         Ok(Some(part)) => Ok(warp::reply::json(&part)),
         Ok(None) => Err(warp::reject::not_found()),
         Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
@@ -400,10 +494,14 @@ async fn get_part_handler(id: i64, db: Db) -> Result<impl warp::Reply, warp::Rej
 async fn update_part_handler(
     id: i64,
     updated_part: Part,
-    db: Db,
+    db: Arc<Mutex<DbConnection>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.update_part(id, &updated_part) {
+    let db_conn = db.lock().await;
+
+    // Initialize the PartRepository
+    let part_repo = PartRepository::new(&*db_conn);
+
+    match part_repo.update_part(id, &updated_part) {
         Ok(updated) if updated > 0 => Ok(warp::reply::with_status(
             warp::reply::json(&()),
             warp::http::StatusCode::OK,
@@ -414,9 +512,16 @@ async fn update_part_handler(
 }
 
 /// Handler to delete a part by ID
-async fn delete_part_handler(id: i64, db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.delete_part(id) {
+async fn delete_part_handler(
+    id: i64,
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the PartRepository
+    let part_repo = PartRepository::new(&*db_conn);
+
+    match part_repo.delete_part(id) {
         Ok(deleted) if deleted > 0 => Ok(warp::reply::with_status(
             warp::reply::json(&()),
             warp::http::StatusCode::NO_CONTENT,
@@ -427,17 +532,24 @@ async fn delete_part_handler(id: i64, db: Db) -> Result<impl warp::Reply, warp::
 }
 
 /// Handler to list all parts
-async fn list_parts_handler(db: Db) -> Result<impl warp::Reply, warp::Rejection> {
-    let db = db.lock().await;
-    match db.list_parts() {
+async fn list_parts_handler(
+    db: Arc<Mutex<DbConnection>>,
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db_conn = db.lock().await;
+
+    // Initialize the PartRepository
+    let part_repo = PartRepository::new(&*db_conn);
+
+    match part_repo.list_parts() {
         Ok(parts) => Ok(warp::reply::json(&parts)),
         Err(_) => Err(warp::reject::custom(Error::DatabaseError)),
     }
 }
 
+/// Handler to get parts by a list of IDs
 async fn get_parts_by_ids_handler(
     part_ids: Vec<i64>,
-    db: Db,
+    db: Arc<Mutex<DbConnection>>,
 ) -> Result<impl warp::Reply, warp::Rejection> {
     info!("Received /parts/batch request with IDs: {:?}", part_ids);
 
@@ -445,18 +557,24 @@ async fn get_parts_by_ids_handler(
     if part_ids.is_empty() {
         info!("Empty part_ids received.");
         return Ok(warp::reply::with_status(
-            warp::reply::json(&Vec::<Part>::new()),
-            warp::http::StatusCode::BAD_REQUEST,
+            warp::reply::json(&serde_json::json!({
+                "error": "No part IDs provided"
+            })),
+            StatusCode::BAD_REQUEST,
         ));
     }
 
-    let db = db.lock().await;
-    match db.get_parts_by_ids(&part_ids) {
+    let db_conn = db.lock().await;
+
+    // Initialize the PartRepository
+    let part_repo = PartRepository::new(&*db_conn);
+
+    match part_repo.get_parts_by_ids(&part_ids) {
         Ok(parts) => {
             info!("Successfully retrieved {} parts.", parts.len());
             Ok(warp::reply::with_status(
                 warp::reply::json(&parts),
-                warp::http::StatusCode::OK,
+                StatusCode::OK,
             ))
         }
         Err(e) => {
@@ -466,6 +584,7 @@ async fn get_parts_by_ids_handler(
     }
 }
 
+/// Handler to report a bug via GitHub Issues
 async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, warp::Rejection> {
     // Load GitHub credentials from environment variables
     let github_token = env::var("GITHUB_TOKEN")
@@ -592,21 +711,3 @@ async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, warp:
         Err(warp::reject::custom(Error::GitHubApiError(error_text)))
     }
 }
-
-/// Custom error type for handling database errors
-#[derive(Debug, thiserror::Error)]
-enum Error {
-    #[error("An error occurred with the database")]
-    DatabaseError,
-    #[error("Failed to process image")]
-    ImageProcessingError,
-    #[error("Missing environment variable: {0}")]
-    MissingEnvVar(String),
-    #[error("GitHub request error: {0}")]
-    GitHubRequestError(String),
-    #[error("GitHub API error: {0}")]
-    GitHubApiError(String),
-}
-
-/// Implementing Warp's Reject trait for the custom error
-impl warp::reject::Reject for Error {}

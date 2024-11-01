@@ -7,7 +7,7 @@ use warp::Reply;
 
 use crate::db::repositories::ExhibitRepository;
 use crate::db::DbConnection;
-use crate::errors::Error;
+use crate::errors::ApiError;
 use crate::models::Exhibit;
 use log::error;
 use rand::seq::SliceRandom;
@@ -29,30 +29,30 @@ pub async fn create_exhibit_handler(
         )),
         Err(e) => {
             error!("Database error: {}", e);
-            Err(warp::reject::custom(Error::DatabaseError(
+            Err(warp::reject::custom(ApiError::DatabaseError(
                 "Database Error".to_string(),
             )))
         }
     }
 }
 
-/// Handler to retrieve an exhibit by ID
+/// Handler to get an exhibit by ID
 pub async fn get_exhibit_handler(
     id: i64,
     db: Arc<Mutex<DbConnection>>,
-) -> Result<impl Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-    let exhibit_repo = ExhibitRepository::new(&*db_conn);
+) -> Result<impl warp::Reply, warp::Rejection> {
+    let db = db.lock().await;
+    let exhibit_repo = ExhibitRepository::new(&*db);
 
     match exhibit_repo.get_exhibit(id) {
-        Ok(Some(exhibit)) => Ok(warp::reply::json(&exhibit)),
-        Ok(None) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
-            "Database Error".to_string(),
-        ))),
+        Ok(Some(exhibit)) => Ok(warp::reply::with_status(
+            warp::reply::json(&exhibit),
+            StatusCode::OK,
+        )),
+        Ok(None) => Err(warp::reject::custom(ApiError::NotFound)),
+        Err(e) => Err(warp::reject::custom(ApiError::DatabaseError(e.to_string()))),
     }
 }
-
 /// Handler to update an existing exhibit
 pub async fn update_exhibit_handler(
     id: i64,
@@ -68,7 +68,7 @@ pub async fn update_exhibit_handler(
             StatusCode::OK,
         )),
         Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+        Err(_) => Err(warp::reject::custom(ApiError::DatabaseError(
             "Database Error".to_string(),
         ))),
     }
@@ -84,11 +84,11 @@ pub async fn delete_exhibit_handler(
 
     match exhibit_repo.delete_exhibit(id) {
         Ok(deleted) if deleted > 0 => Ok(warp::reply::with_status(
-            warp::reply::json(&()),
+            warp::reply(),
             StatusCode::NO_CONTENT,
         )),
         Ok(_) => Err(warp::reject::not_found()),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+        Err(_) => Err(warp::reject::custom(ApiError::DatabaseError(
             "Database Error".to_string(),
         ))),
     }
@@ -103,7 +103,7 @@ pub async fn list_exhibits_handler(
 
     match exhibit_repo.list_exhibits() {
         Ok(exhibits) => Ok(warp::reply::json(&exhibits)),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+        Err(_) => Err(warp::reject::custom(ApiError::DatabaseError(
             "Database Error".to_string(),
         ))),
     }
@@ -124,7 +124,7 @@ pub async fn handle_random_exhibit(
             let random_exhibit = exhibits.choose(&mut rand::thread_rng()).unwrap();
             Ok(warp::reply::json(random_exhibit))
         }
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+        Err(_) => Err(warp::reject::custom(ApiError::DatabaseError(
             "Database Error".to_string(),
         ))),
     }
@@ -142,7 +142,7 @@ pub async fn create_dummy_exhibits_handler(
         Ok(_) => Ok(warp::reply::json(&serde_json::json!({
             "message": "Dummy exhibits created successfully"
         }))),
-        Err(_) => Err(warp::reject::custom(Error::DatabaseError(
+        Err(_) => Err(warp::reject::custom(ApiError::DatabaseError(
             "Database Error".to_string(),
         ))),
     }

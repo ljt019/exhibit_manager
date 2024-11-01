@@ -5,7 +5,7 @@ mod db;
 mod errors;
 mod models;
 
-use errors::Error;
+use errors::ApiError as Error;
 
 use warp::Filter;
 use warp::Reply;
@@ -68,7 +68,7 @@ async fn main() {
         .or(host_images)
         .or(reset_db)
         .with(cors)
-        .recover(handle_rejection);
+        .recover(crate::errors::handle_rejection);
 
     // Start the Warp server on localhost:3030
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
@@ -79,51 +79,6 @@ fn with_db(
     db: Arc<Mutex<DbConnection>>,
 ) -> impl Filter<Extract = (Arc<Mutex<DbConnection>>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
-}
-
-/// Error handling for Warp rejections
-async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Rejection> {
-    if err.is_not_found() {
-        let json = warp::reply::json(&serde_json::json!({
-            "error": "Not Found"
-        }));
-        return Ok(warp::reply::with_status(
-            json,
-            warp::http::StatusCode::NOT_FOUND,
-        ));
-    }
-
-    if let Some(e) = err.find::<warp::filters::body::BodyDeserializeError>() {
-        error!("Deserialization error: {:?}", e);
-        let json = warp::reply::json(&serde_json::json!({
-            "error": "Invalid request body"
-        }));
-        return Ok(warp::reply::with_status(
-            json,
-            warp::http::StatusCode::BAD_REQUEST,
-        ));
-    }
-
-    if let Some(custom_error) = err.find::<Error>() {
-        error!("Internal server error: {:?}", custom_error);
-        let json = warp::reply::json(&serde_json::json!({
-            "error": custom_error.to_string()
-        }));
-        return Ok(warp::reply::with_status(
-            json,
-            warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-        ));
-    }
-
-    // Fallback for other errors
-    error!("Unhandled rejection: {:?}", err);
-    let json = warp::reply::json(&serde_json::json!({
-        "error": "Internal Server Error"
-    }));
-    Ok(warp::reply::with_status(
-        json,
-        warp::http::StatusCode::INTERNAL_SERVER_ERROR,
-    ))
 }
 
 /// Handler to reset the database

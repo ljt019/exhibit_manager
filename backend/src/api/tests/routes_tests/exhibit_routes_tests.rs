@@ -191,21 +191,7 @@ async fn test_delete_exhibit_success() {
     // Insert a sample exhibit
     let db_conn = db.lock().await;
     let exhibit_repo = crate::db::repositories::ExhibitRepository::new(&*db_conn);
-    let exhibit_id = exhibit_repo
-        .create_exhibit(&crate::models::Exhibit {
-            id: None,
-            name: "Art Exhibit".to_string(),
-            cluster: "Modern Art".to_string(),
-            location: "Gallery 1".to_string(),
-            status: "Operational".to_string(),
-            image_url: "http://localhost:3030/images/sample.jpg".to_string(),
-            sponsor_name: Some("Art Sponsor".to_string()),
-            sponsor_start_date: Some("2024-01-01".to_string()),
-            sponsor_end_date: Some("2024-12-31".to_string()),
-            part_ids: vec![],
-            notes: vec![],
-        })
-        .unwrap();
+    let exhibit_id = exhibit_repo.create_exhibit(&get_test_exhibit()).unwrap();
 
     drop(db_conn); // Release the lock
 

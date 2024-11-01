@@ -6,7 +6,7 @@ use warp::http::StatusCode;
 
 use crate::db::repositories::PartRepository;
 use crate::db::DbConnection;
-use crate::errors::Error;
+use crate::errors::ApiError as Error;
 use crate::models::Part;
 use log::{error, info};
 

@@ -1,12 +1,13 @@
 // src/errors.rs
 
-use warp::http::StatusCode;
-use warp::Reply;
+use serde::Serialize;
+use thiserror::Error;
+use warp::{http::StatusCode, Rejection, Reply};
 
-/// Custom error type for handling various errors
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("An error occurred with the database: {0}")]
+/// Unified API error type
+#[derive(Debug, Error)]
+pub enum ApiError {
+    #[error("Database error: {0}")]
     DatabaseError(String),
 
     #[error("Missing environment variable: {0}")]
@@ -18,8 +19,8 @@ pub enum Error {
     #[error("GitHub API error: {0}")]
     GitHubApiError(String),
 
-    #[error("Internal server error: {0}")]
-    InternalServerError(String),
+    #[error("Internal server error")]
+    InternalServerError,
 
     #[error("Invalid request body")]
     InvalidRequestBody,
@@ -31,51 +32,74 @@ pub enum Error {
     Unauthorized,
 }
 
-/// Implementing Warp's Reject trait for the custom error
-impl warp::reject::Reject for Error {}
+impl warp::reject::Reject for ApiError {}
 
-/// Error handling for Warp rejections
-pub async fn handle_rejection(err: warp::Rejection) -> Result<impl Reply, warp::Rejection> {
-    if let Some(api_error) = err.find::<Error>() {
-        let code = match api_error {
-            Error::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::MissingEnvVar(_) => StatusCode::BAD_REQUEST,
-            Error::GitHubRequestError(_) => StatusCode::BAD_GATEWAY,
-            Error::GitHubApiError(_) => StatusCode::BAD_GATEWAY,
-            Error::InternalServerError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            Error::InvalidRequestBody => StatusCode::BAD_REQUEST,
-            Error::NotFound => StatusCode::NOT_FOUND,
-            Error::Unauthorized => StatusCode::UNAUTHORIZED,
-        };
+/// Structure for API error responses
+#[derive(Serialize)]
+pub struct ErrorResponse {
+    pub error: String,
+}
 
-        let json = warp::reply::json(&serde_json::json!({
-            "error": api_error.to_string(),
-        }));
+/// Converts ApiError to a standardized ErrorResponse
+impl ApiError {
+    fn to_response(&self) -> ErrorResponse {
+        ErrorResponse {
+            error: self.to_string(),
+        }
+    }
 
-        return Ok(warp::reply::with_status(json, code));
+    fn status_code(&self) -> StatusCode {
+        match self {
+            ApiError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::MissingEnvVar(_) => StatusCode::BAD_REQUEST,
+            ApiError::GitHubRequestError(_) => StatusCode::BAD_GATEWAY,
+            ApiError::GitHubApiError(_) => StatusCode::BAD_GATEWAY,
+            ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
+            ApiError::InvalidRequestBody => StatusCode::BAD_REQUEST,
+            ApiError::NotFound => StatusCode::NOT_FOUND,
+            ApiError::Unauthorized => StatusCode::UNAUTHORIZED,
+        }
+    }
+}
+
+/// Handles all rejections and converts them into standardized API responses
+pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
+    if let Some(api_error) = err.find::<ApiError>() {
+        let response = api_error.to_response();
+        let status = api_error.status_code();
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            status,
+        ));
     }
 
     if err.is_not_found() {
-        let json = warp::reply::json(&serde_json::json!({
-            "error": "Not Found"
-        }));
-        return Ok(warp::reply::with_status(json, StatusCode::NOT_FOUND));
+        let response = ErrorResponse {
+            error: "Not Found".into(),
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::NOT_FOUND,
+        ));
     }
 
     if let Some(_) = err.find::<warp::filters::body::BodyDeserializeError>() {
-        let json = warp::reply::json(&serde_json::json!({
-            "error": "Invalid request body"
-        }));
-        return Ok(warp::reply::with_status(json, StatusCode::BAD_REQUEST));
+        let response = ErrorResponse {
+            error: "Invalid request body".into(),
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::BAD_REQUEST,
+        ));
     }
 
     // Fallback for other errors
     eprintln!("Unhandled rejection: {:?}", err);
-    let json = warp::reply::json(&serde_json::json!({
-        "error": "Internal Server Error"
-    }));
+    let response = ErrorResponse {
+        error: "Internal Server Error".into(),
+    };
     Ok(warp::reply::with_status(
-        json,
+        warp::reply::json(&response),
         StatusCode::INTERNAL_SERVER_ERROR,
     ))
 }

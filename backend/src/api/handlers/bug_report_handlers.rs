@@ -6,7 +6,7 @@ use std::env;
 use urlencoding::encode;
 use warp::http::StatusCode;
 
-use crate::errors::Error;
+use crate::errors::ApiError as Error;
 use crate::models::BugReport;
 
 /// Handler to report a bug via GitHub Issues

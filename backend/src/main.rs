@@ -9,11 +9,8 @@ mod models;
 use errors::ApiError as Error;
 
 use warp::Filter;
-use warp::Reply;
 
 use db::DbConnection;
-
-use log::error;
 
 use dotenv::dotenv;
 

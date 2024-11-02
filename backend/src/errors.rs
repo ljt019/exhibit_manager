@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 // src/errors.rs
 
 use serde::Serialize;

@@ -1,6 +1,6 @@
 # .github/workflows/test.yml
 
-name: Run Tests
+name: Backend Tests
 
 on:
   push:

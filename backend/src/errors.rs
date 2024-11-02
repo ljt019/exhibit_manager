@@ -2,6 +2,7 @@
 
 use serde::Serialize;
 use thiserror::Error;
+use warp::reject::MethodNotAllowed;
 use warp::{http::StatusCode, Rejection, Reply};
 
 /// Unified API error type
@@ -90,6 +91,16 @@ pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
         return Ok(warp::reply::with_status(
             warp::reply::json(&response),
             StatusCode::BAD_REQUEST,
+        ));
+    }
+
+    if let Some(_) = err.find::<MethodNotAllowed>() {
+        let response = ErrorResponse {
+            error: "Method Not Allowed".into(),
+        };
+        return Ok(warp::reply::with_status(
+            warp::reply::json(&response),
+            StatusCode::METHOD_NOT_ALLOWED,
         ));
     }
 

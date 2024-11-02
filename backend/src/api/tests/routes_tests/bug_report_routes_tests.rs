@@ -2,6 +2,7 @@
 
 use crate::api::routes::bug_report_routes;
 use crate::db::DbConnection;
+use dotenv::dotenv;
 use serde_json::json;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -10,6 +11,8 @@ use warp::Filter;
 
 #[tokio::test]
 async fn test_report_bug_success() {
+    dotenv().ok();
+
     // Initialize in-memory database
     let db = Arc::new(Mutex::new(DbConnection::new_in_memory().unwrap()));
     db.lock().await.setup_tables().unwrap();

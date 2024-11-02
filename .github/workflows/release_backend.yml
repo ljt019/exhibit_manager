@@ -28,14 +28,12 @@ jobs:
             exit 1
           }
           $tomlContent = Get-Content $backendToml -Raw
-          # Extract name
           if ($tomlContent -match 'name\s*=\s*"([^"]+)"') {
             $name = $matches[1]
           } else {
             Write-Error "Package name not found in $backendToml"
             exit 1
           }
-          # Extract version
           if ($tomlContent -match 'version\s*=\s*"([^"]+)"') {
             $version = $matches[1]
           } else {
@@ -66,7 +64,7 @@ jobs:
         id: set_release_exists
         run: echo "release_exists=${{ steps.check_release_backend.outputs.result }}" >> $GITHUB_OUTPUT
 
-      # Step 5: Set up Rust environment
+      # Step 5: Set up Rust environment with caching
       - name: Set up Rust
         if: steps.set_release_exists.outputs.release_exists == 'false'
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -75,14 +73,17 @@ jobs:
           target: x86_64-pc-windows-msvc
           cache: cargo
 
-      # Step 6: Install Backend Dependencies (if any)
-      # If your backend has dependencies beyond Rust's Cargo, add steps here
-      # For example, installing additional tools or fetching dependencies
-      - name: Install Additional Dependencies
+      # Step 6: Cache Cargo registry and index
+      - name: Cache Cargo registry
         if: steps.set_release_exists.outputs.release_exists == 'false'
-        run: |
-          # Add commands to install additional dependencies here
-          echo "Installing additional dependencies..."
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
 
       # Step 7: Test the Backend
       - name: Test Backend

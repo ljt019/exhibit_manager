@@ -39,14 +39,23 @@ jobs:
           restore-keys: |
             cargo-registry-${{ runner.os }}-
 
-      # Step 4: Install dependencies if necessary
+      # Step 4: Cache Cargo build artifacts
+      - name: Cache Cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: cargo-build-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-build-${{ runner.os }}-
+
+      # Step 5: Install dependencies if necessary
       - name: Install Backend Dependencies
         run: |
           cd backend
           cargo fetch
           cd ..
 
-      # Step 5: Run Tests
+      # Step 6: Run Tests
       - name: Run Tests
         run: |
           cd backend

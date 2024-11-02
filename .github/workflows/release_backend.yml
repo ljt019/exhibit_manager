@@ -75,6 +75,15 @@ jobs:
           target: x86_64-pc-windows-msvc
           cache: cargo
 
+      # Step 6: Install Backend Dependencies (if any)
+      # If your backend has dependencies beyond Rust's Cargo, add steps here
+      # For example, installing additional tools or fetching dependencies
+      - name: Install Additional Dependencies
+        if: steps.set_release_exists.outputs.release_exists == 'false'
+        run: |
+          # Add commands to install additional dependencies here
+          echo "Installing additional dependencies..."
+
       # Step 7: Test the Backend
       - name: Test Backend
         if: steps.set_release_exists.outputs.release_exists == 'false'

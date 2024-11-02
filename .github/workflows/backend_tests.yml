@@ -50,5 +50,5 @@ jobs:
       - name: Run Tests
         run: |
           cd backend
-          cargo test --verbose
+          cargo test --verbose -A warnings
           cd ..

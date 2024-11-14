@@ -1,0 +1,5 @@
+
+#### Parts
+- Motor
+- Timer
+- Buttons

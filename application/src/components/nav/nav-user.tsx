@@ -14,15 +14,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
-import { useGetUserProfile } from "@/hooks/useGetProfileInfo";
+import { useGetUserProfile } from "@/hooks/data/queries/useGetProfileInfo";
 import { invoke } from "@tauri-apps/api";
-import useListen from "@/hooks/useListen";
+import useListen from "@/hooks/util/useListen";
 import { useNavigate } from "react-router-dom";
 
 export function NavUser() {
-  const { isMobile } = useSidebar();
   const navigate = useNavigate();
 
   useListen({
@@ -70,7 +68,7 @@ export function NavUser() {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={isMobile ? "bottom" : "right"}
+            side={"right"}
             align="end"
             sideOffset={4}
           >

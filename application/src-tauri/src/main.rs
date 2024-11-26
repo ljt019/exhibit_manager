@@ -10,7 +10,11 @@ use tauri::Manager;
 
 use token_manager::tokens::TokenManager;
 
+use dotenv::dotenv;
+
 fn main() {
+    dotenv().ok();
+
     tauri::Builder::default()
         .setup(|app| {
             let token_manager = TokenManager::new(app.handle().clone());

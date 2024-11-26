@@ -1,0 +1,131 @@
+name: Release Backend
+
+on:
+  push:
+    branches:
+      - main # Adjust if your default branch is different
+
+permissions:
+  contents: write
+
+jobs:
+  release_backend:
+    runs-on: windows-latest
+
+    steps:
+      # Step 1: Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Extract Backend Version and Name
+      - name: Get Backend Version and Name
+        id: backend_info
+        shell: pwsh
+        run: |
+          $backendToml = "backend/Cargo.toml"
+          if (-Not (Test-Path $backendToml)) {
+            Write-Error "Cargo.toml not found at $backendToml"
+            exit 1
+          }
+          $tomlContent = Get-Content $backendToml -Raw
+          if ($tomlContent -match 'name\s*=\s*"([^"]+)"') {
+            $name = $matches[1]
+          } else {
+            Write-Error "Package name not found in $backendToml"
+            exit 1
+          }
+          if ($tomlContent -match 'version\s*=\s*"([^"]+)"') {
+            $version = $matches[1]
+          } else {
+            Write-Error "Version not found in $backendToml"
+            exit 1
+          }
+          Write-Output "name=$name" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+          Write-Output "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      # Step 3: Check if Backend Release Exists
+      - name: Check if Backend Release Exists
+        id: check_release_backend
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const tag = `backend-v${process.env.BACKEND_VERSION}`;
+            const releases = await github.rest.repos.listReleases({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            const exists = releases.data.some(release => release.tag_name === tag);
+            return exists;
+        env:
+          BACKEND_VERSION: ${{ steps.backend_info.outputs.version }}
+
+      # Step 4: Set Output if Release Exists
+      - name: Set Output if Release Exists
+        id: set_release_exists
+        run: echo "release_exists=${{ steps.check_release_backend.outputs.result }}" >> $GITHUB_OUTPUT
+
+      # Step 5: Set up Rust environment with caching
+      - name: Set up Rust
+        if: steps.set_release_exists.outputs.release_exists == 'false'
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-pc-windows-msvc
+          cache: cargo
+
+      # Step 6: Cache Cargo registry and index
+      - name: Cache Cargo registry
+        if: steps.set_release_exists.outputs.release_exists == 'false'
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: cargo-registry-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-registry-${{ runner.os }}-
+
+      # Step 7: Test the Backend
+      - name: Test Backend
+        if: steps.set_release_exists.outputs.release_exists == 'false'
+        id: test_backend
+        shell: pwsh
+        run: |
+          cd backend
+          cargo test
+          cd ..
+
+      # Step 8: Build the Backend
+      - name: Build Backend
+        if: steps.set_release_exists.outputs.release_exists == 'false' && steps.test_backend.outcome == 'success'
+        shell: pwsh
+        run: |
+          cd backend
+          cargo build --release
+          cd ..
+
+      # Step 9: Create Release for Backend
+      - name: Create Release for Backend
+        if: steps.set_release_exists.outputs.release_exists == 'false' && steps.test_backend.outcome == 'success'
+        id: create_release_backend
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: backend-v${{ steps.backend_info.outputs.version }}
+          release_name: ${{ steps.backend_info.outputs.name }} v${{ steps.backend_info.outputs.version }}
+          body: "Release ${{ steps.backend_info.outputs.name }} v${{ steps.backend_info.outputs.version }}"
+          draft: false
+          prerelease: false
+
+      # Step 10: Upload Release Asset for Backend
+      - name: Upload Release Asset for Backend
+        if: steps.set_release_exists.outputs.release_exists == 'false' && steps.test_backend.outcome == 'success'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release_backend.outputs.upload_url }}
+          asset_path: ./backend/target/release/backend.exe
+          asset_name: backend.exe # **Update this name if needed**
+          asset_content_type: application/octet-stream

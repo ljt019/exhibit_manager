@@ -1,3 +1,8 @@
-pub mod db_connection;
+#[cfg(test)]
+mod tests;
 
-pub type Db = std::sync::Arc<tokio::sync::Mutex<db_connection::DbConnection>>;
+mod connection;
+
+pub use connection::DbConnection;
+
+pub mod repositories;

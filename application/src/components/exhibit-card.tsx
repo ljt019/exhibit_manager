@@ -1,20 +1,7 @@
-import {
-  ChevronDown,
-  Hammer,
-  MapPin,
-  Star,
-  StickyNote,
-  Boxes,
-  MoreVertical,
-} from "lucide-react";
+import { MapPin, Star, StickyNote, Boxes, MoreVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogContent,
@@ -30,24 +17,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { calculateTimeUntilExpiration } from "@/lib/date";
-
-type Sponsorship = {
-  sponsorName: string;
-  startDate: string;
-  endDate: string;
-};
-
-export type Exhibit = {
-  id: string;
-  name: string;
-  cluster: string;
-  location: string;
-  status: "operational" | "needs repair" | "out of service";
-  part_ids: Array<string>;
-  notes: Array<{ timestamp: string; text: string }>;
-  imageUrl: string | undefined;
-  sponsorship?: Sponsorship;
-};
+import useDeleteExhibit from "@/hooks/data/mutations/useDeleteExhibit";
+import type { Exhibit, Sponsorship } from "@/types";
+import { PartsButton } from "@/components/parts-dialog";
 
 const statusColors: Record<Exhibit["status"], string> = {
   operational: "bg-green-500",
@@ -56,20 +28,26 @@ const statusColors: Record<Exhibit["status"], string> = {
 };
 
 export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
+  const deleteExhibitMutation = useDeleteExhibit();
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="p-4 pb-0">
         <div className="flex items-start space-x-4">
           <img
-            src={exhibit.imageUrl}
+            src={exhibit.image_url}
             alt={exhibit.name}
-            className="w-36 h-36 object-cover rounded-md"
+            className="w-36 h-36 object-fill rounded-md"
           />
           <div className="flex-1">
             <div className="flex items-center justify-between w-full">
               <h3 className="font-semibold text-lg">{exhibit.name}</h3>
               <div className="flex items-center space-x-2">
-                <Badge className={`${statusColors[exhibit.status]} text-white`}>
+                <Badge
+                  className={`${
+                    statusColors[exhibit.status]
+                  } text-white text-nowrap`}
+                >
                   {exhibit.status}
                 </Badge>
                 <DropdownMenu>
@@ -80,7 +58,11 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => deleteExhibitMutation.mutate(exhibit.id)}
+                    >
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -101,7 +83,11 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
       <CardContent className="p-4 pt-0">
         <div className="mt-4 space-y-2">
           <SponsorshipButton sponsorship={exhibit.sponsorship} />
-          <PartsButton parts={exhibit.part_ids} />
+          <PartsButton
+            name={exhibit.name}
+            parts={exhibit.part_ids}
+            exhibitId={exhibit.id}
+          />
           <NotesButton name={exhibit.name} notes={exhibit.notes} />
         </div>
       </CardContent>
@@ -143,35 +129,12 @@ function SponsorshipButton({ sponsorship }: { sponsorship?: Sponsorship }) {
   );
 }
 
-function PartsButton({ parts }: { parts: string[] }) {
-  return (
-    <Collapsible>
-      <CollapsibleTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
-          <Hammer className="w-4 h-4 mr-2" />
-          Parts ({parts.length})
-          <ChevronDown className="w-4 h-4 ml-auto" />
-        </Button>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="mt-2 bg-background border rounded-md shadow-lg z-10">
-        <ScrollArea className="h-32 w-full p-2">
-          <ul className="text-sm space-y-1">
-            {parts.map((part, index) => (
-              <li key={index}>{part}</li>
-            ))}
-          </ul>
-        </ScrollArea>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
-
 function NotesButton({
   name,
   notes,
 }: {
   name: string;
-  notes: Array<{ timestamp: string; text: string }>;
+  notes: Array<{ timestamp: string; note: string }>;
 }) {
   return (
     <Dialog>
@@ -190,7 +153,7 @@ function NotesButton({
             {notes.map((note, index) => (
               <li key={index} className="border-b pb-2">
                 <span className="font-medium">{note.timestamp}:</span>{" "}
-                {note.text}
+                {note.note}
               </li>
             ))}
           </ul>

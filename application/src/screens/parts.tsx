@@ -68,9 +68,9 @@ const columns: ColumnDef<Part>[] = [
                 Exhibits this part is attached to:
               </DialogDescription>
             </DialogHeader>
-            {exhibit_ids && 
+            {exhibit_ids && (
               <ConnectedExhibitsDisplay exhibitIds={exhibit_ids} />
-            }
+            )}
           </DialogContent>
         </Dialog>
       );
@@ -192,7 +192,7 @@ export default function PartsInventory() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between w-full">
-        <h1 className="text-2xl font-bold mb-6">Parts Inventory</h1>
+        <h1 className="text-2xl font-bold mb-6 mt-[0.1rem]">Part Inventory</h1>
         <CreatePartDialog />
       </div>
       <FilterSection
@@ -268,8 +268,6 @@ export default function PartsInventory() {
 }
 
 function ConnectedExhibitsDisplay({ exhibitIds }: { exhibitIds: string[] }) {
-  
-  
   return (
     <ul className="list-disc pl-4">
       {exhibitIds.map((exhibitId, index) => (
@@ -277,5 +275,4 @@ function ConnectedExhibitsDisplay({ exhibitIds }: { exhibitIds: string[] }) {
       ))}
     </ul>
   );
-
 }

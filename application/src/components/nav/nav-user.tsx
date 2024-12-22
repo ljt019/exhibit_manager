@@ -109,7 +109,10 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => invoke("sign_out")}>
+            <DropdownMenuItem
+              onClick={() => invoke("sign_out")}
+              className="text-destructive"
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>

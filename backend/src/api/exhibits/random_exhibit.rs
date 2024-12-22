@@ -1,17 +1,20 @@
 use crate::db::DbConnection;
 use crate::errors::ApiError;
-use crate::models::Exhibit;
-use crate::models::Note;
+use crate::models::{Exhibit, Note};
 use rand::seq::SliceRandom;
 use rocket::serde::json::Json;
 use rocket::tokio::sync::Mutex;
 use rocket::State;
 use rusqlite::{params, Result as SqliteResult};
 
-pub fn list_exhibits(db_conn: &DbConnection) -> SqliteResult<Vec<Exhibit>> {
+/// Fetches a single random exhibit from the database.
+pub fn random_exhibit(db_conn: &DbConnection) -> SqliteResult<Exhibit> {
+    // Prepare the SQL statement to select all exhibits
     let mut stmt = db_conn.0.prepare(
-            "SELECT id, name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date FROM exhibits"
-        )?;
+        "SELECT id, name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date FROM exhibits"
+    )?;
+
+    // Map each row to an Exhibit struct
     let exhibits_iter = stmt.query_map([], |row| {
         Ok(Exhibit {
             id: Some(row.get(0)?),
@@ -55,7 +58,14 @@ pub fn list_exhibits(db_conn: &DbConnection) -> SqliteResult<Vec<Exhibit>> {
         exhibits.push(exhibit);
     }
 
-    Ok(exhibits)
+    // Check if any exhibits were found
+    if exhibits.is_empty() {
+        return Err(rusqlite::Error::QueryReturnedNoRows);
+    }
+
+    // Select a random exhibit
+    let random_exhibit = exhibits.choose(&mut rand::thread_rng()).unwrap().clone();
+    Ok(random_exhibit)
 }
 
 /// Handles the GET /exhibits/random endpoint
@@ -63,16 +73,15 @@ pub fn list_exhibits(db_conn: &DbConnection) -> SqliteResult<Vec<Exhibit>> {
 pub async fn handle_random_exhibit(
     db: &State<Mutex<DbConnection>>,
 ) -> Result<Json<Exhibit>, ApiError> {
+    // Acquire a lock on the database connection
     let db_conn = db.lock().await;
 
-    match list_exhibits(&*db_conn) {
-        Ok(exhibits) => {
-            if exhibits.is_empty() {
-                return Err(ApiError::NotFound);
-            }
-            let random_exhibit = exhibits.choose(&mut rand::thread_rng()).unwrap().clone();
-            Ok(Json(random_exhibit))
-        }
+    // Call the `random_exhibit` function to get a random exhibit
+    match random_exhibit(&*db_conn) {
+        Ok(exhibit) => Ok(Json(exhibit)),
+        // If no exhibits are found, return a 404 Not Found error
+        Err(rusqlite::Error::QueryReturnedNoRows) => Err(ApiError::NotFound),
+        // For other database errors, return a generic database error
         Err(_) => Err(ApiError::DatabaseError("Database Error".to_string())),
     }
 }

@@ -1,0 +1,193 @@
+{
+  "main": {
+    "id": "464d1afdc0fefc2d",
+    "type": "split",
+    "children": [
+      {
+        "id": "5930ff4ba30a3c30",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "07d31e6311a1b1a2",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "General Exhibits/Bed of Nails.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Bed of Nails"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "7fc8d7ffc1fd4dca",
+    "type": "split",
+    "children": [
+      {
+        "id": "978469cbb00cb6c0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "710b12a8f1cb1fab",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "b60c3d21e49dfb60",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "a9b38ec9ba14df9f",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "335c4e75411c7de2",
+    "type": "split",
+    "children": [
+      {
+        "id": "62fd377c189edcd5",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d6b0b3aeff866308",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks"
+            }
+          },
+          {
+            "id": "88b8ef208a389e05",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links"
+            }
+          },
+          {
+            "id": "855e656fabfd015a",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "973f2a22563fa874",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {},
+              "icon": "lucide-list",
+              "title": "Outline"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false
+    }
+  },
+  "active": "07d31e6311a1b1a2",
+  "lastOpenFiles": [
+    "General Exhibits/Deep Space",
+    "General Exhibits/Space Gloves.md",
+    "General Exhibits/Pump Yourself Up Chair.md",
+    "General Exhibits/Turbulent Seas.md",
+    "General Exhibits/Gravity Assist.md",
+    "General Exhibits/Gravity Traps.md",
+    "General Exhibits/Lungs.md",
+    "General Exhibits/Whats a watt.md",
+    "General Exhibits/Magnet Maze Race.md",
+    "General Exhibits/Sailing By the Stars.md",
+    "General Exhibits/Horsepower.md",
+    "General Exhibits/Bell Jar.md",
+    "General Exhibits/Bed of Nails.md",
+    "General Exhibits/Beat the heat.md",
+    "General Exhibits/H20 Rocket.md",
+    "General Exhibits/3d Rotating Window.md",
+    "Sno-Port/VR Setup.md",
+    "Sno-Port/Ice Hocket.md",
+    "Sno-Port/Untitled",
+    "Sno-Port/Fishing Pond.md",
+    "PoP/Chase Bank Blower.md",
+    "General Exhibits/Sand Table.md",
+    "Game-Port",
+    "Sno-Port",
+    "PoP",
+    "General Exhibits",
+    "General Exhibits/Moon Chair.md",
+    "Moon",
+    "Welcome.md"
+  ]
+}

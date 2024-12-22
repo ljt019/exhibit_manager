@@ -35,7 +35,7 @@ impl TokenManager {
     pub fn refresh_access_token(&self) -> Result<(), String> {
         let token_data = self.get_token_data();
 
-        // Check if we have a refresh token
+        // Check if theres a refresh token
         let refresh_token = match token_data.refresh_token {
             Some(token) => oauth2::RefreshToken::new(token),
             None => return Err("No refresh token available".to_string()),

@@ -3,6 +3,7 @@
 use rocket::http::Status;
 use rocket::response::{Responder, Response};
 use rocket::serde::json::Json;
+use rusqlite::Error as RusqliteError;
 use serde::Serialize;
 use std::io::Cursor;
 use thiserror::Error;
@@ -34,6 +35,12 @@ pub enum ApiError {
 
     #[error("Unauthorized access")]
     Unauthorized,
+}
+
+impl From<RusqliteError> for ApiError {
+    fn from(error: RusqliteError) -> Self {
+        ApiError::DatabaseError(error.to_string())
+    }
 }
 
 /// Structure for API error responses

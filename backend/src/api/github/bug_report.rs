@@ -5,12 +5,28 @@ use crate::models::BugReport;
 use log::error;
 use reqwest::Client;
 use reqwest::StatusCode as ReqwestStatusCode;
+use rocket::post;
 use rocket::serde::json::serde_json;
 use rocket::serde::json::Json;
 use std::env;
 use urlencoding::encode;
 
-/// Handles the POST /report-bug endpoint
+/// Handles the POST /report-bug endpoint.
+///
+/// This endpoint receives a bug report in JSON format and creates a corresponding issue in a GitHub repository.
+/// It ensures that the necessary labels exist and attaches them to the created issue.
+///
+/// # Arguments
+/// * `report` - JSON payload containing the bug report data.
+///
+/// # Returns
+/// * `Result<Json<serde_json::Value>, ApiError>` - Returns the created GitHub issue as JSON or an error.
+///
+/// # Errors
+/// Returns an `ApiError` if:
+/// - Required environment variables are missing.
+/// - HTTP requests to GitHub fail.
+/// - GitHub API returns an error.
 #[post("/report-bug", format = "json", data = "<report>")]
 pub async fn report_bug_handler(
     report: Json<BugReport>,

@@ -1,13 +1,27 @@
-use crate::db::DbConnection;
+use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::Note;
-use crate::models::Part;
+use crate::models::{Note, Part};
+use log::{error, info};
+use rocket::post;
 use rocket::serde::json::Json;
-use rocket::tokio::sync::Mutex;
 use rocket::State;
-use rusqlite::{params, Result as SqliteResult};
+use rusqlite::Connection;
 
-fn get_parts_by_ids(ids: &[i64], db_conn: &DbConnection) -> SqliteResult<Vec<Part>> {
+/// Retrieves parts by their IDs from the database.
+///
+/// This function fetches multiple parts based on the provided list of IDs, including their associated
+/// exhibit IDs and notes.
+///
+/// # Arguments
+/// * `ids` - A slice of part IDs to retrieve.
+/// * `conn` - A reference to the database connection.
+///
+/// # Returns
+/// * `rusqlite::Result<Vec<Part>>` - A vector of parts corresponding to the provided IDs.
+///
+/// # Errors
+/// Returns a `rusqlite::Error` if any database operation fails.
+pub fn get_parts_by_ids(ids: &[i64], conn: &Connection) -> rusqlite::Result<Vec<Part>> {
     if ids.is_empty() {
         return Ok(Vec::new());
     }
@@ -19,7 +33,7 @@ fn get_parts_by_ids(ids: &[i64], db_conn: &DbConnection) -> SqliteResult<Vec<Par
         placeholders
     );
 
-    let mut stmt = db_conn.0.prepare(&query)?;
+    let mut stmt = conn.prepare(&query)?;
 
     // Convert ids to a vector of references for parameter binding
     let id_refs: Vec<&dyn rusqlite::ToSql> =
@@ -41,23 +55,21 @@ fn get_parts_by_ids(ids: &[i64], db_conn: &DbConnection) -> SqliteResult<Vec<Par
         let id = part.id.unwrap();
 
         // Fetch associated exhibit IDs
-        let mut stmt_exhibits = db_conn
-            .0
-            .prepare("SELECT exhibit_id FROM exhibit_parts WHERE part_id = ?1")?;
-        let exhibit_ids_iter = stmt_exhibits.query_map(params![id], |row| row.get(0))?;
-        part.exhibit_ids = exhibit_ids_iter.collect::<Result<Vec<i64>, _>>()?;
+        let mut stmt_exhibits =
+            conn.prepare("SELECT exhibit_id FROM exhibit_parts WHERE part_id = ?1")?;
+        let exhibit_ids_iter = stmt_exhibits.query_map(rusqlite::params![id], |row| row.get(0))?;
+        part.exhibit_ids = exhibit_ids_iter.collect::<rusqlite::Result<Vec<i64>>>()?;
 
         // Fetch associated notes
-        let mut stmt_notes = db_conn
-            .0
-            .prepare("SELECT timestamp, note FROM part_notes WHERE part_id = ?1")?;
-        let notes_iter = stmt_notes.query_map(params![id], |row| {
+        let mut stmt_notes =
+            conn.prepare("SELECT timestamp, note FROM part_notes WHERE part_id = ?1")?;
+        let notes_iter = stmt_notes.query_map(rusqlite::params![id], |row| {
             Ok(Note {
                 timestamp: row.get(0)?,
                 note: row.get(1)?,
             })
         })?;
-        part.notes = notes_iter.collect::<Result<Vec<Note>, _>>()?;
+        part.notes = notes_iter.collect::<rusqlite::Result<Vec<Note>>>()?;
 
         parts.push(part);
     }
@@ -65,12 +77,28 @@ fn get_parts_by_ids(ids: &[i64], db_conn: &DbConnection) -> SqliteResult<Vec<Par
     Ok(parts)
 }
 
-/// Handles the POST /parts/batch endpoint
+/// Handles the POST /parts/batch endpoint.
+///
+/// This endpoint retrieves multiple parts based on a list of provided part IDs.
+/// It accepts a JSON array of part IDs and returns the corresponding parts.
+///
+/// # Arguments
+/// * `part_ids` - JSON payload containing a list of part IDs.
+/// * `db_pool` - Database connection pool.
+///
+/// # Returns
+/// * `Result<Json<Vec<Part>>, ApiError>` - A JSON array of parts corresponding to the provided IDs.
+///
+/// # Errors
+/// Returns an `ApiError` if:
+/// - The database connection cannot be obtained.
+/// - The request body is invalid.
+/// - A database operation fails.
 #[post("/parts/batch", format = "json", data = "<part_ids>")]
 pub async fn get_parts_by_ids_handler(
     part_ids: Json<Vec<i64>>,
-    db: &State<Mutex<DbConnection>>,
-) -> Result<Json<Vec<crate::models::Part>>, ApiError> {
+    db_pool: &State<DbPool>,
+) -> Result<Json<Vec<Part>>, ApiError> {
     let part_ids = part_ids.into_inner();
     info!("Received /parts/batch request with IDs: {:?}", part_ids);
 
@@ -79,16 +107,23 @@ pub async fn get_parts_by_ids_handler(
         return Err(ApiError::InvalidRequestBody);
     }
 
-    let db_conn = db.lock().await;
+    let pool = (*db_pool).clone();
 
-    match get_parts_by_ids(&part_ids, &*db_conn) {
-        Ok(parts) => {
-            info!("Successfully retrieved {} parts.", parts.len());
-            Ok(Json(parts))
-        }
-        Err(e) => {
-            error!("Database error while fetching parts: {:?}", e);
-            Err(ApiError::DatabaseError("Database Error".to_string()))
-        }
-    }
+    let parts_result = rocket::tokio::task::spawn_blocking(move || {
+        let conn = pool.get().map_err(|_| {
+            error!("Failed to get DB connection from pool");
+            ApiError::DatabaseError("Failed to get DB connection".into())
+        })?;
+        get_parts_by_ids(&part_ids, &conn).map_err(|e| {
+            error!("Database error while fetching parts: {}", e);
+            ApiError::DatabaseError("Database Error".into())
+        })
+    })
+    .await
+    .map_err(|e| {
+        error!("Task panicked: {}", e);
+        ApiError::DatabaseError("Internal Server Error".into())
+    })??;
+
+    Ok(Json(parts_result))
 }

@@ -58,7 +58,7 @@ function DevTools() {
         <SidebarMenuButton
           size="sm"
           className="text-muted-foreground hover:text-foreground"
-          onClick={() => axiosInstance.get("/create-dummy-exhibits")}
+          onClick={() => axiosInstance.get("/exhibits/fill-dummy")}
         >
           <DatabaseBackup />
           Fill DB

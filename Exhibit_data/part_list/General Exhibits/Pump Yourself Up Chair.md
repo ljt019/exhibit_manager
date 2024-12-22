@@ -1,3 +1,0 @@
-#### Parts
-- Vacuum Pump
-- Relay

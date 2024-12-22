@@ -1,61 +1,81 @@
-use crate::db::DbConnection;
+use crate::db::DbPool;
 use crate::errors::ApiError;
 use crate::models::Exhibit;
 use log::error;
+use rocket::post;
 use rocket::serde::json::Json;
-use rocket::tokio::sync::Mutex;
 use rocket::State;
-use rusqlite::{params, Result as SqliteResult};
+use rusqlite::Connection;
 
-pub fn create_exhibit(exhibit: &Exhibit, db_conn: &DbConnection) -> SqliteResult<i64> {
-    db_conn.0.execute(
-            "INSERT INTO exhibits (name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date) 
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-            params![
-                exhibit.name,
-                exhibit.cluster,
-                exhibit.location,
-                exhibit.status,
-                exhibit.image_url,
-                exhibit.sponsor_name,
-                exhibit.sponsor_start_date,
-                exhibit.sponsor_end_date,
-            ],
-        )?;
-    let exhibit_id = db_conn.0.last_insert_rowid();
+/// Inserts a new exhibit into the database and returns its ID.
+pub fn create_exhibit(exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<i64> {
+    // Insert the exhibit
+    conn.execute(
+        "INSERT INTO exhibits (name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        rusqlite::params![
+            exhibit.name,
+            exhibit.cluster,
+            exhibit.location,
+            exhibit.status,
+            exhibit.image_url,
+            exhibit.sponsor_name,
+            exhibit.sponsor_start_date,
+            exhibit.sponsor_end_date,
+        ],
+    )?;
+    let exhibit_id = conn.last_insert_rowid();
 
     // Associate parts with the exhibit
     for part_id in &exhibit.part_ids {
-        db_conn.0.execute(
+        conn.execute(
             "INSERT INTO exhibit_parts (exhibit_id, part_id) VALUES (?1, ?2)",
-            params![exhibit_id, part_id],
+            rusqlite::params![exhibit_id, part_id],
         )?;
     }
 
     // Insert notes related to the exhibit
     for note in &exhibit.notes {
-        db_conn.0.execute(
+        conn.execute(
             "INSERT INTO exhibit_notes (exhibit_id, timestamp, note) VALUES (?1, ?2, ?3)",
-            params![exhibit_id, &note.timestamp, &note.note],
+            rusqlite::params![exhibit_id, &note.timestamp, &note.note],
         )?;
     }
 
     Ok(exhibit_id)
 }
 
-/// Handles the POST /exhibits endpoint
+/// Creates a new exhibit with associated parts and notes.
+///
+/// # Arguments
+/// * `new_exhibit` - JSON payload containing the exhibit data
+/// * `db_pool` - Database connection pool
+///
+/// # Returns
+/// * `Result<Json<i64>, ApiError>` - The ID of the newly created exhibit
+///
+/// # Errors
+/// Returns `ApiError` if:
+/// * Database operations fail
+/// * Input validation fails
 #[post("/exhibits", format = "json", data = "<new_exhibit>")]
 pub async fn create_exhibit_handler(
     new_exhibit: Json<Exhibit>,
-    db: &State<Mutex<DbConnection>>,
+    db_pool: &State<DbPool>,
 ) -> Result<Json<i64>, ApiError> {
-    let db_conn = db.lock().await;
+    let exhibit = new_exhibit.into_inner();
+    let pool = (*db_pool).clone();
 
-    match create_exhibit(&new_exhibit.into_inner(), &*db_conn) {
-        Ok(id) => Ok(Json(id)),
-        Err(e) => {
-            error!("Database error: {}", e);
-            Err(ApiError::DatabaseError("Database Error".to_string()))
-        }
-    }
+    // Offload the blocking database operation to a separate thread
+    let result = rocket::tokio::task::spawn_blocking(move || {
+        let conn = pool.get().expect("Failed to get DB connection from pool");
+        create_exhibit(&exhibit, &conn)
+    })
+    .await
+    .map_err(|e| {
+        error!("Task panicked: {}", e);
+        ApiError::DatabaseError("Internal Server Error".into())
+    })??;
+
+    Ok(Json(result))
 }

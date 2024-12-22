@@ -1,18 +1,12 @@
-// src/main.rs
-
-#[macro_use]
-extern crate rocket;
-
 mod api;
 mod db;
 mod errors;
 mod models;
 
-use db::DbConnection;
+use db::{create_pool, setup_database};
 use dotenv::dotenv;
 use log::info;
-use rocket::fairing::AdHoc;
-use rocket::tokio::sync::Mutex;
+use rocket::{catchers, launch, routes};
 use rocket_cors::{AllowedHeaders, AllowedMethods, AllowedOrigins, CorsOptions};
 use std::path::Path;
 
@@ -24,21 +18,23 @@ fn rocket() -> _ {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
     info!("Starting Rocket server...");
 
-    // Check if images directory exists, if not create it
+    // Check if images directory exists; if not, create it
     if !Path::new("images").exists() {
         std::fs::create_dir("images").expect("Failed to create images directory");
     }
 
-    // Initialize the database connection without wrapping in Arc
-    let db =
-        Mutex::new(DbConnection::new("exhibits.db").expect("Failed to create database connection"));
+    // Initialize the database connection pool
+    let db_pool = create_pool("exhibits.db").expect("Failed to create database connection pool");
 
+    // Setup database schema
+    setup_database(&db_pool).expect("Failed to setup database");
+
+    // Configure CORS
     let allowed_methods: AllowedMethods = ["Get", "Post", "Delete"]
         .iter()
         .map(|s| std::str::FromStr::from_str(s).unwrap())
         .collect();
 
-    // Configure CORS
     let cors = CorsOptions::default()
         .allowed_origins(AllowedOrigins::some_exact(&["http://localhost:1420"]))
         .allowed_methods(allowed_methods)
@@ -55,20 +51,8 @@ fn rocket() -> _ {
         .expect("Error creating CORS fairing");
 
     rocket::build()
-        .manage(db)
+        .manage(db_pool) // Inject the connection pool into Rocket's state
         .attach(cors) // Attach the CORS fairing
-        .attach(AdHoc::on_ignite("Database Setup", |rocket| async {
-            // Introduce a separate scope to ensure MutexGuard is dropped before returning rocket
-            {
-                let db = rocket
-                    .state::<Mutex<DbConnection>>()
-                    .expect("database state");
-                let db_conn = db.lock().await;
-                db_conn.setup_tables().expect("Failed to set up tables");
-                // MutexGuard (`db_conn`) is dropped here as it goes out of scope
-            }
-            rocket
-        }))
         .mount(
             "/",
             routes![

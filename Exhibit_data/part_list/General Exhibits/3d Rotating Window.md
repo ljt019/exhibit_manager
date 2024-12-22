@@ -1,3 +1,0 @@
-
-#### Parts
-- Disco Ball Motor

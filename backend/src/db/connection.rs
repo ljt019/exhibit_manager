@@ -10,6 +10,11 @@ impl DbConnection {
         Ok(DbConnection(conn))
     }
 
+    pub fn access(&self) -> &Connection {
+        &self.0
+    }
+
+    #[allow(dead_code)]
     /// Initializes a new in-memory database connection for testing.
     pub fn new_in_memory() -> SqliteResult<Self> {
         let conn = Connection::open_in_memory()?;

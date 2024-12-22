@@ -1,7 +1,4 @@
-#[cfg(test)]
-mod tests;
-
-mod filters;
-mod handlers;
-
-pub mod routes;
+pub mod dev;
+pub mod exhibits;
+pub mod github;
+pub mod parts;

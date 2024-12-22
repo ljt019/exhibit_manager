@@ -1,12 +1,13 @@
-#![allow(dead_code)]
-
 // src/errors.rs
 
+use rocket::http::Status;
+use rocket::response::{Responder, Response};
+use rocket::serde::json::Json;
 use serde::Serialize;
+use std::io::Cursor;
 use thiserror::Error;
-use warp::reject::MethodNotAllowed;
-use warp::{http::StatusCode, Rejection, Reply};
 
+#[allow(dead_code)]
 /// Unified API error type
 #[derive(Debug, Error)]
 pub enum ApiError {
@@ -35,84 +36,67 @@ pub enum ApiError {
     Unauthorized,
 }
 
-impl warp::reject::Reject for ApiError {}
-
 /// Structure for API error responses
 #[derive(Serialize)]
 pub struct ErrorResponse {
     pub error: String,
 }
 
-/// Converts ApiError to a standardized ErrorResponse
-impl ApiError {
-    fn to_response(&self) -> ErrorResponse {
-        ErrorResponse {
+/// Implement Responder for ApiError to convert it into HTTP responses
+impl<'r> Responder<'r, 'static> for ApiError {
+    fn respond_to(self, _: &'r rocket::Request<'_>) -> Result<Response<'static>, Status> {
+        let error_response = ErrorResponse {
             error: self.to_string(),
-        }
-    }
+        };
 
-    fn status_code(&self) -> StatusCode {
-        match self {
-            ApiError::DatabaseError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::MissingEnvVar(_) => StatusCode::BAD_REQUEST,
-            ApiError::GitHubRequestError(_) => StatusCode::BAD_GATEWAY,
-            ApiError::GitHubApiError(_) => StatusCode::BAD_GATEWAY,
-            ApiError::InternalServerError => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::InvalidRequestBody => StatusCode::BAD_REQUEST,
-            ApiError::NotFound => StatusCode::NOT_FOUND,
-            ApiError::Unauthorized => StatusCode::UNAUTHORIZED,
-        }
+        let status = match self {
+            ApiError::DatabaseError(_) => Status::InternalServerError,
+            ApiError::MissingEnvVar(_) => Status::BadRequest,
+            ApiError::GitHubRequestError(_) => Status::BadGateway,
+            ApiError::GitHubApiError(_) => Status::BadGateway,
+            ApiError::InternalServerError => Status::InternalServerError,
+            ApiError::InvalidRequestBody => Status::BadRequest,
+            ApiError::NotFound => Status::NotFound,
+            ApiError::Unauthorized => Status::Unauthorized,
+        };
+
+        Response::build()
+            .status(status)
+            .header(rocket::http::ContentType::JSON)
+            .sized_body(
+                error_response.error.len(),
+                Cursor::new(rocket::serde::json::serde_json::to_string(&error_response).unwrap()),
+            )
+            .ok()
     }
 }
 
-/// Handles all rejections and converts them into standardized API responses
-pub async fn handle_rejection(err: Rejection) -> Result<impl Reply, Rejection> {
-    if let Some(api_error) = err.find::<ApiError>() {
-        let response = api_error.to_response();
-        let status = api_error.status_code();
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            status,
-        ));
-    }
+/// Error catchers
 
-    if err.is_not_found() {
-        let response = ErrorResponse {
-            error: "Not Found".into(),
-        };
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            StatusCode::NOT_FOUND,
-        ));
-    }
+#[rocket::catch(404)]
+pub fn not_found() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "Not Found".into(),
+    })
+}
 
-    if let Some(_) = err.find::<warp::filters::body::BodyDeserializeError>() {
-        let response = ErrorResponse {
-            error: "Invalid request body".into(),
-        };
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            StatusCode::BAD_REQUEST,
-        ));
-    }
+#[rocket::catch(400)]
+pub fn handle_invalid_request_body() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "Invalid request body".into(),
+    })
+}
 
-    if let Some(_) = err.find::<MethodNotAllowed>() {
-        let response = ErrorResponse {
-            error: "Method Not Allowed".into(),
-        };
-        return Ok(warp::reply::with_status(
-            warp::reply::json(&response),
-            StatusCode::METHOD_NOT_ALLOWED,
-        ));
-    }
+#[rocket::catch(405)]
+pub fn handle_method_not_allowed() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
+        error: "Method Not Allowed".into(),
+    })
+}
 
-    // Fallback for other errors
-    eprintln!("Unhandled rejection: {:?}", err);
-    let response = ErrorResponse {
+#[rocket::catch(500)]
+pub fn internal_server_error() -> Json<ErrorResponse> {
+    Json(ErrorResponse {
         error: "Internal Server Error".into(),
-    };
-    Ok(warp::reply::with_status(
-        warp::reply::json(&response),
-        StatusCode::INTERNAL_SERVER_ERROR,
-    ))
+    })
 }

@@ -68,15 +68,9 @@ const columns: ColumnDef<Part>[] = [
                 Exhibits this part is attached to:
               </DialogDescription>
             </DialogHeader>
-            <ul className="list-disc pl-4">
-              {exhibit_ids && exhibit_ids.length > 0 ? (
-                exhibit_ids.map((exhibitId, index) => (
-                  <li key={index}>{exhibitId}</li>
-                ))
-              ) : (
-                <li>No exhibits attached</li>
-              )}
-            </ul>
+            {exhibit_ids && 
+              <ConnectedExhibitsDisplay exhibitIds={exhibit_ids} />
+            }
           </DialogContent>
         </Dialog>
       );
@@ -271,4 +265,17 @@ export default function PartsInventory() {
       </div>
     </div>
   );
+}
+
+function ConnectedExhibitsDisplay({ exhibitIds }: { exhibitIds: string[] }) {
+  
+  
+  return (
+    <ul className="list-disc pl-4">
+      {exhibitIds.map((exhibitId, index) => (
+        <li key={index}>{exhibitId}</li>
+      ))}
+    </ul>
+  );
+
 }

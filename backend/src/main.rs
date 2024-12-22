@@ -1,99 +1,102 @@
-#![allow(dead_code)]
 // src/main.rs
+
+#[macro_use]
+extern crate rocket;
 
 mod api;
 mod db;
 mod errors;
 mod models;
 
-use errors::ApiError as Error;
-
-use warp::Filter;
-
 use db::DbConnection;
-
 use dotenv::dotenv;
+use log::info;
+use rocket::fairing::AdHoc;
+use rocket::tokio::sync::Mutex;
+use rocket_cors::{AllowedHeaders, AllowedMethods, AllowedOrigins, CorsOptions};
+use std::path::Path;
 
-use std::sync::Arc;
-use tokio::sync::Mutex;
-
-#[tokio::main]
-async fn main() {
+#[launch]
+fn rocket() -> _ {
     dotenv().ok();
 
     // Initialize the logger
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    info!("Starting Rocket server...");
 
     // Check if images directory exists, if not create it
-    if !std::path::Path::new("images").exists() {
+    if !Path::new("images").exists() {
         std::fs::create_dir("images").expect("Failed to create images directory");
     }
 
-    // Initialize the database connection wrapped in Arc and Mutex for thread-safe access
-    let db = Arc::new(Mutex::new(
-        DbConnection::new("exhibits.db").expect("Failed to create database connection"),
-    ));
+    // Initialize the database connection without wrapping in Arc
+    let db =
+        Mutex::new(DbConnection::new("exhibits.db").expect("Failed to create database connection"));
 
-    // Set up the database tables
-    {
-        let db_conn = db.lock().await;
-        db_conn.setup_tables().expect("Failed to set up tables");
-    }
+    let allowed_methods: AllowedMethods = ["Get", "Post", "Delete"]
+        .iter()
+        .map(|s| std::str::FromStr::from_str(s).unwrap())
+        .collect();
 
-    // Configure CORS to allow any origin and specific methods and headers
-    let cors = warp::cors()
-        .allow_any_origin()
-        .allow_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-        .allow_headers(vec!["Content-Type"]);
+    // Configure CORS
+    let cors = CorsOptions::default()
+        .allowed_origins(AllowedOrigins::some_exact(&["http://localhost:1420"]))
+        .allowed_methods(allowed_methods)
+        .allowed_headers(AllowedHeaders::some(&[
+            "Authorization",
+            "Accept",
+            "Content-Type",
+            "Origin",
+            "X-Requested-With",
+            "Access-Control-Allow-Origin",
+        ]))
+        .allow_credentials(false)
+        .to_cors()
+        .expect("Error creating CORS fairing");
 
-    // Import route modules
-    let exhibit_routes = api::routes::exhibit_routes(db.clone());
-    let part_routes = api::routes::part_routes(db.clone());
-    let bug_report_routes = api::routes::bug_report_routes();
-
-    // Additional routes that don't fit into resource-specific categories
-    let host_images = warp::path("images").and(warp::fs::dir("images"));
-    let reset_db = warp::get()
-        .and(warp::path("reset"))
-        .and(warp::path::end()) // Ensure exact match
-        .and(with_db(db.clone()))
-        .and_then(handle_reset_db);
-
-    // Combine all routes
-    let routes = exhibit_routes
-        .or(part_routes)
-        .or(bug_report_routes)
-        .or(host_images)
-        .or(reset_db)
-        .with(cors)
-        .recover(crate::errors::handle_rejection);
-
-    // Start the Warp server on localhost:3030
-    warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
-}
-
-/// Helper function to pass the database connection to handlers
-fn with_db(
-    db: Arc<Mutex<DbConnection>>,
-) -> impl Filter<Extract = (Arc<Mutex<DbConnection>>,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || db.clone())
-}
-
-/// Handler to reset the database
-async fn handle_reset_db(
-    db: Arc<Mutex<DbConnection>>,
-) -> Result<impl warp::Reply, warp::Rejection> {
-    let db_conn = db.lock().await;
-
-    db_conn
-        .wipe_database()
-        .map_err(|_| warp::reject::custom(Error::DatabaseError("Database Error".to_string())))?;
-
-    db_conn
-        .setup_tables()
-        .map_err(|_| warp::reject::custom(Error::DatabaseError("Database Error".to_string())))?;
-
-    Ok(warp::reply::json(&serde_json::json!({
-        "message": "Database reset successful"
-    })))
+    rocket::build()
+        .manage(db)
+        .attach(cors) // Attach the CORS fairing
+        .attach(AdHoc::on_ignite("Database Setup", |rocket| async {
+            // Introduce a separate scope to ensure MutexGuard is dropped before returning rocket
+            {
+                let db = rocket
+                    .state::<Mutex<DbConnection>>()
+                    .expect("database state");
+                let db_conn = db.lock().await;
+                db_conn.setup_tables().expect("Failed to set up tables");
+                // MutexGuard (`db_conn`) is dropped here as it goes out of scope
+            }
+            rocket
+        }))
+        .mount(
+            "/",
+            routes![
+                api::github::report_bug_handler,
+                api::exhibits::create_exhibit_handler,
+                api::exhibits::get_exhibit_handler,
+                api::exhibits::update_exhibit_handler,
+                api::exhibits::delete_exhibit_handler,
+                api::exhibits::list_exhibits_handler,
+                api::exhibits::handle_random_exhibit,
+                api::parts::create_part_handler,
+                api::parts::get_part_handler,
+                api::parts::update_part_handler,
+                api::parts::delete_part_handler,
+                api::parts::list_parts_handler,
+                api::parts::get_parts_by_ids_handler,
+                api::dev::handle_reset_db,
+                api::dev::create_dummy_exhibits_handler
+            ],
+        )
+        .mount("/images", rocket::fs::FileServer::from("images"))
+        .register(
+            "/",
+            catchers![
+                errors::not_found,
+                errors::handle_invalid_request_body,
+                errors::handle_method_not_allowed,
+                errors::internal_server_error
+            ],
+        )
 }

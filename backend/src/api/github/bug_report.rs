@@ -1,23 +1,27 @@
 // src/handlers/bug_report_handlers.rs
 
+use crate::errors::ApiError;
+use crate::models::BugReport;
 use log::error;
 use reqwest::Client;
+use reqwest::StatusCode as ReqwestStatusCode;
+use rocket::serde::json::serde_json;
+use rocket::serde::json::Json;
 use std::env;
 use urlencoding::encode;
-use warp::http::StatusCode;
 
-use crate::errors::ApiError as Error;
-use crate::models::BugReport;
-
-/// Handler to report a bug via GitHub Issues
-pub async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, warp::Rejection> {
+/// Handles the POST /report-bug endpoint
+#[post("/report-bug", format = "json", data = "<report>")]
+pub async fn report_bug_handler(
+    report: Json<BugReport>,
+) -> Result<Json<serde_json::Value>, ApiError> {
     // Load GitHub credentials from environment variables
     let github_token = env::var("GITHUB_TOKEN")
-        .map_err(|_| warp::reject::custom(Error::MissingEnvVar("GITHUB_TOKEN".to_string())))?;
+        .map_err(|_| ApiError::MissingEnvVar("GITHUB_TOKEN".to_string()))?;
     let repo_owner = env::var("GITHUB_REPO_OWNER")
-        .map_err(|_| warp::reject::custom(Error::MissingEnvVar("GITHUB_REPO_OWNER".to_string())))?;
+        .map_err(|_| ApiError::MissingEnvVar("GITHUB_REPO_OWNER".to_string()))?;
     let repo_name = env::var("GITHUB_REPO_NAME")
-        .map_err(|_| warp::reject::custom(Error::MissingEnvVar("GITHUB_REPO_NAME".to_string())))?;
+        .map_err(|_| ApiError::MissingEnvVar("GITHUB_REPO_NAME".to_string()))?;
 
     // Prepare the GitHub API URLs
     let issue_url = format!(
@@ -44,7 +48,7 @@ pub async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, w
 
     match label_creation_response {
         Ok(response) => {
-            if response.status().as_u16() == warp::http::StatusCode::NOT_FOUND.as_u16() {
+            if response.status() == ReqwestStatusCode::NOT_FOUND {
                 // Label does not exist; create it
                 let create_label_url = format!(
                     "https://api.github.com/repos/{}/{}/labels",
@@ -52,7 +56,7 @@ pub async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, w
                 );
                 let label_payload = serde_json::json!({
                     "name": report.name,
-                    "color": "f29513", // You can choose an appropriate color
+                    "color": "f29513", // Choose an appropriate color
                     "description": "Dynamic label from bug report"
                 });
 
@@ -72,14 +76,12 @@ pub async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, w
                                 .await
                                 .unwrap_or_else(|_| "Unknown error".to_string());
                             error!("Failed to create label: {}", error_text);
-                            return Err(warp::reject::custom(Error::GitHubApiError(error_text)));
+                            return Err(ApiError::GitHubApiError(error_text));
                         }
                     }
                     Err(e) => {
                         error!("Failed to create label: {}", e);
-                        return Err(warp::reject::custom(Error::GitHubRequestError(
-                            e.to_string(),
-                        )));
+                        return Err(ApiError::GitHubRequestError(e.to_string()));
                     }
                 }
             } else if !response.status().is_success() {
@@ -88,15 +90,13 @@ pub async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, w
                     .await
                     .unwrap_or_else(|_| "Unknown error".to_string());
                 error!("Error checking label existence: {}", error_text);
-                return Err(warp::reject::custom(Error::GitHubApiError(error_text)));
+                return Err(ApiError::GitHubApiError(error_text));
             }
             // If label exists, do nothing
         }
         Err(e) => {
             error!("Failed to check label existence: {}", e);
-            return Err(warp::reject::custom(Error::GitHubRequestError(
-                e.to_string(),
-            )));
+            return Err(ApiError::GitHubRequestError(e.to_string()));
         }
     }
 
@@ -117,22 +117,19 @@ pub async fn report_bug_handler(report: BugReport) -> Result<impl warp::Reply, w
         .await
         .map_err(|e| {
             error!("Failed to send request to GitHub: {}", e);
-            warp::reject::custom(Error::GitHubRequestError(e.to_string()))
+            ApiError::GitHubRequestError(e.to_string())
         })?;
 
     // Check the response status
     if response.status().is_success() {
         let issue: serde_json::Value = response.json().await.unwrap_or_default();
-        Ok(warp::reply::with_status(
-            warp::reply::json(&issue),
-            StatusCode::CREATED,
-        ))
+        Ok(Json(issue))
     } else {
         let error_text = response
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
         error!("GitHub API error: {}", error_text);
-        Err(warp::reject::custom(Error::GitHubApiError(error_text)))
+        Err(ApiError::GitHubApiError(error_text))
     }
 }

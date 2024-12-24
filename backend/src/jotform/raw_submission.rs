@@ -121,7 +121,7 @@ impl RawSubmission {
         Jotform {
             id: self.id.clone(),
             submitter_name,
-            submission_date: submission_date,
+            created_at: submission_date,
             location,
             exhibit_name,
             description,

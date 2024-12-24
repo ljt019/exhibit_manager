@@ -11,7 +11,7 @@ pub struct SubmissionDate {
 pub struct Jotform {
     pub id: String,
     pub submitter_name: String,
-    pub submission_date: SubmissionDate,
+    pub created_at: SubmissionDate,
     pub location: String,
     pub exhibit_name: String,
     pub description: String,

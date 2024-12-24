@@ -47,8 +47,8 @@ fn insert_jotform(conn: &Connection, jotform: &Jotform) -> rusqlite::Result<()> 
         params![
             jotform.id,
             jotform.submitter_name,
-            jotform.submission_date.date,
-            jotform.submission_date.time,
+            jotform.created_at.date,
+            jotform.created_at.time,
             jotform.location,
             jotform.exhibit_name,
             jotform.description,
@@ -78,8 +78,8 @@ fn update_jotform(conn: &Connection, jotform: &Jotform) -> rusqlite::Result<()> 
         params![
             jotform.id,
             jotform.submitter_name,
-            jotform.submission_date.date,
-            jotform.submission_date.time,
+            jotform.created_at.date,
+            jotform.created_at.time,
             jotform.location,
             jotform.exhibit_name,
             jotform.description,

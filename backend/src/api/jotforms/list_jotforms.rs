@@ -25,7 +25,7 @@ pub fn list_jotforms(conn: &Connection) -> rusqlite::Result<Vec<Jotform>> {
         Ok(Jotform {
             id: row.get(0)?,
             submitter_name: row.get(1)?,
-            submission_date: submission_date,
+            created_at: submission_date,
             location: row.get(4)?,
             exhibit_name: row.get(5)?,
             description: row.get(6)?,

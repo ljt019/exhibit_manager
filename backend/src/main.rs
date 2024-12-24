@@ -112,7 +112,8 @@ pub fn handle_jotform(db_pool: DbPool) {
                 Err(e) => error!("Failed to sync Jotform data: {:?}", e),
             }
 
-            sleep(Duration::from_secs(300)).await;
+            // Sleep for 12 hours (so refresh twice a day)
+            sleep(Duration::from_secs(43200)).await;
         }
     });
 }

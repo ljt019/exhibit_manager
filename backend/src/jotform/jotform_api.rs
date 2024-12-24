@@ -1,5 +1,6 @@
 use super::raw_submission::RawSubmission;
 use crate::models::Jotform;
+use log::info;
 use serde::Deserialize;
 
 #[derive(Debug, Clone)]
@@ -30,6 +31,11 @@ impl JotformApi {
 
         let response = self.client.get(&url).send().await?;
         let response_body = response.json::<JotFormApiResponse>().await?;
+
+        let limit_left = response_body.limit_left;
+
+        info!("JotForm API rate limit left: {}", limit_left);
+
         Ok(response_body
             .content
             .into_iter()
@@ -44,4 +50,6 @@ pub struct JotFormApiResponse {
     pub response_code: u16,
     pub message: String,
     pub content: Vec<RawSubmission>,
+    #[serde(rename = "limit-left")]
+    pub limit_left: u32,
 }

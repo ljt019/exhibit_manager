@@ -1,17 +1,19 @@
 mod api;
 mod db;
 mod errors;
+mod jotform;
 mod models;
 
-use db::{create_pool, setup_database};
+use db::{create_pool, setup_database, DbPool};
 use dotenv::dotenv;
-use log::info;
+use log::{error, info};
+use rocket::tokio::time::{sleep, Duration};
 use rocket::{catchers, launch, routes};
 use rocket_cors::{AllowedHeaders, AllowedMethods, AllowedOrigins, CorsOptions};
 use std::path::Path;
 
 #[launch]
-fn rocket() -> _ {
+async fn rocket() -> _ {
     dotenv().ok();
 
     // Initialize the logger
@@ -28,6 +30,8 @@ fn rocket() -> _ {
 
     // Setup database schema
     setup_database(&db_pool).expect("Failed to setup database");
+
+    handle_jotform(db_pool.clone());
 
     // Configure CORS
     let allowed_methods: AllowedMethods = ["Get", "Post", "Delete"]
@@ -70,7 +74,8 @@ fn rocket() -> _ {
                 api::parts::list_parts_handler,
                 api::parts::get_parts_by_ids_handler,
                 api::dev::handle_reset_db,
-                api::dev::create_dummy_exhibits_handler
+                api::dev::create_dummy_exhibits_handler,
+                api::jotforms::list_jotforms_handler,
             ],
         )
         .mount("/images", rocket::fs::FileServer::from("images"))
@@ -83,4 +88,31 @@ fn rocket() -> _ {
                 errors::internal_server_error
             ],
         )
+}
+
+/// Fetches data from Jotform and stores it in the database
+///
+/// makes sure not to store duplicate data, and updates existing data
+/// if new data is available from Jotform API.
+pub fn handle_jotform(db_pool: DbPool) {
+    let jotform_api_key = std::env::var("JOTFORM_API_KEY").expect("JOTFORM_API_KEY not set");
+    let jotform_form_id = std::env::var("JOTFORM_FORM_ID").expect("JOTFORM_FORM_ID not set");
+    let jotform_base_url = "https://api.jotform.com".to_string();
+
+    let jotform_api_client =
+        jotform::JotformApi::new(jotform_api_key, jotform_form_id, jotform_base_url);
+
+    let pool_clone = db_pool.clone();
+    let api_clone = jotform_api_client;
+
+    rocket::tokio::spawn(async move {
+        loop {
+            match jotform::sync_jotforms_once(&pool_clone, &api_clone).await {
+                Ok(_) => info!("Successfully synced Jotform data"),
+                Err(e) => error!("Failed to sync Jotform data: {:?}", e),
+            }
+
+            sleep(Duration::from_secs(300)).await;
+        }
+    });
 }

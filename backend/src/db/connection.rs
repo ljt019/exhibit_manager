@@ -61,6 +61,19 @@ pub fn setup_database(pool: &DbPool) -> SqliteResult<()> {
             note TEXT NOT NULL,
             FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE CASCADE
         );
+
+        CREATE TABLE IF NOT EXISTS jotforms (
+            id TEXT PRIMARY KEY,
+            submitter_name TEXT NOT NULL,
+            submission_date TEXT NOT NULL,
+            submission_time TEXT NOT NULL,
+            location TEXT NOT NULL,
+            exhibit_name TEXT NOT NULL,
+            description TEXT NOT NULL,
+            priority_level TEXT NOT NULL,
+            department TEXT NOT NULL,
+            status TEXT NOT NULL
+        );
         ",
     )
 }

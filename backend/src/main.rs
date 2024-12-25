@@ -9,6 +9,7 @@ use dotenv::dotenv;
 use log::{error, info};
 use rocket::tokio::time::{sleep, Duration};
 use rocket::{catchers, launch, routes};
+use rocket::{Orbit, Rocket};
 use rocket_cors::{AllowedHeaders, AllowedMethods, AllowedOrigins, CorsOptions};
 use std::path::Path;
 
@@ -30,8 +31,6 @@ async fn rocket() -> _ {
 
     // Setup database schema
     setup_database(&db_pool).expect("Failed to setup database");
-
-    handle_jotform(db_pool.clone());
 
     // Configure CORS
     let allowed_methods: AllowedMethods = ["Get", "Post", "Delete"]
@@ -57,6 +56,7 @@ async fn rocket() -> _ {
     rocket::build()
         .manage(db_pool) // Inject the connection pool into Rocket's state
         .attach(cors) // Attach the CORS fairing
+        .attach(JotformFairing)
         .mount(
             "/",
             routes![
@@ -91,30 +91,55 @@ async fn rocket() -> _ {
         )
 }
 
-/// Fetches data from Jotform and stores it in the database
-///
-/// makes sure not to store duplicate data, and updates existing data
-/// if new data is available from Jotform API.
-pub fn handle_jotform(db_pool: DbPool) {
-    let jotform_api_key = std::env::var("JOTFORM_API_KEY").expect("JOTFORM_API_KEY not set");
-    let jotform_form_id = std::env::var("JOTFORM_FORM_ID").expect("JOTFORM_FORM_ID not set");
-    let jotform_base_url = "https://api.jotform.com".to_string();
+struct JotformFairing;
 
-    let jotform_api_client =
-        jotform::JotformApi::new(jotform_api_key, jotform_form_id, jotform_base_url);
-
-    let pool_clone = db_pool.clone();
-    let api_clone = jotform_api_client;
-
-    rocket::tokio::spawn(async move {
-        loop {
-            match jotform::sync_jotforms_once(&pool_clone, &api_clone).await {
-                Ok(_) => info!("Successfully synced Jotform data"),
-                Err(e) => error!("Failed to sync Jotform data: {:?}", e),
-            }
-
-            // Sleep for 12 hours (so refresh twice a day)
-            sleep(Duration::from_secs(43200)).await;
+#[rocket::async_trait]
+impl rocket::fairing::Fairing for JotformFairing {
+    fn info(&self) -> rocket::fairing::Info {
+        rocket::fairing::Info {
+            name: "Jotform Sync",
+            kind: rocket::fairing::Kind::Liftoff, // Use Liftoff to hook into the launch phase
         }
-    });
+    }
+
+    async fn on_liftoff(&self, rocket: &Rocket<Orbit>) {
+        let db_pool = match rocket.state::<DbPool>() {
+            Some(pool) => pool.clone(),
+            None => {
+                error!("Database pool not found in Rocket state");
+                return;
+            }
+        };
+
+        // setup variables for Jotform API
+        let jotform_api_key =
+            std::env::var("JOTFORM_API_KEY").expect("JOTFORM_API_KEY env not set");
+
+        let jotform_form_id =
+            std::env::var("JOTFORM_FORM_ID").expect("JOTFORM_FORM_ID env not set");
+
+        let jotform_base_url = "https://api.jotform.com".to_string();
+
+        // Create the api client
+        let jotform_api_client =
+            jotform::JotformApi::new(jotform_api_key, jotform_form_id, jotform_base_url);
+
+        let pool_clone = db_pool.clone();
+        let api_clone = jotform_api_client;
+
+        // Spawn the synchronization task that runs every 30 minutes and syncs Jotform data
+        rocket::tokio::spawn(async move {
+            loop {
+                match jotform::sync_jotforms_once(&pool_clone, &api_clone).await {
+                    Ok(_) => info!("Successfully synced Jotform data"),
+                    Err(e) => error!("Failed to sync Jotform data: {:?}", e),
+                }
+
+                // Sleep for 30 minutes
+                sleep(Duration::from_secs(1800)).await;
+            }
+        });
+
+        info!("Jotform synchronization task started");
+    }
 }

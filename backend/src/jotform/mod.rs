@@ -72,7 +72,6 @@ fn update_jotform(conn: &Connection, jotform: &Jotform) -> rusqlite::Result<()> 
                description = ?7,
                priority_level = ?8,
                department = ?9,
-               status = ?10
          WHERE id = ?1
         "#,
         params![
@@ -85,7 +84,6 @@ fn update_jotform(conn: &Connection, jotform: &Jotform) -> rusqlite::Result<()> 
             jotform.description,
             jotform.priority_level,
             jotform.department,
-            jotform.status
         ],
     )?;
     Ok(())

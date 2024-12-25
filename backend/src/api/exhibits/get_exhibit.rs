@@ -48,7 +48,7 @@ pub fn get_exhibit(id: i64, conn: &Connection) -> rusqlite::Result<Option<Exhibi
 
         // Fetch associated notes
         let mut stmt =
-            conn.prepare("SELECT timestamp, note FROM exhibit_notes WHERE exhibit_id = ?1")?;
+            conn.prepare("SELECT timestamp, message FROM exhibit_notes WHERE exhibit_id = ?1")?;
         let notes_iter = stmt.query_map(rusqlite::params![id], |row| {
             Ok(Note {
                 id: row.get(0)?,

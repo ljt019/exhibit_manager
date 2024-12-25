@@ -19,7 +19,7 @@ export type Exhibit = {
   name: string;
   cluster: string;
   location: string;
-  status: "operational" | "needs repair" | "out of service";
+  status: "Operational" | "Needs Repair" | "Out of Service";
   part_ids: Array<string>;
   notes: Array<Note>;
   image_url: string | undefined;

@@ -22,9 +22,9 @@ import type { Exhibit, Sponsorship } from "@/types";
 import { PartsButton } from "@/components/parts-dialog";
 
 const statusColors: Record<Exhibit["status"], string> = {
-  operational: "bg-green-500",
-  "needs repair": "bg-yellow-500",
-  "out of service": "bg-red-500",
+  Operational: "bg-green-500",
+  "Needs Repair": "bg-yellow-500",
+  "Out of Service": "bg-red-500",
 };
 
 export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {

@@ -3,7 +3,7 @@
     "ExhibitName": "Big Lever",
     "ExhibitDescription": "Demonstrates how levers can reduce the amount of force needed to lift an object. Visitors can pull a lever with a rope and lift an engine.",
     "BuildingLocation": "Outside - Main entrance",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Physics",
     "Notes": "New coat of paint and ropes, Feb. 2023. Hardware is missing/stollen. Frame was rotated. Welder will be contacted for further assistance. March '24."
   },
@@ -11,7 +11,7 @@
     "ExhibitName": "Focusing Dishes",
     "ExhibitDescription": "Two focusing dishes that can transmit sound. A visitor can whisper into one dish and another visitor can hear it through the other dish.",
     "BuildingLocation": "Outside",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Physics",
     "Notes": "Need to rope off Dianne's parking area to be able to repair and update exhibit. "
   },
@@ -99,7 +99,7 @@
     "ExhibitName": "Van De Graaff",
     "ExhibitDescription": "A Van De Graaf generator that can be touched and see their hair stand up.",
     "BuildingLocation": "Demo Theater",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Physics",
     "Notes": "New belt needs installed. "
   },
@@ -107,7 +107,7 @@
     "ExhibitName": "Tesla Coil",
     "ExhibitDescription": "A Tesla Coil that can be used for demonstrations.",
     "BuildingLocation": "Demo Theater",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Physics",
     "Notes": "See email from Dustin"
   },
@@ -123,7 +123,7 @@
     "ExhibitName": "Rising Bubbles",
     "ExhibitDescription": "A lever that can be pumped to create bubbles in a tube.",
     "BuildingLocation": "Changing Gallery",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Physics",
     "Notes": "Has a leak. Needs to be opened at base to fix."
   },
@@ -139,7 +139,7 @@
     "ExhibitName": "Paper Airplane Launcher ",
     "ExhibitDescription": "A device that paper airplanes can be loaded into, when a switch it flipped it turns on and launches the airplane.",
     "BuildingLocation": "Space Center",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Air & Space",
     "Notes": "Two new motors replaced. One launcher is installed and working at exhibit. Moveable target was put back on track. March '24."
   },
@@ -147,7 +147,7 @@
     "ExhibitName": "Propellor Station",
     "ExhibitDescription": "Allows visitors to create and then experiment with a propellor. The speed of the fan can be adjusted to see how it affects the propellor's rotation.",
     "BuildingLocation": "Space Center",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Air & Space",
     "Notes": "speed needle doesnt work "
   },
@@ -155,7 +155,7 @@
     "ExhibitName": "Paper Airplane Quality Tester",
     "ExhibitDescription": "Allows visitors to load a paper airplane into the tester, and have experiments ran on it. When the tests are complete it gives the visitors ways they can improve their paper airplane's design.",
     "BuildingLocation": "Space Center",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Air & Space",
     "Notes": "LA TECH redesign.Needs vinyl wrap and directions for use.  plexi galss replaced. Oct. 23'"
   },
@@ -171,7 +171,7 @@
     "ExhibitName": "Phases of the Moon",
     "ExhibitDescription": "The Phases of the Moon Exhibit features a chair surronded by the 8 phases of the moon. When the chair is spun to point at a moon it lights up with its correspoinding phase in the lunar cycle.",
     "BuildingLocation": "Space Center",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Air & Space",
     "Notes": "LED bulbs and new relay installed. PO needed for new boat chair. Two moons broke and were acyrlic welded and re-installed. "
   },
@@ -203,7 +203,7 @@
     "ExhibitName": "Pendulum",
     "ExhibitDescription": "A large pendulum that swings back and forth. and knocks over pins. It is used to demonstrate the rotation of the Earth.",
     "BuildingLocation": "Space Center",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Air & Space",
     "Notes": "Blocked off from visitors bc of June 3 flash flood. City insurance covers carpet replacment. Needs new signage."
   },
@@ -251,7 +251,7 @@
     "ExhibitName": "Bridge Model",
     "ExhibitDescription": "A model of the Bakowski Bridge.",
     "BuildingLocation": "Solarium",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Engineering",
     "Notes": "PO for wheel replacement. needs a vinyl wrap designed and quoted."
   },
@@ -411,7 +411,7 @@
     "ExhibitName": "Lung pump",
     "ExhibitDescription": "A big lever that can be pumped to simulate how our lungs work.",
     "BuildingLocation": "Second Floor",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Health",
     "Notes": "needs lever handle fixed and rubber sheet replaced. 3-10-24"
   },
@@ -451,7 +451,7 @@
     "ExhibitName": "Bed of Nails",
     "ExhibitDescription": "Allows visitors to lay on a bed of nails and experience and learn about pressure distribution.",
     "BuildingLocation": "Second Floor",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Physics",
     "Notes": "Relocated near pitching cage. Water damage possible. Acrylic top is stopping nails from raising and lowering. Cleaned exhibit and adjusted nail holes (April '24)."
   },
@@ -459,7 +459,7 @@
     "ExhibitName": "Endless Hallway",
     "ExhibitDescription": "A small hallway that has mirrors on both sides, visitors can look through a hole and see an illusion of an endless hallway.",
     "BuildingLocation": "Second Floor",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "Science",
     "Notes": "Replaced two light bulbs on top 8/17/22. Needs more work."
   },
@@ -547,7 +547,7 @@
     "ExhibitName": "Water table",
     "ExhibitDescription": "A large water table that visitors can use to play with water and learn about water flow.",
     "BuildingLocation": "POP",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "N/a",
     "Notes": "Deep Cleaned 10/22, 1/23. Clorine tabs - ONLY 3 at a time! Acrylic cylindar needs replaced. PO needed. Flooring needs cleaning and an updated drainage and UV light system."
   },
@@ -611,7 +611,7 @@
     "ExhibitName": "Chase Bank Blower",
     "ExhibitDescription": "A miniature pnumatic tube system that visitors can use to send a ball through the tubes to the bank.",
     "BuildingLocation": "POP",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "N/a",
     "Notes": "blowers are not working well. PO submitted March '24)."
   },
@@ -619,7 +619,7 @@
     "ExhibitName": "Play House",
     "ExhibitDescription": "A large playhouse that visitors can climb around in.",
     "BuildingLocation": "POP",
-    "CurrentStatus": "Under Repair",
+    "CurrentStatus": "Needs Repair",
     "Cluster": "N/a",
     "Notes": "Needs cleaning. Rope lights have been replaced with ceiling light fixtures. "
   }

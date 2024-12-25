@@ -24,7 +24,7 @@ pub fn get_exhibit(id: i64, conn: &Connection) -> rusqlite::Result<Option<Exhibi
             rusqlite::params![id],
             |row| {
                 Ok(Exhibit {
-                    id: Some(row.get(0)?),
+                    id: row.get(0)?,
                     name: row.get(1)?,
                     cluster: row.get(2)?,
                     location: row.get(3)?,
@@ -51,8 +51,9 @@ pub fn get_exhibit(id: i64, conn: &Connection) -> rusqlite::Result<Option<Exhibi
             conn.prepare("SELECT timestamp, note FROM exhibit_notes WHERE exhibit_id = ?1")?;
         let notes_iter = stmt.query_map(rusqlite::params![id], |row| {
             Ok(Note {
-                timestamp: row.get(0)?,
-                note: row.get(1)?,
+                id: row.get(0)?,
+                timestamp: row.get(1)?,
+                message: row.get(2)?,
             })
         })?;
         exhibit.notes = notes_iter.collect::<rusqlite::Result<Vec<Note>>>()?;

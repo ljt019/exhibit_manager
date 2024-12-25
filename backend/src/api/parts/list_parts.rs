@@ -44,11 +44,12 @@ pub fn list_parts(conn: &Connection) -> rusqlite::Result<Vec<Part>> {
 
         // Fetch associated notes
         let mut stmt_notes =
-            conn.prepare("SELECT timestamp, note FROM part_notes WHERE part_id = ?1")?;
+            conn.prepare("SELECT timestamp, message FROM part_notes WHERE part_id = ?1")?;
         let notes_iter = stmt_notes.query_map(rusqlite::params![id], |row| {
             Ok(Note {
-                timestamp: row.get(0)?,
-                note: row.get(1)?,
+                id: row.get(0)?,
+                timestamp: row.get(1)?,
+                message: row.get(2)?,
             })
         })?;
         part.notes = notes_iter.collect::<rusqlite::Result<Vec<Note>>>()?;

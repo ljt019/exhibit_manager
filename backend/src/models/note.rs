@@ -4,8 +4,10 @@ use validator::{Validate, ValidationError};
 // Also need to validate the Note struct
 #[derive(Debug, Serialize, Deserialize, Validate, PartialEq, Eq, Clone)]
 pub struct Note {
+    pub id: i64,
+
     #[validate(length(min = 1, message = "Note cannot be empty"))]
-    pub note: String,
+    pub message: String,
 
     #[validate(custom(function = "validate_timestamp"))]
     pub timestamp: String,

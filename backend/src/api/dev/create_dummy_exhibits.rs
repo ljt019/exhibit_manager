@@ -20,30 +20,13 @@ use rusqlite::Connection;
 /// # Returns
 /// * `rusqlite::Result<()>` - Returns `Ok(())` if all exhibits are inserted successfully.
 /// * `rusqlite::Error` - Returns an error if any database operation fails.
+///
+///
+/// WARNING FOR FUTURE Self
+/// MIGHT CAN FAIL IF RAND NUMBERS ARE NOT UNIQUE UNLIKELY BUT POSSIBLE
 pub fn generate_and_insert_exhibits(conn: &Connection) -> rusqlite::Result<()> {
-    for i in 1..=100 {
-        let exhibit = Exhibit {
-            id: None,
-            name: format!("Exhibit {}", i),
-            cluster: format!("Cluster {}", (i % 10) + 1),
-            location: format!("Location {}", (i % 5) + 1),
-            status: "Operational".to_string(),
-            image_url: format!("https://picsum.photos/seed/picsum/200/300"),
-            sponsor_name: Some(format!("Sponsor {}", (i % 3) + 1)),
-            sponsor_start_date: Some("2023-01-01".to_string()),
-            sponsor_end_date: Some("2023-12-31".to_string()),
-            part_ids: vec![],
-            notes: vec![
-                Note {
-                    timestamp: "2023-10-01".to_string(),
-                    note: format!("Note 1 for Exhibit {}", i),
-                },
-                Note {
-                    timestamp: "2023-10-02".to_string(),
-                    note: format!("Note 2 for Exhibit {}", i),
-                },
-            ],
-        };
+    for _i in 1..=100 {
+        let exhibit = crate::dev::get_random_dummy_exhibit();
 
         crate::api::exhibits::create_exhibit::create_exhibit(&exhibit, conn)?;
     }

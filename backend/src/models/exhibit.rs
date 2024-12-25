@@ -4,7 +4,7 @@ use validator::{Validate, ValidationError};
 
 #[derive(Debug, Serialize, Deserialize, Validate, PartialEq, Eq, Clone)]
 pub struct Exhibit {
-    pub id: Option<i64>,
+    pub id: i64,
 
     #[validate(length(
         min = 1,

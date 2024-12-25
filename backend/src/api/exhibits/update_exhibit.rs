@@ -61,8 +61,8 @@ pub fn update_exhibit(id: i64, exhibit: &Exhibit, conn: &Connection) -> rusqlite
     )?;
     for note in &exhibit.notes {
         conn.execute(
-            "INSERT INTO exhibit_notes (exhibit_id, timestamp, note) VALUES (?1, ?2, ?3)",
-            rusqlite::params![id, &note.timestamp, &note.note],
+            "INSERT INTO exhibit_notes (exhibit_id, timestamp, message) VALUES (?1, ?2, ?3)",
+            rusqlite::params![id, &note.timestamp, &note.message],
         )?;
     }
 

@@ -37,8 +37,8 @@ pub fn create_exhibit(exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<
     // Insert notes related to the exhibit
     for note in &exhibit.notes {
         conn.execute(
-            "INSERT INTO exhibit_notes (exhibit_id, timestamp, note) VALUES (?1, ?2, ?3)",
-            rusqlite::params![exhibit_id, &note.timestamp, &note.note],
+            "INSERT INTO exhibit_notes (exhibit_id, timestamp, message) VALUES (?1, ?2, ?3)",
+            rusqlite::params![exhibit_id, &note.timestamp, &note.message],
         )?;
     }
 

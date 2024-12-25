@@ -50,7 +50,7 @@ pub fn setup_database(pool: &DbPool) -> SqliteResult<()> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             exhibit_id INTEGER NOT NULL,
             timestamp TEXT NOT NULL,
-            note TEXT NOT NULL,
+            message TEXT NOT NULL,
             FOREIGN KEY (exhibit_id) REFERENCES exhibits(id) ON DELETE CASCADE
         );
 
@@ -58,7 +58,7 @@ pub fn setup_database(pool: &DbPool) -> SqliteResult<()> {
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             part_id INTEGER NOT NULL,
             timestamp TEXT NOT NULL,
-            note TEXT NOT NULL,
+            message TEXT NOT NULL,
             FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE CASCADE
         );
 

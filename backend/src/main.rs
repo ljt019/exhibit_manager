@@ -1,5 +1,6 @@
 mod api;
 mod db;
+mod dev;
 mod errors;
 mod jotform;
 mod models;
@@ -67,6 +68,7 @@ async fn rocket() -> _ {
                 api::exhibits::delete_exhibit_handler,
                 api::exhibits::list_exhibits_handler,
                 api::exhibits::handle_random_exhibit,
+                api::exhibits::create_exhibit_note_handler,
                 api::parts::create_part_handler,
                 api::parts::get_part_handler,
                 api::parts::update_part_handler,

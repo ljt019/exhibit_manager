@@ -1,0 +1,626 @@
+[
+  {
+    "ExhibitName": "Big Lever",
+    "ExhibitDescription": "Demonstrates how levers can reduce the amount of force needed to lift an object. Visitors can pull a lever with a rope and lift an engine.",
+    "BuildingLocation": "Outside - Main entrance",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Physics",
+    "Notes": "New coat of paint and ropes, Feb. 2023. Hardware is missing/stollen. Frame was rotated. Welder will be contacted for further assistance. March '24."
+  },
+  {
+    "ExhibitName": "Focusing Dishes",
+    "ExhibitDescription": "Two focusing dishes that can transmit sound. A visitor can whisper into one dish and another visitor can hear it through the other dish.",
+    "BuildingLocation": "Outside",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Physics",
+    "Notes": "Need to rope off Dianne's parking area to be able to repair and update exhibit. "
+  },
+  {
+    "ExhibitName": "Sundial",
+    "ExhibitDescription": "A large sundial, it works by casting a shadow on the ground and showing the time.",
+    "BuildingLocation": "Lake st. entrance",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "power washed Oct. 23'"
+  },
+  {
+    "ExhibitName": "Large Sparkle Earth",
+    "ExhibitDescription": "A large model of the earth that is covered in a sparkly material.",
+    "BuildingLocation": "Outside IMAX",
+    "CurrentStatus": "Out of Service",
+    "Cluster": "N/a",
+    "Notes": "Has been moved to IMAX window area. Possible install from ceiling beams. Has bad odor; recommend decommissioning."
+  },
+  {
+    "ExhibitName": "Dollar and Coin Donation",
+    "ExhibitDescription": "A dollar tornado that visitors can put money into and watch it spin around. A coin plinko that users can drop coins into for donation.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "$165 total collected in 2023. $44.26 March 2024"
+  },
+  {
+    "ExhibitName": "Information Kiosk",
+    "ExhibitDescription": "A kiosk that displays general information about the museum.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": "Sometimes does not work"
+  },
+  {
+    "ExhibitName": "Photo Booth",
+    "ExhibitDescription": "A booth that visitors can take pictures in and then print them out.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": "sometimes does not respond. Recomend trying to hardwire to the building's internet."
+  },
+  {
+    "ExhibitName": "Floor Piano",
+    "ExhibitDescription": "A large piano that can be played with your feet. It works by detecting air pressure through a tube when a key is stepped on, and then plays the corresponding note.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "Music",
+    "Notes": "Some keys do not work. Cory, a local music teacher replaced a switch, now all keys work. He is researching new latex-free tubing. Recomend update the exhibit with newer speaker and audio system."
+  },
+  {
+    "ExhibitName": "Mr. Bones",
+    "ExhibitDescription": "A display of a skeleton that visitors can watch ride a bike, it shows how the bones move and work together.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "Health",
+    "Notes": "Cleaned Feb. 2023. Needs new relivant signage. "
+  },
+  {
+    "ExhibitName": "Dna Name Sculpture",
+    "ExhibitDescription": "A sculpture of dna with each strand of dna have a name plaque.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "Health",
+    "Notes": "Cleaned Feb. 2023. Needs new relivant signage. "
+  },
+  {
+    "ExhibitName": "Sci-Port Coin Press",
+    "ExhibitDescription": "A souvenir coin press that visitors can use to press a coin with various Sci-Port things.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": ""
+  },
+  {
+    "ExhibitName": "Gravity Well",
+    "ExhibitDescription": "A coin gravity well, visitors can put a coin in and watch it spiral down the well.",
+    "BuildingLocation": "Main Lobby",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Surface wrap with new graphic design recommended"
+  },
+  {
+    "ExhibitName": "Van De Graaff",
+    "ExhibitDescription": "A Van De Graaf generator that can be touched and see their hair stand up.",
+    "BuildingLocation": "Demo Theater",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Physics",
+    "Notes": "New belt needs installed. "
+  },
+  {
+    "ExhibitName": "Tesla Coil",
+    "ExhibitDescription": "A Tesla Coil that can be used for demonstrations.",
+    "BuildingLocation": "Demo Theater",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Physics",
+    "Notes": "See email from Dustin"
+  },
+  {
+    "ExhibitName": "Space Walk",
+    "ExhibitDescription": "A tunnel that can be walked through that simulates the feeling of walking in space.",
+    "BuildingLocation": "Outside Changing Gallery",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "Two lights replaced 4-18-23. Update outside panels with new NASA images of galaxies."
+  },
+  {
+    "ExhibitName": "Rising Bubbles",
+    "ExhibitDescription": "A lever that can be pumped to create bubbles in a tube.",
+    "BuildingLocation": "Changing Gallery",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Physics",
+    "Notes": "Has a leak. Needs to be opened at base to fix."
+  },
+  {
+    "ExhibitName": "Chaotic Pendulum",
+    "ExhibitDescription": "These pendulums exhibit the characteristic behavior of chaotic systems. If the pendulums are started at the same initial conditions, they will quickly diverge and exhibit completely different behavior.",
+    "BuildingLocation": "Space Center",
+    "Cluster": "Air & Space",
+    "CurrentStatus": "Operational",
+    "Notes": ""
+  },
+  {
+    "ExhibitName": "Paper Airplane Launcher ",
+    "ExhibitDescription": "A device that paper airplanes can be loaded into, when a switch it flipped it turns on and launches the airplane.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Air & Space",
+    "Notes": "Two new motors replaced. One launcher is installed and working at exhibit. Moveable target was put back on track. March '24."
+  },
+  {
+    "ExhibitName": "Propellor Station",
+    "ExhibitDescription": "Allows visitors to create and then experiment with a propellor. The speed of the fan can be adjusted to see how it affects the propellor's rotation.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Air & Space",
+    "Notes": "speed needle doesnt work "
+  },
+  {
+    "ExhibitName": "Paper Airplane Quality Tester",
+    "ExhibitDescription": "Allows visitors to load a paper airplane into the tester, and have experiments ran on it. When the tests are complete it gives the visitors ways they can improve their paper airplane's design.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Air & Space",
+    "Notes": "LA TECH redesign.Needs vinyl wrap and directions for use.  plexi galss replaced. Oct. 23'"
+  },
+  {
+    "ExhibitName": "Bernoulli's Principle",
+    "ExhibitDescription": "Demonstrates Bernoulli's principle by blowing air over a ball in a tube and showing how the ball stays in place.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Out of Service",
+    "Cluster": "Air & Space",
+    "Notes": "Repaired and installed back on exhibit floor. 8/25/22. Broken and Repaired again 1/24/23, and 2/20/23. LaTech selected this exhibit as thier next project this semester. Broken cord replaced Oct. 23'. Broken and taken off floor as of December 2023."
+  },
+  {
+    "ExhibitName": "Phases of the Moon",
+    "ExhibitDescription": "The Phases of the Moon Exhibit features a chair surronded by the 8 phases of the moon. When the chair is spun to point at a moon it lights up with its correspoinding phase in the lunar cycle.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Air & Space",
+    "Notes": "LED bulbs and new relay installed. PO needed for new boat chair. Two moons broke and were acyrlic welded and re-installed. "
+  },
+  {
+    "ExhibitName": "Sun Table",
+    "ExhibitDescription": "Exhibits related to the sun, a sun quiz, a sun spot livestream.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "Recomend showing NASA live stream "
+  },
+  {
+    "ExhibitName": "Sailing by the Stars",
+    "ExhibitDescription": "Features a sailboat that visitors can sit in and use a controller to explore Open Skys and learn about the constellations and the universe.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "New programming and controler installed. Needs new signage on how to use exhibit "
+  },
+  {
+    "ExhibitName": "Star constilation Kiosks",
+    "ExhibitDescription": "Kiosks that show different constillations by season. Once the visitors feel they have learned enough they can take a quiz to test their knowledge.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Out of Service",
+    "Cluster": "Air & Space",
+    "Notes": "Recomend decommissioning. Not functioning as intended."
+  },
+  {
+    "ExhibitName": "Pendulum",
+    "ExhibitDescription": "A large pendulum that swings back and forth. and knocks over pins. It is used to demonstrate the rotation of the Earth.",
+    "BuildingLocation": "Space Center",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Air & Space",
+    "Notes": "Blocked off from visitors bc of June 3 flash flood. City insurance covers carpet replacment. Needs new signage."
+  },
+  {
+    "ExhibitName": "Flash Shadow Wall",
+    "ExhibitDescription": "A wall that visitors can stand in front of and have their shadow projected onto it. The wall then has a light flashed at it and the shadow is captured.",
+    "BuildingLocation": "Light and Color Lab",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Glow wall does not react well to flash"
+  },
+  {
+    "ExhibitName": "Colored Shadows",
+    "ExhibitDescription": "Uses red, green, and blue light to demonstrate how the color can be mixed to create different colors.",
+    "BuildingLocation": "Light and Color Lab",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Green light replaced 7/22/23"
+  },
+  {
+    "ExhibitName": "Hydroponic System",
+    "ExhibitDescription": "A hydroponic system that visitors can see how plants grow without soil.",
+    "BuildingLocation": "Cafe",
+    "CurrentStatus": "Out of Service",
+    "Cluster": "Plant",
+    "Notes": "Maintanance supplies and sigange"
+  },
+  {
+    "ExhibitName": "Age and Weight kiosks ",
+    "ExhibitDescription": "Kiosks for each of the planets, you can input your weight and age and it will tell you how much you would weigh on that planet and how old you would be.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Out of Service",
+    "Cluster": "Air & Space",
+    "Notes": "Replaced with new planet kiosks #1 and #2"
+  },
+  {
+    "ExhibitName": "Planet Kiosks #1 and #2",
+    "ExhibitDescription": "Two kiosks each showing a few of the planets in our solar system. Planets can be selected and information about the respective planet is displayed for the visitor to learn.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": ""
+  },
+  {
+    "ExhibitName": "Bridge Model",
+    "ExhibitDescription": "A model of the Bakowski Bridge.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Engineering",
+    "Notes": "PO for wheel replacement. needs a vinyl wrap designed and quoted."
+  },
+  {
+    "ExhibitName": "Gum Ball Tower",
+    "ExhibitDescription": "A large container of gumballs. Visitors can try and make a guess at how many gumballs are contained.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Math",
+    "Notes": "Added new gum balls on top 8/12/22."
+  },
+  {
+    "ExhibitName": "Beanie Baby Tower",
+    "ExhibitDescription": "A large container of beanie babies. Visitors can try and make a guess at how many beanie babies are contained.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Math",
+    "Notes": "signage was taken from exhibit"
+  },
+  {
+    "ExhibitName": "Planet Signs",
+    "ExhibitDescription": "",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "light bulbs replaced with LED. Light boxes 1,2,3,4, 8 and 9 have the new LED bulbs. Earth light box had ballast replaced 5/23. "
+  },
+  {
+    "ExhibitName": "Planets on Pillars",
+    "ExhibitDescription": "The planets in our solar system on pillars, visitors can walk around and see the planets, and their sizes in comparison to each other.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "Needs cleaning "
+  },
+  {
+    "ExhibitName": "Light Tower NASA Infograph",
+    "ExhibitDescription": "",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": ""
+  },
+  {
+    "ExhibitName": "Mars NISE Net Build Habitat",
+    "ExhibitDescription": "Allows visitors to build a mars habitat with legos.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "NEW! relocation closer to Mars planet and sign"
+  },
+  {
+    "ExhibitName": "Horsepower",
+    "ExhibitDescription": "Exhibit that demonstrates how much horsepower you can generate. It works by turning a crank that has magnets around the outside of the shaft. A hall effect sensor is used to capture the speed of the magnets and the Horsepower is calculated.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Cleaned - Dec. 2022. Exposed wires at bottom. does not work properly. Taken off exhibit floor. Stored in boiler room April '23. FIXED! 8/26/23 moved back on exbhit floor in Solarium. MOVED! 4/24 Moved to Second Floor Outside POP"
+  },
+  {
+    "ExhibitName": "Chandra Activity",
+    "ExhibitDescription": "Different activities having to do with chandra and our solar system.",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "Rotate exhibit furniture 180. New signage with LAStem Grant"
+  },
+  {
+    "ExhibitName": "Oceans On the Move (Blue spin)",
+    "ExhibitDescription": "",
+    "BuildingLocation": "Solarium",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "Leak fixed. Needs new signage. Placed in Solarium April 2023. "
+  },
+  {
+    "ExhibitName": "Nano displays",
+    "ExhibitDescription": "Assortment of nano exhibits, build a carbon nanotube, nano balance, static vs gravity beads, and informational panels about nano technology.",
+    "BuildingLocation": "2nd Floor Balcony",
+    "CurrentStatus": "Operational",
+    "Cluster": "Nano",
+    "Notes": "Moved to 2nd fl balcony - March '24"
+  },
+  {
+    "ExhibitName": "Small, Smaller, Nano",
+    "ExhibitDescription": "Containers of water and small and nano sized ferrofluids. Visitors can see how the ferrofluids react to magnets.",
+    "BuildingLocation": "2nd Floor Balcony",
+    "CurrentStatus": "Operational",
+    "Cluster": "Nano",
+    "Notes": "Water replaced with clean water, March '24."
+  },
+  {
+    "ExhibitName": "I Spy Nano",
+    "ExhibitDescription": "Four different kinds of nano technology. A squeeze bottle that releases a scent, a fuzz on a teddy bear, a circuit board, and a butterflies wings.",
+    "BuildingLocation": "2nd Floor Balcony",
+    "CurrentStatus": "Operational",
+    "Cluster": "Nano",
+    "Notes": "Squeeze bottle and orange scent replaced, March '24."
+  },
+  {
+    "ExhibitName": "Body Puzzle",
+    "ExhibitDescription": "A puzzle of the different parts of the body. Visitors can try and put the body back together.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Health",
+    "Notes": "missing organ parts"
+  },
+  {
+    "ExhibitName": "X-rays Puzzle",
+    "ExhibitDescription": "A puzzle of different x-ray images, can be put together to make full x-rays of different things.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Health",
+    "Notes": "Replaced x-rays 9-5-22"
+  },
+  {
+    "ExhibitName": "Jumping Ring",
+    "ExhibitDescription": "A metal ring on a tube, a button can be pressed to store up a charge, when the button is pressed the ring jumps up the tube.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Electricity",
+    "Notes": "Ring replaced 2/23, 4/25, 8/25"
+  },
+  {
+    "ExhibitName": "Magnetic Fields",
+    "ExhibitDescription": "A magnetic field that visitors can interact with using washers.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Electricity",
+    "Notes": "Magnetic washers replaced as needed"
+  },
+  {
+    "ExhibitName": "Make a Movie",
+    "ExhibitDescription": "Allows visitors to experiment with and to understand how Zoetropes work. Allows visitors to make their own movie.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Science",
+    "Notes": "Paper strips need replaced as needed. New signage ordered."
+  },
+  {
+    "ExhibitName": "Domino Table",
+    "ExhibitDescription": "A large domino table that visitors can use to line up dominos and then knock them over in sequence.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Math",
+    "Notes": "Surface is faded. Recomend new vinyl wrap."
+  },
+  {
+    "ExhibitName": "Hang Tough, Dont Puff",
+    "ExhibitDescription": "",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Out of Service",
+    "Cluster": "Health",
+    "Notes": "Stored in blue container "
+  },
+  {
+    "ExhibitName": "Lung pump",
+    "ExhibitDescription": "A big lever that can be pumped to simulate how our lungs work.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Health",
+    "Notes": "needs lever handle fixed and rubber sheet replaced. 3-10-24"
+  },
+  {
+    "ExhibitName": "Pitch Speed",
+    "ExhibitDescription": "A pitching cage that visitors can pitch in and see how fast they can throw.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Health",
+    "Notes": "Cleaned May '23. Catcher backdrop replaced May '23. Baseballs replaced. Needs an updated speed sensor installed. New signage ordered."
+  },
+  {
+    "ExhibitName": "Square Wheel Ramp",
+    "ExhibitDescription": "Exhibit that demonstrates how square wheels can roll on a ramp with a series of humps.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "needs new surface on landing pads"
+  },
+  {
+    "ExhibitName": "Angular Momentum",
+    "ExhibitDescription": "A stool that can be sat on, a visitor can spin a wheel and then pull their arms in to see how their speed increases and it spins them.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "fresh coat of paint needed. New signage ordered. "
+  },
+  {
+    "ExhibitName": "Drill Core Xylophone",
+    "ExhibitDescription": "A large xylophone that can be played by visitors.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Music",
+    "Notes": "Drum sticks replaced May '23. Replacements at heath zone July '23. 6 new drum stick sets purchased Oct. '23. Screws reeinforced and exhibit cleaned and new signage ordered. March '24."
+  },
+  {
+    "ExhibitName": "Bed of Nails",
+    "ExhibitDescription": "Allows visitors to lay on a bed of nails and experience and learn about pressure distribution.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Physics",
+    "Notes": "Relocated near pitching cage. Water damage possible. Acrylic top is stopping nails from raising and lowering. Cleaned exhibit and adjusted nail holes (April '24)."
+  },
+  {
+    "ExhibitName": "Endless Hallway",
+    "ExhibitDescription": "A small hallway that has mirrors on both sides, visitors can look through a hole and see an illusion of an endless hallway.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "Science",
+    "Notes": "Replaced two light bulbs on top 8/17/22. Needs more work."
+  },
+  {
+    "ExhibitName": "Bernoulli Funnel",
+    "ExhibitDescription": "A funnel that has a ball that can be floated on a stream of air.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "Blower replaced. Craftsman 2.5 gal wet/dry vac. 4/4/24"
+  },
+  {
+    "ExhibitName": "Ball Machine",
+    "ExhibitDescription": "A large contraption that has a series of ramps, tracks, drops, and lifts that a balls move around on and can be watched going through the machine.",
+    "BuildingLocation": "IMAX Exit",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "three new polycarbnet walls for replacement. Cleaned July '23. Quote for total wall replacment $3,000"
+  },
+  {
+    "ExhibitName": "Bernoulli Balancing",
+    "ExhibitDescription": "Demonstrates the Bernoulli principle by balancing a ball on a stream of air.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Air & Space",
+    "Notes": "Ball replaced April '23, and again Nov. '23. New Signage installed. Relocated to 2nd fl gallery"
+  },
+  {
+    "ExhibitName": "Pull Yourself Up",
+    "ExhibitDescription": "Allows the visitor to pull themselves up on a chair with three different diffucluty levels based on the pulley configuration.",
+    "BuildingLocation": "IMAX Exit",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Needs dry lubricant spray once a week. Pulleys replaced July '23. Needs new ropes installed. New Signage Ordered."
+  },
+  {
+    "ExhibitName": "Pump Yourself Up",
+    "ExhibitDescription": "A chair connected to a vaccuum pump. Visitors can sit in the chair and press a button to create a vacuum and lift themselves up.",
+    "BuildingLocation": "IMAX Exit",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Relay replaced, rewired power supply and replaced top blower/motor January 2024."
+  },
+  {
+    "ExhibitName": "Magnet Maze",
+    "ExhibitDescription": "Balls in a maze that can be moved around with magnets. Visitors can try and get the balls to the end of the maze using the magnets.",
+    "BuildingLocation": "2nd Floor Balcony",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Replaced wire and magnets 9/22, 2/23 and 4/23, 5/23, 6/15, 8/10, 9/24. REplacment magnet wands keep getting broekn. Need R&D for a better magnet wand. A new type of strong magnet has been purchased. "
+  },
+  {
+    "ExhibitName": "Ball Race",
+    "ExhibitDescription": "Shows how a straight line may not always be the fastest way to get to the end. Visitors can race balls down a track, one curved and one straight ,and see which ball gets to the end first.",
+    "BuildingLocation": "Second Floor",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Could use a vinyl wrap for update"
+  },
+  {
+    "ExhibitName": "Pipes of Pan",
+    "ExhibitDescription": "This exhibit shows that tubes of different lengths produce different sounds. Visitors can blow into the tubes and hear the different sounds. The length of the tube decides it pitch, longer tubes yiles lower notes, and shorter tubes yield higher ones.",
+    "BuildingLocation": "Second Floor Balcony",
+    "CurrentStatus": "Operational",
+    "Cluster": "Health",
+    "Notes": "color fading on PVC parts"
+  },
+  {
+    "ExhibitName": "Air Cannon",
+    "ExhibitDescription": "An air cannon pointed at CD disks suspended from the ceiling, visitors can hit the back of the cannon and see how it affects the disks.",
+    "BuildingLocation": "Second Floor Balcony",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Drum cover replaced 1/23"
+  },
+  {
+    "ExhibitName": "Turbulent Seas",
+    "ExhibitDescription": "A bowl of water that is spun to create a whirlpool like effect. It demonstrates how the Coriolis effect works.",
+    "BuildingLocation": "Second Floor Balcony",
+    "CurrentStatus": "Operational",
+    "Cluster": "Physics",
+    "Notes": "Clean bowl and replace with fresh water once a quarter. 5/23, 7/23, 8/20. Motor needs to be replaced. Motor has been purchased and installed. Exhibit is working great (March '24)."
+  },
+  {
+    "ExhibitName": "Water table",
+    "ExhibitDescription": "A large water table that visitors can use to play with water and learn about water flow.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "N/a",
+    "Notes": "Deep Cleaned 10/22, 1/23. Clorine tabs - ONLY 3 at a time! Acrylic cylindar needs replaced. PO needed. Flooring needs cleaning and an updated drainage and UV light system."
+  },
+  {
+    "ExhibitName": "Fire Hose Air Blower",
+    "ExhibitDescription": "Simulates a fire and allows visitors to use a hydrant and fire hose to put the fire out with air blower.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": "3D print new hose handle. Timer switch was replaced. Relay replaced."
+  },
+  {
+    "ExhibitName": "Brookshires Grocery ",
+    "ExhibitDescription": "A model brookshires grocery store with plastic groceries that visitors can pretend shop in",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": "updated grocery items needed"
+  },
+  {
+    "ExhibitName": "Construction House",
+    "ExhibitDescription": "A house that has different demonstrations of common construction neccesities, like plumbing and power.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": "Needs new foam material "
+  },
+  {
+    "ExhibitName": "Cow",
+    "ExhibitDescription": "A large cow that visitors can simulate milking on.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": "utters replaced 8/20. Utters replaced again January 2024."
+  },
+  {
+    "ExhibitName": "Chase Bank Tv Screen",
+    "ExhibitDescription": "A tv screen that simulates a bank.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Operational",
+    "Cluster": "N/a",
+    "Notes": "Fixed. Needs to be reset after a power outage. "
+  },
+  {
+    "ExhibitName": "X-Ray",
+    "ExhibitDescription": "A screen with buttons that display different x-rays of animals.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Operational",
+    "Cluster": "Health",
+    "Notes": "Fixed. Needs to be reset after a power outage. "
+  },
+  {
+    "ExhibitName": "Piggy Bank",
+    "ExhibitDescription": "A piggy bank that plastic money can be put into, and it makes a sound.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Operational",
+    "Cluster": "Math",
+    "Notes": "New sensor installed."
+  },
+  {
+    "ExhibitName": "Chase Bank Blower",
+    "ExhibitDescription": "A miniature pnumatic tube system that visitors can use to send a ball through the tubes to the bank.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "N/a",
+    "Notes": "blowers are not working well. PO submitted March '24)."
+  },
+  {
+    "ExhibitName": "Play House",
+    "ExhibitDescription": "A large playhouse that visitors can climb around in.",
+    "BuildingLocation": "POP",
+    "CurrentStatus": "Under Repair",
+    "Cluster": "N/a",
+    "Notes": "Needs cleaning. Rope lights have been replaced with ceiling light fixtures. "
+  }
+]

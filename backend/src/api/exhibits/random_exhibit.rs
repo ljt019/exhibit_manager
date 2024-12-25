@@ -29,7 +29,7 @@ pub fn random_exhibit(conn: &Connection) -> rusqlite::Result<Exhibit> {
     // Map each row to an Exhibit struct
     let exhibits_iter = stmt.query_map([], |row| {
         Ok(Exhibit {
-            id: Some(row.get(0)?),
+            id: row.get(0)?,
             name: row.get(1)?,
             cluster: row.get(2)?,
             location: row.get(3)?,
@@ -46,7 +46,7 @@ pub fn random_exhibit(conn: &Connection) -> rusqlite::Result<Exhibit> {
     let mut exhibits = Vec::new();
     for exhibit_res in exhibits_iter {
         let mut exhibit = exhibit_res?;
-        let id = exhibit.id.unwrap();
+        let id = exhibit.id;
 
         // Fetch associated part IDs
         let mut stmt_parts =
@@ -59,8 +59,9 @@ pub fn random_exhibit(conn: &Connection) -> rusqlite::Result<Exhibit> {
             conn.prepare("SELECT timestamp, note FROM exhibit_notes WHERE exhibit_id = ?1")?;
         let notes_iter = stmt_notes.query_map(rusqlite::params![id], |row| {
             Ok(Note {
-                timestamp: row.get(0)?,
-                note: row.get(1)?,
+                id: row.get(0)?,
+                timestamp: row.get(1)?,
+                message: row.get(2)?,
             })
         })?;
         exhibit.notes = notes_iter.collect::<rusqlite::Result<Vec<Note>>>()?;

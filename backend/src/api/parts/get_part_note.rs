@@ -1,0 +1,62 @@
+use crate::db::DbPool;
+use crate::errors::ApiError;
+use crate::models::Note;
+use log::error;
+use rocket::get;
+use rocket::serde::json::Json;
+use rocket::State;
+use rusqlite::Connection;
+use rusqlite::OptionalExtension;
+
+pub fn get_part_note(
+    part_id: i64,
+    note_id: i64,
+    conn: &Connection,
+) -> rusqlite::Result<Option<Note>> {
+    let note_opt = conn
+        .query_row(
+            "SELECT id, timestamp, message FROM part_notes WHERE part_id = ?1 AND id = ?2",
+            rusqlite::params![part_id, note_id],
+            |row| {
+                Ok(Note {
+                    id: row.get(0)?,
+                    timestamp: row.get(1)?,
+                    message: row.get(2)?,
+                })
+            },
+        )
+        .optional()?;
+
+    Ok(note_opt)
+}
+
+#[get("/parts/<part_id>/notes/<note_id>")]
+pub async fn get_part_note_handler(
+    part_id: i64,
+    note_id: i64,
+    db_pool: &State<DbPool>,
+) -> Result<Json<Note>, ApiError> {
+    let pool = (*db_pool).clone();
+
+    // Offload the blocking database operation to a separate thread
+    let result = rocket::tokio::task::spawn_blocking(move || {
+        let conn = pool.get().map_err(|_| {
+            error!("Failed to get DB connection from pool");
+            ApiError::DatabaseError("Failed to get DB connection".into())
+        })?;
+        get_part_note(part_id, note_id, &conn).map_err(|e| {
+            error!("Database error: {}", e);
+            ApiError::DatabaseError("Database Error".into())
+        })
+    })
+    .await
+    .map_err(|e| {
+        error!("Task panicked: {}", e);
+        ApiError::DatabaseError("Internal Server Error".into())
+    })??;
+
+    match result {
+        Some(note) => Ok(Json(note)),
+        None => Err(ApiError::NotFound),
+    }
+}

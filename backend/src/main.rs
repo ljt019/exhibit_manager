@@ -61,26 +61,58 @@ async fn rocket() -> _ {
         .mount(
             "/",
             routes![
+                //
+                // ** Bug Report Route **
+                //
+                // POST
                 api::github::report_bug_handler,
-                api::exhibits::create_exhibit_handler,
+                //
+                // ** Exhibit Routes **
+                //
+                // GET
                 api::exhibits::get_exhibit_handler,
-                api::exhibits::update_exhibit_handler,
-                api::exhibits::delete_exhibit_handler,
                 api::exhibits::list_exhibits_handler,
                 api::exhibits::handle_random_exhibit,
+                api::exhibits::get_exhibit_note_handler,
+                api::exhibits::list_exhibit_notes_handler,
+                // POST
+                api::exhibits::create_exhibit_handler,
                 api::exhibits::create_exhibit_note_handler,
-                api::parts::create_part_handler,
+                // PUT
+                api::exhibits::update_exhibit_handler,
+                // DELETE
+                api::exhibits::delete_exhibit_handler,
+                api::exhibits::delete_exhibit_note_handler,
+                //
+                // ** Part Routes **
+                //
+                // GET
                 api::parts::get_part_handler,
-                api::parts::update_part_handler,
-                api::parts::delete_part_handler,
                 api::parts::list_parts_handler,
                 api::parts::get_parts_by_ids_handler,
+                api::parts::get_part_note_handler,
+                api::parts::list_part_notes_handler,
+                // POST
+                api::parts::create_part_handler,
                 api::parts::create_part_note_handler,
+                // PUT
+                api::parts::update_part_handler,
+                // DELETE
+                api::parts::delete_part_handler,
+                api::parts::delete_part_note_handler,
+                //
+                // ** Jotform Routes **
+                //
+                // GET
+                api::jotforms::list_jotforms_handler,
+                api::jotforms::get_jotform_handler,
+                // POST
+                api::jotforms::change_status_handler,
+                //
+                // ** Dev Routes **
+                //
                 api::dev::handle_reset_db,
                 api::dev::create_dummy_exhibits_handler,
-                api::jotforms::list_jotforms_handler,
-                api::jotforms::change_status_handler,
-                api::jotforms::get_jotform_handler,
             ],
         )
         .mount("/images", rocket::fs::FileServer::from("images"))

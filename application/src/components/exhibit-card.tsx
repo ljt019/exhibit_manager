@@ -134,7 +134,7 @@ function NotesButton({
   notes,
 }: {
   name: string;
-  notes: Array<{ timestamp: string; note: string }>;
+  notes: Array<{ timestamp: string; message: string }>;
 }) {
   return (
     <Dialog>
@@ -153,7 +153,7 @@ function NotesButton({
             {notes.map((note, index) => (
               <li key={index} className="border-b pb-2">
                 <span className="font-medium">{note.timestamp}:</span>{" "}
-                {note.note}
+                {note.message}
               </li>
             ))}
           </ul>

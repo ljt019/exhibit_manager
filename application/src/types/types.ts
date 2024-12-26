@@ -6,7 +6,7 @@ export interface UserProfile {
   picture: string | null;
 }
 
-export type Note = { timestamp: string; note: string };
+export type Note = { timestamp: string; message: string };
 
 export type Sponsorship = {
   sponsorName: string;

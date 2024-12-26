@@ -1,5 +1,5 @@
+import { useEffect } from "react";
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from "lucide-react";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -32,15 +32,35 @@ export function NavUser() {
 
   const {
     data: userProfile,
-    isLoading: isUserProfileLoading,
     isError: isUserProfileError,
+    isPending: isUserProfilePending,
   } = useGetUserProfile();
 
-  if (isUserProfileError) {
-    return null;
-  }
+  useEffect(() => {
+    if (isUserProfileError) {
+      navigate("/");
+    }
+  }, [isUserProfileError, navigate]);
 
-  const isProfile = !isUserProfileLoading && userProfile;
+  const renderAvatar = () => (
+    <Avatar className="h-8 w-8 rounded-lg">
+      {!isUserProfilePending && userProfile?.picture ? (
+        <AvatarImage src={userProfile.picture} alt={userProfile.name} />
+      ) : (
+        <AvatarFallback className="rounded-lg">
+          {isUserProfilePending ? "EM" : userProfile?.name?.charAt(0) || "?"}
+        </AvatarFallback>
+      )}
+    </Avatar>
+  );
+
+  const renderName = () => (
+    <span className="truncate font-semibold">
+      {isUserProfilePending
+        ? "Loading..."
+        : userProfile?.name || "Unknown User"}
+    </span>
+  );
 
   return (
     <SidebarMenu>
@@ -51,22 +71,9 @@ export function NavUser() {
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
-                {isProfile ? (
-                  userProfile.picture && (
-                    <AvatarImage
-                      src={userProfile.picture}
-                      alt={userProfile.name}
-                    />
-                  )
-                ) : (
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                )}
-              </Avatar>
+              {renderAvatar()}
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">
-                  {isProfile ? userProfile.name : "Loading..."}
-                </span>
+                {renderName()}
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -79,22 +86,9 @@ export function NavUser() {
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                <Avatar className="h-8 w-8 rounded-lg">
-                  {isProfile ? (
-                    userProfile.picture && (
-                      <AvatarImage
-                        src={userProfile.picture}
-                        alt={userProfile.name}
-                      />
-                    )
-                  ) : (
-                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
-                  )}
-                </Avatar>
+                {renderAvatar()}
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    {isProfile ? userProfile.name : "Loading..."}
-                  </span>
+                  {renderName()}
                 </div>
               </div>
             </DropdownMenuLabel>

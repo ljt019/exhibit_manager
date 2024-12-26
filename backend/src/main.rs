@@ -137,7 +137,7 @@ impl rocket::fairing::Fairing for JotformFairing {
                     Err(e) => error!("Failed to sync Jotform data: {:?}", e),
                 }
 
-                // Sleep for 30 minutes
+                // Sleep for 30 minutes which is 1800 seconds
                 sleep(Duration::from_secs(1800)).await;
             }
         });

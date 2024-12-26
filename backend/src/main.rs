@@ -75,6 +75,7 @@ async fn rocket() -> _ {
                 api::parts::delete_part_handler,
                 api::parts::list_parts_handler,
                 api::parts::get_parts_by_ids_handler,
+                api::parts::create_part_note_handler,
                 api::dev::handle_reset_db,
                 api::dev::create_dummy_exhibits_handler,
                 api::jotforms::list_jotforms_handler,

@@ -9,7 +9,10 @@ use rusqlite::Connection;
 
 /// Inserts a new exhibit into the database and returns its ID.
 pub fn create_exhibit(exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<i64> {
-    // Insert the exhibit
+    let sponsor_name = exhibit.sponsor.as_ref().map(|s| &s.name);
+    let sponsor_start = exhibit.sponsor.as_ref().map(|s| &s.start_date);
+    let sponsor_end = exhibit.sponsor.as_ref().map(|s| &s.end_date);
+
     conn.execute(
         "INSERT INTO exhibits (name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date) 
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
@@ -19,14 +22,13 @@ pub fn create_exhibit(exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<
             exhibit.location,
             exhibit.status,
             exhibit.image_url,
-            exhibit.sponsor_name,
-            exhibit.sponsor_start_date,
-            exhibit.sponsor_end_date,
+            sponsor_name,
+            sponsor_start,
+            sponsor_end,
         ],
     )?;
     let exhibit_id = conn.last_insert_rowid();
 
-    // Associate parts with the exhibit
     for part_id in &exhibit.part_ids {
         conn.execute(
             "INSERT INTO exhibit_parts (exhibit_id, part_id) VALUES (?1, ?2)",
@@ -34,11 +36,16 @@ pub fn create_exhibit(exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<
         )?;
     }
 
-    // Insert notes related to the exhibit
+    // Updated to handle new Timestamp structure
     for note in &exhibit.notes {
         conn.execute(
-            "INSERT INTO exhibit_notes (exhibit_id, timestamp, message) VALUES (?1, ?2, ?3)",
-            rusqlite::params![exhibit_id, &note.timestamp, &note.message],
+            "INSERT INTO exhibit_notes (exhibit_id, date, time, message) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![
+                exhibit_id,
+                &note.timestamp.date,
+                &note.timestamp.time,
+                &note.message
+            ],
         )?;
     }
 
@@ -68,8 +75,14 @@ pub async fn create_exhibit_handler(
 
     // Offload the blocking database operation to a separate thread
     let result = rocket::tokio::task::spawn_blocking(move || {
-        let conn = pool.get().expect("Failed to get DB connection from pool");
-        create_exhibit(&exhibit, &conn)
+        let conn = pool.get().map_err(|_| {
+            error!("Failed to get DB connection from pool");
+            ApiError::DatabaseError("Failed to get DB connection".into())
+        })?;
+        create_exhibit(&exhibit, &conn).map_err(|e| {
+            error!("Database error: {}", e);
+            ApiError::DatabaseError("Database Error".into())
+        })
     })
     .await
     .map_err(|e| {

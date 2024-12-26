@@ -27,9 +27,7 @@ pub fn get_random_dummy_exhibit() -> Exhibit {
         location: dummy_exhibit_data.building_location.clone(),
         status: dummy_exhibit_data.current_status.clone(),
         image_url: format!("https://picsum.photos/seed/{}/200/300", id),
-        sponsor_name: None,
-        sponsor_start_date: None,
-        sponsor_end_date: None,
+        sponsor: None,
         part_ids: vec![],
         notes: vec![],
     };

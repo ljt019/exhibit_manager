@@ -1,6 +1,6 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::{Exhibit, Note};
+use crate::models::{Exhibit, Note, Sponsor, Timestamp};
 use log::error;
 use rocket::get;
 use rocket::serde::json::Json;
@@ -21,9 +21,25 @@ use rusqlite::Connection;
 /// Returns a `rusqlite::Error` if any database operation fails.
 pub fn list_exhibits(conn: &Connection) -> rusqlite::Result<Vec<Exhibit>> {
     let mut stmt = conn.prepare(
-        "SELECT id, name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date FROM exhibits"
+        "SELECT id, name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
+         FROM exhibits"
     )?;
-    let exhibits_iter = stmt.query_map([], |row| {
+
+    let exhibit_iter = stmt.query_map([], |row| {
+        // Handle optional sponsor fields
+        let sponsor = match (
+            row.get::<_, Option<String>>(6)?, // sponsor_name
+            row.get::<_, Option<String>>(7)?, // sponsor_start_date
+            row.get::<_, Option<String>>(8)?, // sponsor_end_date
+        ) {
+            (Some(name), Some(start_date), Some(end_date)) => Some(Sponsor {
+                name,
+                start_date,
+                end_date,
+            }),
+            _ => None, // If any sponsor field is NULL, sponsor becomes None
+        };
+
         Ok(Exhibit {
             id: row.get(0)?,
             name: row.get(1)?,
@@ -31,33 +47,34 @@ pub fn list_exhibits(conn: &Connection) -> rusqlite::Result<Vec<Exhibit>> {
             location: row.get(3)?,
             status: row.get(4)?,
             image_url: row.get(5)?,
-            sponsor_name: row.get(6)?,
-            sponsor_start_date: row.get(7)?,
-            sponsor_end_date: row.get(8)?,
+            sponsor,
             part_ids: Vec::new(),
             notes: Vec::new(),
         })
     })?;
 
     let mut exhibits = Vec::new();
-    for exhibit_res in exhibits_iter {
-        let mut exhibit = exhibit_res?;
-        let id = exhibit.id;
+    for exhibit_result in exhibit_iter {
+        let mut exhibit = exhibit_result?;
 
-        // Fetch associated part IDs
-        let mut stmt_parts =
-            conn.prepare("SELECT part_id FROM exhibit_parts WHERE exhibit_id = ?1")?;
-        let part_ids_iter = stmt_parts.query_map(rusqlite::params![id], |row| row.get(0))?;
+        // Fetch associated part IDs for each exhibit
+        let mut stmt = conn.prepare("SELECT part_id FROM exhibit_parts WHERE exhibit_id = ?1")?;
+        let part_ids_iter = stmt.query_map(rusqlite::params![exhibit.id], |row| row.get(0))?;
         exhibit.part_ids = part_ids_iter.collect::<rusqlite::Result<Vec<i64>>>()?;
 
-        // Fetch associated notes
-        let mut stmt_notes =
-            conn.prepare("SELECT id, timestamp, message FROM exhibit_notes WHERE exhibit_id = ?1")?;
-        let notes_iter = stmt_notes.query_map(rusqlite::params![id], |row| {
+        // Fetch associated notes for each exhibit
+        let mut stmt = conn
+            .prepare("SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1")?;
+        let notes_iter = stmt.query_map(rusqlite::params![exhibit.id], |row| {
+            let timestamp = Timestamp {
+                date: row.get(1)?,
+                time: row.get(2)?,
+            };
+
             Ok(Note {
                 id: row.get(0)?,
-                timestamp: row.get(1)?,
-                message: row.get(2)?,
+                timestamp,
+                message: row.get(3)?,
             })
         })?;
         exhibit.notes = notes_iter.collect::<rusqlite::Result<Vec<Note>>>()?;

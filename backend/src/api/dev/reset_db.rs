@@ -1,3 +1,4 @@
+use crate::db;
 use crate::db::DbPool;
 use crate::errors::ApiError;
 use log::error;
@@ -21,7 +22,12 @@ use rusqlite::Result as SqliteResult;
 /// * `rusqlite::Error` - Returns an error if any database operation fails.
 pub fn reset_database(conn: &Connection) -> rusqlite::Result<()> {
     wipe_database(conn)?;
-    setup_tables(conn)?;
+
+    Ok(())
+}
+
+fn setup_database_here(pool: &DbPool) -> SqliteResult<()> {
+    db::setup_database(pool)?;
 
     Ok(())
 }
@@ -54,6 +60,10 @@ pub async fn handle_reset_db(db_pool: &State<DbPool>) -> Result<Json<serde_json:
         reset_database(&conn).map_err(|e| {
             error!("Failed to reset database: {}", e);
             ApiError::DatabaseError("Failed to reset database".into())
+        })?;
+        setup_database_here(&pool).map_err(|e| {
+            error!("Failed to setup database: {}", e);
+            ApiError::DatabaseError("Failed to setup database".into())
         })
     })
     .await
@@ -65,73 +75,6 @@ pub async fn handle_reset_db(db_pool: &State<DbPool>) -> Result<Json<serde_json:
     Ok(Json(serde_json::json!({
         "message": "Database reset successful"
     })))
-}
-
-/// Sets up the database schema.
-fn setup_tables(conn: &Connection) -> SqliteResult<()> {
-    // Create exhibits table
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS exhibits (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                cluster TEXT NOT NULL,
-                location TEXT NOT NULL,
-                status TEXT NOT NULL,
-                image_url TEXT NOT NULL,
-                sponsor_name TEXT,
-                sponsor_start_date TEXT,
-                sponsor_end_date TEXT
-            )",
-        [],
-    )?;
-
-    // Create parts table
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS parts (
-                id INTEGER PRIMARY KEY,
-                name TEXT NOT NULL,
-                link TEXT NOT NULL
-            )",
-        [],
-    )?;
-
-    // Create exhibit_parts join table for many-to-many relationship
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS exhibit_parts (
-                exhibit_id INTEGER NOT NULL,
-                part_id INTEGER NOT NULL,
-                FOREIGN KEY (exhibit_id) REFERENCES exhibits(id) ON DELETE CASCADE,
-                FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE CASCADE,
-                PRIMARY KEY (exhibit_id, part_id)
-            )",
-        [],
-    )?;
-
-    // Create notes table for exhibits
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS exhibit_notes (
-                id INTEGER PRIMARY KEY,
-                exhibit_id INTEGER NOT NULL,
-                timestamp TEXT NOT NULL,
-                message TEXT NOT NULL,
-                FOREIGN KEY (exhibit_id) REFERENCES exhibits(id) ON DELETE CASCADE
-            )",
-        [],
-    )?;
-
-    // Create notes table for parts
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS part_notes (
-                id INTEGER PRIMARY KEY,
-                part_id INTEGER NOT NULL,
-                timestamp TEXT NOT NULL,
-                message TEXT NOT NULL,
-                FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE CASCADE
-            )",
-        [],
-    )?;
-
-    Ok(())
 }
 
 /// Wipes the database by dropping all tables.

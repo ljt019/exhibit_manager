@@ -1,6 +1,6 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::Jotform;
+use crate::models::{FullName, Jotform};
 use log::error;
 use rocket::get;
 use rocket::serde::json::Json;
@@ -10,28 +10,36 @@ use rusqlite::Connection;
 /// Retrieves all jotforms from the database.
 pub fn get_jotform(id: i64, conn: &Connection) -> rusqlite::Result<Jotform> {
     let mut stmt = conn.prepare(
-        "SELECT id, submitter_name, submission_date, submission_time, location, exhibit_name, description, priority_level, department, status FROM jotforms WHERE id = ?1"
+        "SELECT id, submitter_first_name, submitter_last_name, submission_date, submission_time, location, exhibit_name, description, priority_level, department, status FROM jotforms WHERE id = ?1"
     )?;
 
     let mut jotform_iter = stmt.query_map(rusqlite::params![id], |row| {
-        let submission_date_raw = row.get(2)?;
-        let submission_time_raw = row.get(3)?;
+        let submission_date_raw = row.get(3)?;
+        let submission_time_raw = row.get(4)?;
+
+        let submitter_first_name = row.get(1)?;
+        let submitter_last_name = row.get(2)?;
 
         let submission_date = crate::models::SubmissionDate {
             date: submission_date_raw,
             time: submission_time_raw,
         };
 
+        let submitter_name = FullName {
+            first: submitter_first_name,
+            last: submitter_last_name,
+        };
+
         Ok(Jotform {
             id: row.get(0)?,
-            submitter_name: row.get(1)?,
+            submitter_name: submitter_name,
             created_at: submission_date,
-            location: row.get(4)?,
-            exhibit_name: row.get(5)?,
-            description: row.get(6)?,
-            priority_level: row.get(7)?,
-            department: row.get(8)?,
-            status: row.get(9)?,
+            location: row.get(5)?,
+            exhibit_name: row.get(6)?,
+            description: row.get(7)?,
+            priority_level: row.get(8)?,
+            department: row.get(9)?,
+            status: row.get(10)?,
         })
     })?;
 

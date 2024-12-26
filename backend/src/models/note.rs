@@ -1,6 +1,22 @@
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Validate, Clone)]
+pub struct Timestamp {
+    #[validate(custom(function = "Timestamp::validate_date_format"))]
+    pub date: String,
+    #[validate(custom(function = "Timestamp::validate_date_format"))]
+    pub time: String,
+}
+
+impl Timestamp {
+    fn validate_date_format(date: &str) -> Result<(), ValidationError> {
+        chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d")
+            .map_err(|_| ValidationError::new("Date must be in YYYY-MM-DD format"))?;
+        Ok(())
+    }
+}
+
 // Also need to validate the Note struct
 #[derive(Debug, Serialize, Deserialize, Validate, PartialEq, Eq, Clone)]
 pub struct Note {
@@ -9,15 +25,5 @@ pub struct Note {
     #[validate(length(min = 1, message = "Note cannot be empty"))]
     pub message: String,
 
-    #[validate(custom(function = "validate_timestamp"))]
-    pub timestamp: String,
-}
-
-fn validate_timestamp(timestamp: &str) -> Result<(), ValidationError> {
-    // Validate timestamp format (assuming ISO 8601)
-    // You might want to use chrono here for proper date validation
-    if timestamp.len() < 1 {
-        return Err(ValidationError::new("Timestamp cannot be empty"));
-    }
-    Ok(())
+    pub timestamp: Timestamp,
 }

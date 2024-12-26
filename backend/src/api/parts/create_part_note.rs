@@ -1,5 +1,6 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
+use crate::models::Timestamp;
 use log::error;
 use rocket::post;
 use rocket::serde::json::Json;
@@ -24,11 +25,14 @@ pub struct NewNote {
 /// # Returns
 /// * `rusqlite::Result<i64>` - The ID of the newly created note or a rusqlite error
 pub fn create_note(new_note: &NewNote, part_id: i64, conn: &Connection) -> rusqlite::Result<i64> {
-    let timestamp = chrono::Utc::now().to_rfc3339();
+    let timestamp = Timestamp {
+        date: chrono::Local::now().naive_local().date().to_string(),
+        time: chrono::Local::now().naive_local().time().to_string(),
+    };
 
     conn.execute(
-        "INSERT INTO part_notes (part_id, timestamp, message) VALUES (?1, ?2, ?3)",
-        rusqlite::params![part_id, &timestamp, &new_note.message],
+        "INSERT INTO part_notes (part_id, date, time, message) VALUES (?1, ?2, ?3, ?4)",
+        rusqlite::params![part_id, &timestamp.date, &timestamp.time, &new_note.message],
     )?;
 
     let note_id = conn.last_insert_rowid();

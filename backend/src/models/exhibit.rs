@@ -3,6 +3,25 @@ use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
 #[derive(Debug, Serialize, Deserialize, Validate, PartialEq, Eq, Clone)]
+pub struct Sponsor {
+    pub name: String,
+
+    #[validate(custom(function = "Sponsor::validate_date_format"))]
+    pub start_date: String,
+
+    #[validate(custom(function = "Sponsor::validate_date_format"))]
+    pub end_date: String,
+}
+
+impl Sponsor {
+    fn validate_date_format(date: &str) -> Result<(), ValidationError> {
+        chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d")
+            .map_err(|_| ValidationError::new("Date must be in YYYY-MM-DD format"))?;
+        Ok(())
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Validate, PartialEq, Eq, Clone)]
 pub struct Exhibit {
     pub id: i64,
 
@@ -39,13 +58,7 @@ pub struct Exhibit {
     #[validate(url)]
     pub image_url: String,
 
-    pub sponsor_name: Option<String>,
-
-    #[validate(custom(function = "Exhibit::validate_date_format"))]
-    pub sponsor_start_date: Option<String>,
-
-    #[validate(custom(function = "Exhibit::validate_date_format"))]
-    pub sponsor_end_date: Option<String>,
+    pub sponsor: Option<Sponsor>,
 }
 
 impl Exhibit {
@@ -56,11 +69,5 @@ impl Exhibit {
                 "Invalid status. Must be 'active', 'inactive', or 'maintenance'",
             )),
         }
-    }
-
-    fn validate_date_format(date: &str) -> Result<(), ValidationError> {
-        chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d")
-            .map_err(|_| ValidationError::new("Date must be in YYYY-MM-DD format"))?;
-        Ok(())
     }
 }

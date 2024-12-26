@@ -7,10 +7,16 @@ pub struct SubmissionDate {
     pub time: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+pub struct FullName {
+    pub first: String,
+    pub last: String,
+}
+
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Validate)]
 pub struct Jotform {
     pub id: String,
-    pub submitter_name: String,
+    pub submitter_name: FullName,
     pub created_at: SubmissionDate,
     pub location: String,
     pub exhibit_name: String,
@@ -31,6 +37,7 @@ fn validate_status(status: &str) -> Result<(), ValidationError> {
         "Open" => Ok(()),
         "InProgress" => Ok(()),
         "Closed" => Ok(()),
+        "Unplanned" => Ok(()),
         _ => Err(ValidationError::new("Invalid status")),
     }
 }

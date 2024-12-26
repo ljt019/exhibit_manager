@@ -1,4 +1,4 @@
-use crate::models::{Jotform, SubmissionDate};
+use crate::models::{FullName, Jotform, SubmissionDate};
 use rocket::serde::json::serde_json::Value;
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -75,8 +75,6 @@ impl RawSubmission {
             .expect("'last' wasn't a string")
             .trim();
 
-        let submitter_name = format!("{} {}", first, last).trim().to_string();
-
         // 2) Helper to get a string from the "answer" field of any question.
         let get_str = |q_id: &str| {
             self.answers
@@ -117,6 +115,12 @@ impl RawSubmission {
             time: self.created_at.split(' ').last().unwrap().to_string(),
         };
 
+        // 4.5) Create the FullName Struct
+        let submitter_name = FullName {
+            first: first.to_string(),
+            last: last.to_string(),
+        };
+
         // 5) Build the final Jotform struct, defaulting `status` to "Open".
         Jotform {
             id: self.id.clone(),
@@ -127,7 +131,7 @@ impl RawSubmission {
             description,
             priority_level,
             department,
-            status: "Open".to_string(), // your default
+            status: String::new(), // your default
         }
     }
 

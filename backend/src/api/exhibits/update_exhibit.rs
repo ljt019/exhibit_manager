@@ -24,6 +24,10 @@ use rusqlite::Connection;
 /// # Errors
 /// Returns a `rusqlite::Error` if any database operation fails.
 pub fn update_exhibit(id: i64, exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<usize> {
+    let sponsor_name = exhibit.sponsor.as_ref().map(|s| &s.name);
+    let sponsor_start = exhibit.sponsor.as_ref().map(|s| &s.start_date);
+    let sponsor_end = exhibit.sponsor.as_ref().map(|s| &s.end_date);
+
     let affected = conn.execute(
         "UPDATE exhibits 
              SET name = ?1, cluster = ?2, location = ?3, status = ?4, image_url = ?5, 
@@ -35,9 +39,9 @@ pub fn update_exhibit(id: i64, exhibit: &Exhibit, conn: &Connection) -> rusqlite
             exhibit.location,
             exhibit.status,
             exhibit.image_url,
-            exhibit.sponsor_name,
-            exhibit.sponsor_start_date,
-            exhibit.sponsor_end_date,
+            sponsor_name,
+            sponsor_start,
+            sponsor_end,
             id
         ],
     )?;
@@ -61,8 +65,13 @@ pub fn update_exhibit(id: i64, exhibit: &Exhibit, conn: &Connection) -> rusqlite
     )?;
     for note in &exhibit.notes {
         conn.execute(
-            "INSERT INTO exhibit_notes (exhibit_id, timestamp, message) VALUES (?1, ?2, ?3)",
-            rusqlite::params![id, &note.timestamp, &note.message],
+            "INSERT INTO exhibit_notes (exhibit_id, date, time, message) VALUES (?1, ?2, ?3)",
+            rusqlite::params![
+                id,
+                &note.timestamp.date,
+                &note.timestamp.time,
+                &note.message
+            ],
         )?;
     }
 

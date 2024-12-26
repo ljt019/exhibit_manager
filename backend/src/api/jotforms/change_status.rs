@@ -16,7 +16,7 @@ pub struct ChangeStatusRequest {
 pub fn change_status(id: i64, new_status: &str, conn: &Connection) -> Result<(), rusqlite::Error> {
     // Validate the new status value
     match new_status {
-        "Open" | "InProgress" | "Closed" => {}
+        "Open" | "InProgress" | "Closed" | "Unplanned" => {}
         _ => {
             return Err(rusqlite::Error::InvalidQuery);
         }
@@ -26,6 +26,7 @@ pub fn change_status(id: i64, new_status: &str, conn: &Connection) -> Result<(),
         "UPDATE jotforms SET status = ? WHERE id = ?",
         params![new_status, id],
     )?;
+
     Ok(())
 }
 

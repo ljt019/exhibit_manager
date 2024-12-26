@@ -1,6 +1,6 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::{Note, Part};
+use crate::models::{Note, Part, Timestamp};
 use log::error;
 use rocket::get;
 use rocket::serde::json::Json;
@@ -46,12 +46,17 @@ pub fn get_part(id: i64, conn: &Connection) -> rusqlite::Result<Option<Part>> {
 
         // Fetch associated notes
         let mut stmt =
-            conn.prepare("SELECT id, timestamp, message FROM part_notes WHERE part_id = ?1")?;
+            conn.prepare("SELECT id, date, time, message FROM part_notes WHERE part_id = ?1")?;
         let notes_iter = stmt.query_map(rusqlite::params![id], |row| {
+            let timestamp = Timestamp {
+                date: row.get(1)?,
+                time: row.get(2)?,
+            };
+
             Ok(Note {
                 id: row.get(0)?,
-                timestamp: row.get(1)?,
-                message: row.get(2)?,
+                timestamp,
+                message: row.get(3)?,
             })
         })?;
         part.notes = notes_iter.collect::<rusqlite::Result<Vec<Note>>>()?;

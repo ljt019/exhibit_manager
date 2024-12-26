@@ -49,7 +49,8 @@ pub fn setup_database(pool: &DbPool) -> SqliteResult<()> {
         CREATE TABLE IF NOT EXISTS exhibit_notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             exhibit_id INTEGER NOT NULL,
-            timestamp TEXT NOT NULL,
+            date TEXT NOT NULL,
+            time TEXT NOT NULL,
             message TEXT NOT NULL,
             FOREIGN KEY (exhibit_id) REFERENCES exhibits(id) ON DELETE CASCADE
         );
@@ -57,14 +58,16 @@ pub fn setup_database(pool: &DbPool) -> SqliteResult<()> {
         CREATE TABLE IF NOT EXISTS part_notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             part_id INTEGER NOT NULL,
-            timestamp TEXT NOT NULL,
+            date TEXT NOT NULL,
+            time TEXT NOT NULL,
             message TEXT NOT NULL,
             FOREIGN KEY (part_id) REFERENCES parts(id) ON DELETE CASCADE
         );
 
         CREATE TABLE IF NOT EXISTS jotforms (
             id TEXT PRIMARY KEY,
-            submitter_name TEXT NOT NULL,
+            submitter_first_name TEXT NOT NULL,
+            submitter_last_name TEXT NOT NULL,
             submission_date TEXT NOT NULL,
             submission_time TEXT NOT NULL,
             location TEXT NOT NULL,

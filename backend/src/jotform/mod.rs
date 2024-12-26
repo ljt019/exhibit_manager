@@ -36,17 +36,20 @@ pub async fn sync_jotforms_once(
 }
 
 fn insert_jotform(conn: &Connection, jotform: &Jotform) -> rusqlite::Result<()> {
+    let status = "Open".to_string();
+
     conn.execute(
         r#"
         INSERT INTO jotforms (
-            id, submitter_name, submission_date, submission_time,
+            id, submitter_first_name, submitter_last_name, submission_date, submission_time,
             location, exhibit_name, description,
             priority_level, department, status
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
         "#,
         params![
             jotform.id,
-            jotform.submitter_name,
+            jotform.submitter_name.first,
+            jotform.submitter_name.last,
             jotform.created_at.date,
             jotform.created_at.time,
             jotform.location,
@@ -54,7 +57,7 @@ fn insert_jotform(conn: &Connection, jotform: &Jotform) -> rusqlite::Result<()> 
             jotform.description,
             jotform.priority_level,
             jotform.department,
-            jotform.status
+            status
         ],
     )?;
     Ok(())
@@ -64,19 +67,22 @@ fn update_jotform(conn: &Connection, jotform: &Jotform) -> rusqlite::Result<()> 
     conn.execute(
         r#"
         UPDATE jotforms
-           SET submitter_name = ?2,
-               submission_date = ?3,
-               submission_time = ?4,
-               location = ?5,
-               exhibit_name = ?6,
-               description = ?7,
-               priority_level = ?8,
-               department = ?9
-         WHERE id = ?1
+        SET
+            submitter_first_name = ?2,
+            submitter_last_name = ?3,
+            submission_date = ?4,
+            submission_time = ?5,
+            location = ?6,
+            exhibit_name = ?7,
+            description = ?8,
+            priority_level = ?9,
+            department = ?10
+        WHERE id = ?1
         "#,
         params![
             jotform.id,
-            jotform.submitter_name,
+            jotform.submitter_name.first,
+            jotform.submitter_name.last,
             jotform.created_at.date,
             jotform.created_at.time,
             jotform.location,

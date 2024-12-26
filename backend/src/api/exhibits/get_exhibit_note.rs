@@ -1,6 +1,6 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::Note;
+use crate::models::{Note, Timestamp};
 use log::error;
 use rocket::get;
 use rocket::serde::json::Json;
@@ -15,13 +15,18 @@ pub fn get_exhibit_note(
 ) -> rusqlite::Result<Option<Note>> {
     let note_opt = conn
         .query_row(
-            "SELECT id, timestamp, message FROM exhibit_notes WHERE exhibit_id = ?1 AND id = ?2",
+            "SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1 AND id = ?2",
             rusqlite::params![exhibit_id, note_id],
             |row| {
+                let timestamp = Timestamp {
+                    date: row.get(1)?,
+                    time: row.get(2)?,
+                };
+
                 Ok(Note {
                     id: row.get(0)?,
-                    timestamp: row.get(1)?,
-                    message: row.get(2)?,
+                    timestamp,
+                    message: row.get(3)?,
                 })
             },
         )

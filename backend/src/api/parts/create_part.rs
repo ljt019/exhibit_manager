@@ -40,8 +40,13 @@ pub fn create_part(part: &Part, conn: &Connection) -> rusqlite::Result<i64> {
     // Insert notes related to the part
     for note in &part.notes {
         conn.execute(
-            "INSERT INTO part_notes (part_id, timestamp, message) VALUES (?1, ?2, ?3)",
-            rusqlite::params![part_id, &note.timestamp, &note.message],
+            "INSERT INTO part_notes (part_id, date, time, message) VALUES (?1, ?2, ?3)",
+            rusqlite::params![
+                part_id,
+                &note.timestamp.date,
+                &note.timestamp.time,
+                &note.message
+            ],
         )?;
     }
 

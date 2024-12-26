@@ -48,8 +48,13 @@ pub fn update_part(id: i64, part: &Part, conn: &Connection) -> rusqlite::Result<
     )?;
     for note in &part.notes {
         conn.execute(
-            "INSERT INTO part_notes (part_id, timestamp, message) VALUES (?1, ?2, ?3)",
-            rusqlite::params![id, &note.timestamp, &note.message],
+            "INSERT INTO part_notes (part_id, date, time, message) VALUES (?1, ?2, ?3)",
+            rusqlite::params![
+                id,
+                &note.timestamp.date,
+                &note.timestamp.time,
+                &note.message
+            ],
         )?;
     }
 

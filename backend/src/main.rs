@@ -80,6 +80,7 @@ async fn rocket() -> _ {
                 api::dev::create_dummy_exhibits_handler,
                 api::jotforms::list_jotforms_handler,
                 api::jotforms::change_status_handler,
+                api::jotforms::get_jotform_handler,
             ],
         )
         .mount("/images", rocket::fs::FileServer::from("images"))

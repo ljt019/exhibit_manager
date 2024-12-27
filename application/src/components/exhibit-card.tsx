@@ -172,7 +172,6 @@ export function NotesButton({ exhibitId, name, notes }: NotesButtonProps) {
         exhibitId,
         note: { message: data.message },
       });
-      reset();
     } catch (error) {
       console.error("Error creating note:", error);
     }
@@ -219,7 +218,12 @@ export function NotesButton({ exhibitId, name, notes }: NotesButtonProps) {
                     <CardContent className="p-4 flex justify-between items-start">
                       <div>
                         <p className="text-sm text-muted-foreground mb-1">
-                          {format(new Date(note.timestamp.date), "PPpp")}
+                          {format(
+                            new Date(
+                              note.timestamp.date + " " + note.timestamp.time
+                            ),
+                            "PPpp"
+                          )}
                         </p>
                         <p>{note.message}</p>
                       </div>

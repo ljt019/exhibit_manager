@@ -266,7 +266,7 @@ interface NotesDialogProps {
 
 function NotesDialog({ partId, notes }: NotesDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { register, handleSubmit, reset } = useForm<{ message: string }>();
+  const { register, handleSubmit } = useForm<{ message: string }>();
   const createNote = useCreatePartNote();
   const deleteNote = useDeletePartNote();
 
@@ -276,7 +276,6 @@ function NotesDialog({ partId, notes }: NotesDialogProps) {
         partId,
         note: { message: data.message },
       });
-      reset();
     } catch (error) {
       console.error("Error creating note:", error);
     }

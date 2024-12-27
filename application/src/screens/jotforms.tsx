@@ -1,6 +1,5 @@
 import useGetJotformList from "@/hooks/data/queries/jotforms/useGetJotformList";
 import { Loading, Error } from "@/components/loading-and-error";
-import { Toaster } from "react-hot-toast";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,9 +28,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import axios from "axios";
+import useChangeStatus from "@/hooks/data/mutations/jotforms/useChangeStatus";
 import { FilterSection } from "@/components/filter-section";
 import { Jotform } from "@/types";
+import type {
+  Status,
+  NewStatusRequest,
+} from "@/hooks/data/mutations/jotforms/useChangeStatus";
 
 export default function Jotforms() {
   const { data: jotforms, isPending, isError, error } = useGetJotformList();
@@ -53,7 +56,6 @@ export default function Jotforms() {
 
   return (
     <div className="container mx-auto p-4 mt-[0.1rem]">
-      <Toaster position="top-right" />
       <Header />
       {isPending ? (
         <Loading />
@@ -126,6 +128,8 @@ interface ExpandedState {
 export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
   const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
 
+  const changeStatus = useChangeStatus();
+
   const sortedData = jotforms.sort((a: Jotform, b: Jotform) => {
     if (a.status === "InProgress" && b.status !== "InProgress") return -1;
     if (a.status !== "InProgress" && b.status === "InProgress") return 1;
@@ -141,7 +145,7 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
     }));
   };
 
-  const handleStatusChange = async (jotformId: string, newStatus: string) => {
+  const handleStatusChange = (jotformId: string, newStatus: string) => {
     if (
       jotforms.find((jotform: Jotform) => jotform.id === jotformId)?.status ===
       newStatus
@@ -151,12 +155,12 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
     if (!["Open", "InProgress", "Closed", "Unplanned"].includes(newStatus))
       return;
 
-    await axios.post(`http://localhost:3030/jotforms/${jotformId}/status`, {
-      new_status: newStatus,
-    });
+    const newStatusRequest: NewStatusRequest = {
+      jotformId,
+      status: newStatus as Status,
+    };
 
-    // Refresh jotforms data (you might need to implement this)
-    // refreshJotforms();
+    changeStatus.mutate(newStatusRequest);
   };
 
   const getPriorityBadge = (priority: string) => {

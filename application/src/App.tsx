@@ -6,7 +6,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "react-hot-toast";
 
 import { routes } from "@/routes";
 
@@ -58,7 +58,15 @@ function App() {
     <Router>
       <QueryClientProvider client={queryClient}>
         <Routes />
-        <Toaster />
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            style: {
+              background: "#19191F",
+              color: "#fff",
+            },
+          }}
+        />
       </QueryClientProvider>
     </Router>
   );

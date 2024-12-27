@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useGetUserProfile } from "@/hooks/data/queries/useGetProfileInfo";
 import { axiosInstance } from "@/api/axiosInstance";
+import { toast } from "react-hot-toast";
 
 interface ReportBugPayload {
   name?: string;
@@ -9,20 +10,20 @@ interface ReportBugPayload {
 }
 
 async function reportBug(bug_report: ReportBugPayload) {
-  await axiosInstance.post("http://localhost:3030/report-bug", bug_report);
+  const response = await axiosInstance.post(
+    "http://localhost:3030/report-bug",
+    bug_report
+  );
+
+  if (response.status !== 200) {
+    throw new Error("Failed to report bug");
+  }
+
+  return response;
 }
 
 export default function useCreateBugReport() {
   const { data: profile, isLoading, isError } = useGetUserProfile();
-
-  if (isLoading || isError || !profile) {
-    return {
-      mutate: () => {},
-      isPending: true,
-      isError,
-      isSuccess: false,
-    };
-  }
 
   return useMutation({
     mutationKey: ["reportBug"],
@@ -43,7 +44,11 @@ export default function useCreateBugReport() {
         name: profile.given_name, // Assuming 'given_name' is available
       };
 
-      return await reportBug(enrichedBugReport);
+      return toast.promise(reportBug(enrichedBugReport), {
+        loading: "Submitting bug report...",
+        success: "Bug reported successfully",
+        error: "Failed to report bug",
+      });
     },
   });
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axiosInstance";
+import { toast } from "react-hot-toast";
 
 export interface NewPart {
   name: string;
@@ -9,7 +10,13 @@ export interface NewPart {
 }
 
 async function createPart(part: NewPart) {
-  axiosInstance.post("/parts", part);
+  const response = await axiosInstance.post("/parts", part);
+
+  if (response.status !== 200) {
+    throw new Error("Failed to create part");
+  }
+
+  return response;
 }
 
 export default function useCreatePart() {
@@ -17,14 +24,13 @@ export default function useCreatePart() {
 
   return useMutation({
     mutationKey: ["createPart"],
-    mutationFn: createPart,
+    mutationFn: (part: NewPart) =>
+      toast.promise(createPart(part), {
+        loading: "Creating part...",
+        success: "Part created successfully",
+        error: "Failed to create part",
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["parts"] });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["parts"] });
-    },
-    onMutate: () => {
       queryClient.invalidateQueries({ queryKey: ["parts"] });
     },
   });

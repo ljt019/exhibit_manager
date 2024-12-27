@@ -11,12 +11,12 @@ export async function getPartsByIds(partIds: string[]): Promise<Part[]> {
   return response.data;
 }
 
+///
 export default function useGetExhibitParts(partIds: string[]) {
   return useQuery<Part[]>({
-    queryKey: ["parts", partIds], // queryKey
-    queryFn: () => getPartsByIds(partIds), // queryFn
+    queryKey: ["parts", partIds],
+    queryFn: () => getPartsByIds(partIds),
     enabled: partIds.length > 0, // Only run the query if partIds is not empty
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2, // Retry failed requests up to 2 times
+    refetchInterval: 1000 * 60 * 1, // 1 minute
   });
 }

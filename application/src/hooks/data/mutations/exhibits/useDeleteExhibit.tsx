@@ -1,8 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/api/axiosInstance";
+import { toast } from "react-hot-toast";
 
 async function deleteExhibit(exhibit_id: string) {
-  axiosInstance.delete("/exhibits/" + exhibit_id);
+  const response = await axiosInstance.delete("/exhibits/" + exhibit_id);
+
+  if (response.status !== 204) {
+    throw new Error("Failed to delete exhibit");
+  }
+
+  return response;
 }
 
 export default function useDeleteExhibit() {
@@ -10,14 +17,13 @@ export default function useDeleteExhibit() {
 
   return useMutation({
     mutationKey: ["deleteExhibit"],
-    mutationFn: deleteExhibit,
+    mutationFn: (exhibit_id: string) =>
+      toast.promise(deleteExhibit(exhibit_id), {
+        loading: "Deleting exhibit...",
+        success: "Exhibit deleted successfully",
+        error: "Failed to delete exhibit",
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["exhibits"] });
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["exhibits"] });
-    },
-    onMutate: () => {
       queryClient.invalidateQueries({ queryKey: ["exhibits"] });
     },
   });

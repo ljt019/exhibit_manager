@@ -11,7 +11,6 @@ export default function useGetExhibits() {
   return useQuery<Exhibit[]>({
     queryKey: ["exhibits"],
     queryFn: getExhibits,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    refetchInterval: 1000 * 60 * 1, // 1 minute
   });
 }

@@ -7,7 +7,7 @@ import {
   Plus,
   ChevronRight,
 } from "lucide-react";
-import useGetExhibitParts from "@/hooks/data/queries/useGetExhibitParts";
+import useGetExhibitParts from "@/hooks/data/queries/exhibits/useGetExhibitParts";
 import {
   Dialog,
   DialogContent,
@@ -173,8 +173,10 @@ function PartItem({ part }: { part: Part }) {
                     <ul className="space-y-2">
                       {part.notes.map((note: Note, index: number) => (
                         <li key={index} className="text-sm">
-                          <span className="font-medium">{note.timestamp}:</span>{" "}
-                          {note.note}
+                          <span className="font-medium">
+                            {note.timestamp.date}:
+                          </span>{" "}
+                          {note.message}
                         </li>
                       ))}
                     </ul>

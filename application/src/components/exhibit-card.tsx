@@ -17,8 +17,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { calculateTimeUntilExpiration } from "@/lib/date";
-import useDeleteExhibit from "@/hooks/data/mutations/useDeleteExhibit";
-import type { Exhibit, Sponsorship } from "@/types";
+import useDeleteExhibit from "@/hooks/data/mutations/exhibits/useDeleteExhibit";
+import type { Exhibit, Note, Sponsorship } from "@/types";
 import { PartsButton } from "@/components/parts-dialog";
 
 const statusColors: Record<Exhibit["status"], string> = {
@@ -60,6 +60,7 @@ export function ExhibitCard({ exhibit }: { exhibit: Exhibit }) {
                     <DropdownMenuItem>Edit</DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => deleteExhibitMutation.mutate(exhibit.id)}
+                      className="text-destructive"
                     >
                       Delete
                     </DropdownMenuItem>
@@ -129,13 +130,7 @@ function SponsorshipButton({ sponsorship }: { sponsorship?: Sponsorship }) {
   );
 }
 
-function NotesButton({
-  name,
-  notes,
-}: {
-  name: string;
-  notes: Array<{ timestamp: string; message: string }>;
-}) {
+function NotesButton({ name, notes }: { name: string; notes: Array<Note> }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -152,7 +147,7 @@ function NotesButton({
           <ul className="space-y-4">
             {notes.map((note, index) => (
               <li key={index} className="border-b pb-2">
-                <span className="font-medium">{note.timestamp}:</span>{" "}
+                <span className="font-medium">{note.timestamp.date}:</span>{" "}
                 {note.message}
               </li>
             ))}

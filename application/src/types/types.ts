@@ -6,7 +6,9 @@ export interface UserProfile {
   picture: string | null;
 }
 
-export type Note = { timestamp: string; message: string };
+type Timestamp = { date: string, time: string}
+
+export type Note = { timestamp: Timestamp; message: string };
 
 export type Sponsorship = {
   sponsorName: string;
@@ -33,3 +35,18 @@ export type Part = {
   exhibit_ids: Array<string>;
   notes: Array<Note>;
 };
+
+export type created_at = { date: string; time: string };
+export type submitter_name = { first: string; last: string };
+
+export type Jotform = {
+  id: string;
+  submitter_name: submitter_name;
+  created_at: created_at;
+  location: string;
+  exhibit_name: string;
+  description: string;
+  priority_level: string;
+  department: string;
+  status: string;
+}

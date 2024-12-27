@@ -1,8 +1,10 @@
 import SignIn from "@/screens/sign-in";
 import Exhibits from "@/screens/exhibits";
 import Parts from "@/screens/parts";
+import Jotforms from "@/screens/jotforms";
+import Dev from "@/screens/dev"
 
-import { Atom, Bolt } from "lucide-react";
+import { Atom, Bolt, NotepadText, ImagePlay } from "lucide-react";
 
 export interface RouteConfig {
   url: string;
@@ -25,6 +27,22 @@ export const routes: RouteConfig[] = [
     title: "Sign In",
     isActive: false,
     sidebar: false,
+  },
+  {
+    url: "/dev",
+    screen: Dev,
+    title: "dev",
+    icon: ImagePlay,
+    isActive: false,
+    sidebar: true,
+  },
+  {
+    url: "/jotforms",
+    screen: Jotforms,
+    title: "Jotforms",
+    icon: NotepadText,
+    isActive: false,
+    sidebar: true,
   },
   {
     url: "/exhibits",

@@ -4,8 +4,8 @@ import {
   ExternalLink,
   Loader2,
   AlertCircle,
-  Plus,
   ChevronRight,
+  StickyNote,
 } from "lucide-react";
 import useGetExhibitParts from "@/hooks/data/queries/exhibits/useGetExhibitParts";
 import {
@@ -26,9 +26,9 @@ import {
 } from "@/components/ui/tooltip";
 import { CreatePartDialog } from "@/components/create-part-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Note, Part } from "@/types";
+import type { Part } from "@/types";
 
-function PartsButton({
+export function PartsButton({
   name,
   parts,
   exhibitId,
@@ -53,9 +53,7 @@ function PartsButton({
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex flex-row items-center justify-between">
-          <DialogTitle className="text-2xl font-bold">
-            {name} - Parts
-          </DialogTitle>
+          <DialogTitle className="text-2xl font-bold">{name}</DialogTitle>
           <CreatePartDialog exhibitId={exhibitId} />
         </DialogHeader>
         <PartsInnerDialog parts={parts} />
@@ -65,7 +63,7 @@ function PartsButton({
 }
 
 function PartsInnerDialog({ parts }: { parts: string[] }) {
-  const { data, isLoading, isError } = useGetExhibitParts(parts);
+  const { data, isLoading, isError, refetch } = useGetExhibitParts(parts);
 
   if (isLoading) {
     return (
@@ -89,7 +87,9 @@ function PartsInnerDialog({ parts }: { parts: string[] }) {
     <ScrollArea className="h-[50rem] rounded-md">
       <div className="space-y-2 pr-4">
         {data ? (
-          data.map((part) => <PartItem key={part.id} part={part} />)
+          data.map((part) => (
+            <PartItem key={part.id} part={part} onNoteAdded={refetch} />
+          ))
         ) : (
           <p className="text-lg font-semibold text-center text-muted-foreground">
             No parts found
@@ -100,7 +100,13 @@ function PartsInnerDialog({ parts }: { parts: string[] }) {
   );
 }
 
-function PartItem({ part }: { part: Part }) {
+function PartItem({
+  part,
+  onNoteAdded,
+}: {
+  part: Part;
+  onNoteAdded: () => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -153,7 +159,7 @@ function PartItem({ part }: { part: Part }) {
                           className="flex items-center"
                         >
                           <ExternalLink className="mr-2 h-4 w-4" />
-                          View Part Details
+                          Go to Vendor
                         </a>
                       </Button>
                     </TooltipTrigger>
@@ -162,27 +168,12 @@ function PartItem({ part }: { part: Part }) {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <Button variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" /> Add Note
-                </Button>
+                <NotesDialog
+                  partId={part.id}
+                  notes={part.notes}
+                  onNoteAdded={onNoteAdded}
+                />
               </div>
-              {part.notes.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-semibold text-sm">Notes:</h4>
-                  <ScrollArea className="h-40 w-full rounded-md border p-4">
-                    <ul className="space-y-2">
-                      {part.notes.map((note: Note, index: number) => (
-                        <li key={index} className="text-sm">
-                          <span className="font-medium">
-                            {note.timestamp.date}:
-                          </span>{" "}
-                          {note.message}
-                        </li>
-                      ))}
-                    </ul>
-                  </ScrollArea>
-                </div>
-              )}
             </div>
           </motion.div>
         )}
@@ -191,4 +182,110 @@ function PartItem({ part }: { part: Part }) {
   );
 }
 
-export { PartsButton };
+import { useForm } from "react-hook-form";
+import { format } from "date-fns";
+import { Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import useCreatePartNote from "@/hooks/data/mutations/parts/useCreatePartNote";
+import useDeletePartNote from "@/hooks/data/mutations/parts/useDeletePartNote";
+import type { Note } from "@/types";
+
+interface NotesDialogProps {
+  partId: string;
+  notes: Note[];
+  onNoteAdded: () => void;
+}
+
+function NotesDialog({ partId, notes, onNoteAdded }: NotesDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const { register, handleSubmit, reset } = useForm<{ message: string }>();
+  const createNote = useCreatePartNote();
+  const deleteNote = useDeletePartNote();
+
+  const onSubmit = async (data: { message: string }) => {
+    try {
+      await createNote.mutateAsync({
+        partId,
+        note: { message: data.message },
+      });
+      reset();
+      onNoteAdded();
+    } catch (error) {
+      console.error("Error creating note:", error);
+    }
+  };
+
+  const handleDelete = async (noteId: string) => {
+    try {
+      await deleteNote.mutateAsync({ partId, noteId });
+      onNoteAdded();
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <StickyNote className="w-4 h-4 mr-2" />
+          Notes ({notes.length})
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Notes</DialogTitle>
+        </DialogHeader>
+        <div className="mt-4 space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
+            <Input
+              {...register("message", { required: true })}
+              placeholder="Add a new note..."
+              className="flex-grow"
+            />
+            <Button type="submit" disabled={createNote.isPending}>
+              {createNote.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                "Add"
+              )}
+            </Button>
+          </form>
+          <ScrollArea className="h-[50vh]">
+            {notes.length === 0 ? (
+              <p className="text-center text-muted-foreground">No notes yet</p>
+            ) : (
+              <div className="space-y-4">
+                {notes.map((note) => (
+                  <Card key={note.id}>
+                    <CardContent className="p-4 flex justify-between items-start">
+                      <div>
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {format(new Date(note.timestamp.date), "PPpp")}
+                        </p>
+                        <p>{note.message}</p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(note.id)}
+                        disabled={deleteNote.isPending}
+                      >
+                        {deleteNote.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -62,7 +62,7 @@ pub fn get_parts_by_ids(ids: &[i64], conn: &Connection) -> rusqlite::Result<Vec<
 
         // Fetch associated notes
         let mut stmt_notes =
-            conn.prepare("SELECT timestamp, message FROM part_notes WHERE part_id = ?1")?;
+            conn.prepare("SELECT id, date, time, message FROM part_notes WHERE part_id = ?1")?;
         let notes_iter = stmt_notes.query_map(rusqlite::params![id], |row| {
             let timestamp = Timestamp {
                 date: row.get(1)?,

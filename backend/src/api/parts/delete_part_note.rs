@@ -8,7 +8,7 @@ use rusqlite::Connection;
 
 pub fn delete_part_note(part_id: i64, note_id: i64, conn: &Connection) -> rusqlite::Result<usize> {
     conn.execute(
-        "DELETE FROM part_notes WHERE part_id = ?1 AND note_id = ?2",
+        "DELETE FROM part_notes WHERE part_id = ?1 AND id = ?2",
         rusqlite::params![part_id, note_id],
     )
 }

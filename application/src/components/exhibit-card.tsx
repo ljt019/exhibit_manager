@@ -162,7 +162,7 @@ interface NotesButtonProps {
 
 export function NotesButton({ exhibitId, name, notes }: NotesButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { register, handleSubmit, reset } = useForm<{ message: string }>();
+  const { register, handleSubmit } = useForm<{ message: string }>();
   const createNote = useCreateExhibit();
   const deleteNote = useDeleteExhibitNote();
 

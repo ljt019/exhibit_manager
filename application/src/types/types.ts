@@ -8,7 +8,7 @@ export interface UserProfile {
 
 type Timestamp = { date: string, time: string}
 
-export type Note = { timestamp: Timestamp; message: string };
+export type Note = { id: string, timestamp: Timestamp; message: string };
 
 export type Sponsorship = {
   sponsorName: string;

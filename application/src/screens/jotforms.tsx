@@ -160,7 +160,15 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
       status: newStatus as Status,
     };
 
-    changeStatus.mutate(newStatusRequest);
+    changeStatus.mutate(newStatusRequest, {
+      onSuccess: () => {
+        // Manually update the local state to ensure immediate UI update
+        setExpandedRows((prev) => ({
+          ...prev,
+          [jotformId]: false,
+        }));
+      },
+    });
   };
 
   const getPriorityBadge = (priority: string) => {

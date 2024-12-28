@@ -108,6 +108,8 @@ async fn rocket() -> _ {
                 api::jotforms::get_jotform_handler,
                 // POST
                 api::jotforms::change_status_handler,
+                // DELETE
+                api::jotforms::delete_jotform_handler,
                 //
                 // ** Dev Routes **
                 //

@@ -1,7 +1,7 @@
 import useGetJotformList from "@/hooks/data/queries/jotforms/useGetJotformList";
 import { Loading, Error } from "@/components/loading-and-error";
 import { Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
@@ -130,13 +130,30 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
 
   const changeStatus = useChangeStatus();
 
-  const sortedData = jotforms.sort((a: Jotform, b: Jotform) => {
-    if (a.status === "InProgress" && b.status !== "InProgress") return -1;
-    if (a.status !== "InProgress" && b.status === "InProgress") return 1;
-    if (a.status === "Unplanned" && b.status !== "Unplanned") return 1;
-    if (a.status !== "Unplanned" && b.status === "Unplanned") return -1;
-    return 0;
-  });
+  const sortedData = useMemo(() => {
+    return jotforms.sort((a: Jotform, b: Jotform) => {
+      // First, sort by status groups
+      const getStatusGroup = (status: string) => {
+        if (status === "InProgress") return 0;
+        if (status === "Open" || status === "Closed") return 1;
+        if (status === "Unplanned") return 2;
+        return 3; // For any unexpected status
+      };
+
+      const aGroup = getStatusGroup(a.status);
+      const bGroup = getStatusGroup(b.status);
+
+      if (aGroup !== bGroup) {
+        return aGroup - bGroup;
+      }
+
+      // If in the same group, sort by date (most recent first)
+      return (
+        new Date(b.created_at.date).getTime() -
+        new Date(a.created_at.date).getTime()
+      );
+    });
+  }, [jotforms]);
 
   const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({

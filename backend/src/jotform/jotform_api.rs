@@ -25,7 +25,7 @@ impl JotformApi {
 
     pub async fn get_submissions(&self) -> Result<Vec<Jotform>, reqwest::Error> {
         let url = format!(
-            "{}/form/{}/submissions?apiKey={}&limit=25&orderby=created_at",
+            "{}/form/{}/submissions?apiKey={}&limit=25",
             self.base_url, self.form_id, self.api_key
         );
 

@@ -3,27 +3,43 @@ use rocket::serde::json::serde_json::Value;
 use serde::Deserialize;
 use std::collections::HashMap;
 
+const QUESTION_NAME: &str = "4";
+const QUESTION_LOCATION: &str = "5";
+const QUESTION_EXHIBIT_NAME: &str = "6";
+const QUESTION_DESCRIPTION: &str = "7";
+const QUESTION_RAW_PRIORITY: &str = "8";
+const QUESTION_RAW_DEPARTMENT: &str = "9";
+
+/// Represents an "answer" to a question in the JotForm.
+///
+/// This struct is used to deserialize the JSON response from the JotForm API.
+/// It's used to extract the "answer" to a question, which could be a string, array of file URLs, etc.
 #[derive(Debug, Deserialize)]
 pub struct Answer {
+    #[allow(dead_code)]
     // This is typically the "short text" of the question (e.g. "Name:" or "Description:")
+    // This is not used in the current implementation, but could be useful for debugging.
     pub name: Option<String>,
 
-    // The question text, e.g. "Work / Building Location:"
+    #[allow(dead_code)]
+    // The question text,  "Work / Building Location:"
+    // This is not used in the current implementation, but could be useful for debugging.
     pub text: Option<String>,
 
     // The raw "answer". Could be string, array of file URLs, etc.
+    // This is the field we're interested in.
     pub answer: Option<Value>,
-
-    // Some fields from JotForm use "prettyFormat" (e.g. combined first+last name).
-    #[serde(rename = "prettyFormat")]
-    pub pretty_format: Option<String>,
 }
 
+/// Represents a raw submission from the JotForm API.
+///
+/// This struct is used to deserialize the JSON response from the JotForm API.
+/// And then has a method to convert it to our custom `Jotform` struct.
+///
+/// The main purpose of this is just to throw away the fields/information we don't need.
 #[derive(Debug, Deserialize)]
 pub struct RawSubmission {
     pub id: String,
-    #[serde(rename = "form_id")]
-    pub form_id: String,
 
     // The "created_at" field is your "submission date".
     #[serde(rename = "created_at")]
@@ -34,94 +50,33 @@ pub struct RawSubmission {
 }
 
 impl RawSubmission {
-    pub fn get_answer(&self, question_id: &str) -> Option<&Answer> {
-        self.answers.get(question_id)
-    }
-
-    fn get_str_from_answer(&self, question_id: &str) -> String {
-        self.get_answer(question_id)
-            .and_then(|ans| ans.answer.as_ref())
-            .and_then(|val| val.as_str()) // Convert JSON value to &str if it’s indeed a string
-            .unwrap_or("")
-            .trim()
-            .to_string()
-    }
-
+    /// Converts the raw submission to our custom `Jotform` struct.
     pub fn to_jotform(&self) -> Jotform {
-        // 1) Extract the "name" field (question #4).
-        //    We assume it always exists, is always an object, and contains "first" & "last".
+        // Extract the "name" field (question #4) using the `extract_name` function.
         let answer_4 = self
             .answers
-            .get("4")
-            .expect("Question #4 is missing; did the form change?");
+            .get(QUESTION_NAME)
+            .expect("Question #4 (Name) is missing; did the form change?");
 
         let name_value = answer_4.answer.as_ref().expect("Q#4 has no `answer` value");
 
-        let name_obj = name_value
-            .as_object()
-            .expect("Expected Q#4 `answer` to be a JSON object with `first`/`last`");
+        let submitter_name = extract_name(name_value);
 
-        let first = name_obj
-            .get("first")
-            .expect("Missing 'first' key in Q#4 answer object")
-            .as_str()
-            .expect("'first' wasn't a string")
-            .trim();
+        // Extract other fields by question ID using the `get_str` helper function.
+        let location = get_str(&self.answers, QUESTION_LOCATION);
+        let exhibit_name = get_str(&self.answers, QUESTION_EXHIBIT_NAME);
+        let description = get_str(&self.answers, QUESTION_DESCRIPTION);
+        let raw_priority = get_str(&self.answers, QUESTION_RAW_PRIORITY);
+        let raw_department = get_str(&self.answers, QUESTION_RAW_DEPARTMENT);
 
-        let last = name_obj
-            .get("last")
-            .expect("Missing 'last' key in Q#4 answer object")
-            .as_str()
-            .expect("'last' wasn't a string")
-            .trim();
+        // Convert them to the desired short strings using the other helper functions.
+        let priority_level = parse_priority_level(&raw_priority);
+        let department = parse_department(&raw_department);
 
-        // 2) Helper to get a string from the "answer" field of any question.
-        let get_str = |q_id: &str| {
-            self.answers
-                .get(q_id)
-                .expect(&format!("Question #{} missing; did the form change?", q_id))
-                .answer
-                .as_ref()
-                .expect("No answer value for question")
-                .as_str()
-                .expect("Answer was not a string")
-                .trim()
-                .to_string()
-        };
+        // Extract the date and time from the "created_at" field using `parse_submission_date`.
+        let submission_date = parse_submission_date(&self.created_at);
 
-        // 3) Extract other fields by question ID.
-        let location = get_str("5");
-        let exhibit_name = get_str("6");
-        let description = get_str("7");
-        let raw_priority = get_str("8");
-        let raw_department = get_str("9");
-
-        // 4) Convert them to your desired short strings, e.g. "High", "Operations", etc.
-        let priority_level = match raw_priority {
-            ref s if s == "High - ASAP" => "High".to_string(),
-            ref s if s == "Low - as soon as possible" => "Low".to_string(),
-            ref s if s == "Medium - within 1-2 weeks" => "Medium".to_string(),
-            _ => "N/A".to_string(),
-        };
-
-        let department = match raw_department.as_str() {
-            "Building Maintenance/Repair request - Operations" => "Operations".to_string(),
-            "Exhibit Maintenance/Repair request - Exhibits" => "Exhibits".to_string(),
-            _ => "N/A".to_string(),
-        };
-
-        let submission_date = SubmissionDate {
-            date: self.created_at.split(' ').next().unwrap().to_string(),
-            time: self.created_at.split(' ').last().unwrap().to_string(),
-        };
-
-        // 4.5) Create the FullName Struct
-        let submitter_name = FullName {
-            first: first.to_string(),
-            last: last.to_string(),
-        };
-
-        // 5) Build the final Jotform struct, defaulting `status` to "Open".
+        // Build the final Jotform struct, defaulting `status` to "Open".
         Jotform {
             id: self.id.clone(),
             submitter_name,
@@ -131,49 +86,95 @@ impl RawSubmission {
             description,
             priority_level,
             department,
-            status: String::new(), // your default
+            status: "Open".to_string(), // your default
         }
     }
+}
 
-    fn extract_name(answer_value: &Value) -> String {
-        let obj = answer_value
-            .as_object()
-            .expect("Expected an object for name field");
+/// Helper function to extract a string answer from the `answers` map.
+fn get_str(answers: &HashMap<String, Answer>, q_id: &str) -> String {
+    answers
+        .get(q_id)
+        .expect(&format!("Question #{} missing; did the form change?", q_id))
+        .answer
+        .as_ref()
+        .expect("No answer value for question")
+        .as_str()
+        .expect("Answer was not a string")
+        .trim()
+        .to_string()
+}
 
-        // Unwrap "first" and "last" (both guaranteed to be JSON strings),
-        // trim trailing spaces, and combine with a single space in between.
-        // thanks kenneth...
-        let first = obj
-            .get("first")
-            .expect("Missing 'first' key in name field")
-            .as_str()
-            .expect("'first' wasn't a string")
-            .trim();
+/// Helper function to extract a `FullName` from the "name" field.
+/// Main use is just to split the first and last name into seperate fields.
+///
+/// So I don't have to do any string manipulation if i just need the first name.
+///
+/// This also helps with the "Kenneth" problem where spaces are added
+/// around the first and last name which leaves to a wonky printout.
+fn extract_name(answer_value: &Value) -> FullName {
+    let obj = answer_value
+        .as_object()
+        .expect("Expected an object for name field");
 
-        let last = obj
-            .get("last")
-            .expect("Missing 'last' key in name field")
-            .as_str()
-            .expect("'last' wasn't a string")
-            .trim();
+    let first = obj
+        .get("first")
+        .expect("Missing 'first' key in name field")
+        .as_str()
+        .expect("'first' wasn't a string")
+        .trim()
+        .to_string();
 
-        format!("{} {}", first, last).trim().to_string()
+    let last = obj
+        .get("last")
+        .expect("Missing 'last' key in name field")
+        .as_str()
+        .expect("'last' wasn't a string")
+        .trim()
+        .to_string();
+
+    FullName { first, last }
+}
+
+/// Helper function to parse the raw strings into the desired short strings.
+/// The long strings are just the dropdown options in the Jotform that was already created
+/// by someone else.
+///
+/// If for some reason the jotform has any changes, these would need to change or it would
+/// always return the default value of "N/A".
+fn parse_department(raw_department: &str) -> String {
+    match raw_department.trim() {
+        "Building Maintenance/Repair request - Operations" => "Operations".to_string(),
+        "Exhibit Maintenance/Repair request - Exhibits" => "Exhibits".to_string(),
+        _ => "N/A".to_string(),
     }
+}
 
-    fn parse_department(raw_department: &str) -> &str {
-        match raw_department.trim() {
-            "Building Maintenance/Repair request - Operations" => "Operations",
-            "Exhibit Maintenance/Repair request - Exhibits" => "Exhibits",
-            _ => "N/A",
-        }
+/// Helper function to parse the raw strings into the desired short strings.
+/// The long strings are just the dropdown options in the Jotform that was already created
+/// by someone else.
+///
+/// If for some reason the jotform has any changes, these would need to change or it would
+/// always return the default value of "N/A".
+fn parse_priority_level(raw_priority: &str) -> String {
+    match raw_priority.trim() {
+        "High - ASAP" => "High".to_string(),
+        "Low - as soon as possible" => "Low".to_string(),
+        "Medium - within 1-2 weeks" => "Medium".to_string(),
+        _ => "N/A".to_string(),
     }
+}
 
-    fn parse_priority_level(raw_priority: &str) -> &str {
-        match raw_priority.trim() {
-            "High - ASAP" => "High",
-            "Low - as soon as possible" => "Low",
-            "Medium - within 1-2 weeks" => "Medium",
-            _ => "N/A",
-        }
-    }
+/// Helper function to parse the raw submission date into a `SubmissionDate` struct.
+/// This is just to split the date and time into seperate fields.
+///
+/// This way either the date or time can be accessed independently
+/// and without any string manipulation.
+///
+/// This will usually only be used to access the date but still useful.
+fn parse_submission_date(raw_date: &str) -> SubmissionDate {
+    let date = raw_date.split(' ').next().unwrap().to_string();
+    let time = raw_date.split(' ').last().unwrap().to_string();
+
+    SubmissionDate { date, time }
 }

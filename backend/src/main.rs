@@ -2,7 +2,7 @@ mod api;
 mod db;
 mod dev;
 mod errors;
-mod jotform;
+mod jotform_api;
 mod models;
 
 use db::{create_pool, setup_database, DbPool};
@@ -160,7 +160,7 @@ impl rocket::fairing::Fairing for JotformFairing {
 
         // Create the api client
         let jotform_api_client =
-            jotform::JotformApi::new(jotform_api_key, jotform_form_id, jotform_base_url);
+            jotform_api::JotformApi::new(jotform_api_key, jotform_form_id, jotform_base_url);
 
         let pool_clone = db_pool.clone();
         let api_clone = jotform_api_client;
@@ -168,7 +168,7 @@ impl rocket::fairing::Fairing for JotformFairing {
         // Spawn the synchronization task that runs every 30 minutes and syncs Jotform data
         rocket::tokio::spawn(async move {
             loop {
-                match jotform::sync_jotforms_once(&pool_clone, &api_clone).await {
+                match jotform_api::sync_jotforms_once(&pool_clone, &api_clone).await {
                     Ok(_) => info!("Successfully synced Jotform data"),
                     Err(e) => error!("Failed to sync Jotform data: {:?}", e),
                 }

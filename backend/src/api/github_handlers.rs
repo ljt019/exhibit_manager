@@ -1,5 +1,3 @@
-// src/handlers/bug_report_handlers.rs
-
 use crate::errors::ApiError;
 use crate::models::BugReport;
 use log::error;

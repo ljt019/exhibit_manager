@@ -1,4 +1,4 @@
-use crate::api::parts::create_part::NewPart;
+use crate::api::part_handlers::NewPart;
 use crate::db::DbPool;
 use crate::models::{Note, Part, Timestamp};
 use sqlx::Result;

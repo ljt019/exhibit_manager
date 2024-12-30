@@ -1,5 +1,5 @@
-pub mod dev;
-pub mod exhibits;
-pub mod github;
-pub mod jotforms;
-pub mod parts;
+pub mod development_util_handlers;
+pub mod exhibit_handlers;
+pub mod github_handlers;
+pub mod jotform_handlers;
+pub mod part_handlers;

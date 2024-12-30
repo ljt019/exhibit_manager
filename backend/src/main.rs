@@ -66,60 +66,33 @@ async fn rocket() -> _ {
         .mount(
             "/",
             routes![
-                //
-                // ** Bug Report Route **
-                //
-                // POST
-                api::github::report_bug_handler,
-                //
-                // ** Exhibit Routes **
-                //
-                // GET
-                api::exhibits::get_exhibit_handler,
-                api::exhibits::list_exhibits_handler,
-                api::exhibits::handle_random_exhibit,
-                api::exhibits::get_exhibit_note_handler,
-                api::exhibits::list_exhibit_notes_handler,
-                // POST
-                api::exhibits::create_exhibit_handler,
-                api::exhibits::create_exhibit_note_handler,
-                // PUT
-                api::exhibits::update_exhibit_handler,
-                // DELETE
-                api::exhibits::delete_exhibit_handler,
-                api::exhibits::delete_exhibit_note_handler,
-                //
-                // ** Part Routes **
-                //
-                // GET
-                api::parts::get_part_handler,
-                api::parts::list_parts_handler,
-                api::parts::get_parts_by_ids_handler,
-                api::parts::get_part_note_handler,
-                api::parts::list_part_notes_handler,
-                // POST
-                api::parts::create_part_handler,
-                api::parts::create_part_note_handler,
-                // PUT
-                api::parts::update_part_handler,
-                // DELETE
-                api::parts::delete_part_handler,
-                api::parts::delete_part_note_handler,
-                //
-                // ** Jotform Routes **
-                //
-                // GET
-                api::jotforms::list_jotforms_handler,
-                api::jotforms::get_jotform_handler,
-                // POST
-                api::jotforms::change_status_handler,
-                // DELETE
-                api::jotforms::delete_jotform_handler,
-                //
-                // ** Dev Routes **
-                //
-                api::dev::handle_reset_db,
-                api::dev::create_dummy_exhibits_handler,
+                api::github_handlers::report_bug_handler,
+                api::exhibit_handlers::get_exhibit_handler,
+                api::exhibit_handlers::list_exhibits_handler,
+                api::exhibit_handlers::handle_random_exhibit,
+                api::exhibit_handlers::get_exhibit_note_handler,
+                api::exhibit_handlers::list_exhibit_notes_handler,
+                api::exhibit_handlers::create_exhibit_handler,
+                api::exhibit_handlers::create_exhibit_note_handler,
+                api::exhibit_handlers::update_exhibit_handler,
+                api::exhibit_handlers::delete_exhibit_handler,
+                api::exhibit_handlers::delete_exhibit_note_handler,
+                api::part_handlers::get_part_handler,
+                api::part_handlers::list_parts_handler,
+                api::part_handlers::get_part_note_handler,
+                api::part_handlers::list_part_notes_handler,
+                api::part_handlers::get_parts_by_ids_handler,
+                api::part_handlers::update_part_handler,
+                api::part_handlers::create_part_handler,
+                api::part_handlers::create_part_note_handler,
+                api::part_handlers::delete_part_handler,
+                api::part_handlers::delete_part_note_handler,
+                api::jotform_handlers::list_jotforms_handler,
+                api::jotform_handlers::get_jotform_handler,
+                api::jotform_handlers::change_status_handler,
+                api::jotform_handlers::delete_jotform_handler,
+                api::development_util_handlers::handle_reset_db,
+                api::development_util_handlers::create_dummy_exhibits_handler,
             ],
         )
         .mount("/images", rocket::fs::FileServer::from("images"))

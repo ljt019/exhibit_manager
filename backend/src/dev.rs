@@ -1,4 +1,4 @@
-use crate::api::exhibits::create_exhibit::NewExhibit;
+use crate::api::exhibit_handlers::NewExhibit;
 use rand::prelude::SliceRandom;
 use rocket::serde;
 

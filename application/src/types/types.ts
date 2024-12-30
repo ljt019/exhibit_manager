@@ -21,6 +21,7 @@ export type Exhibit = {
   name: string;
   cluster: string;
   location: string;
+  description: string;
   status: "Operational" | "Needs Repair" | "Out of Service";
   part_ids: Array<string>;
   notes: Array<Note>;

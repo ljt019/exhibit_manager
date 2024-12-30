@@ -25,7 +25,7 @@ export function NavSecondary({
     <SidebarGroup {...props}>
       <SidebarGroupContent>
         <SidebarMenu>
-          {isDev && <DevTools />}
+          {false && <DevTools />}
           <BugReportDialog />
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>

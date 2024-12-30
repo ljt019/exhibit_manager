@@ -1,5 +1,6 @@
 import useGetExhibits from "@/hooks/data/queries/exhibits/useGetExhibits";
 import { ExhibitList } from "@/components/exhibit-list";
+import { ExhibitsTable } from "@/components/exhibits-table";
 import { FilterSection } from "@/components/filter-section";
 import { CreateExhibitDialog } from "@/components/create-exhibit-dialog";
 import { Loading, Error } from "@/components/loading-and-error";
@@ -34,7 +35,7 @@ export default function ExhibitInventory() {
       ) : isError || !exhibits ? (
         <Error error={error} name="exhibits" />
       ) : (
-        <ExhibitList filteredExhibits={filteredExhibits} />
+        <ExhibitsTable exhibits={filteredExhibits} />
       )}
       <Footer
         totalExhibits={exhibits ? exhibits.length : 0}

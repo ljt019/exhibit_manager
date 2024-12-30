@@ -16,7 +16,7 @@ export default function SignIn() {
   useListen({
     event: "sign_in_complete",
     callback: () => {
-      navigate("/exhibits");
+      navigate("/jotforms");
     },
   });
 
@@ -27,7 +27,7 @@ export default function SignIn() {
   async function checkAlreadySignedIn() {
     let isSignedIn = await invoke("check_if_signed_in");
     if (isSignedIn) {
-      navigate("/exhibits");
+      navigate("/jotforms");
     }
   }
 

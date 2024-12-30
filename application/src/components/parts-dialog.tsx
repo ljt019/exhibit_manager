@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Hammer,
+  Bolt,
   ExternalLink,
   Loader2,
   AlertCircle,
@@ -45,10 +45,10 @@ export function PartsButton({
         <Button
           variant="outline"
           size="sm"
-          className="w-full transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
+          className="w-1/2 transition-all duration-200 hover:bg-primary hover:text-primary-foreground"
         >
-          <Hammer className="w-4 h-4 mr-2" />
-          {parts ? `Parts(${parts.length})` : "Add a Part"}
+          <Bolt className="w-4 h-4 mr-2" />
+          {parts ? `${parts.length}` : "Add a Part"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">

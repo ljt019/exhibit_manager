@@ -1,5 +1,5 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ExhibitCard } from "@/components/exhibit-card";
+import { ExhibitCard } from "@/components/notes-button";
 import type { Exhibit } from "@/types";
 
 interface ExhibitListProps {

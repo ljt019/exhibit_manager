@@ -29,14 +29,6 @@ export const routes: RouteConfig[] = [
     sidebar: false,
   },
   {
-    url: "/dev",
-    screen: Dev,
-    title: "dev",
-    icon: ImagePlay,
-    isActive: false,
-    sidebar: true,
-  },
-  {
     url: "/jotforms",
     screen: Jotforms,
     title: "Jotforms",

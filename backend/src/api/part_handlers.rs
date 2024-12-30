@@ -37,7 +37,7 @@ pub async fn get_part_handler(id: i64, db_pool: &State<DbPool>) -> Result<Json<P
 }
 
 #[derive(Debug, Deserialize, Validate)]
-struct NewNote {
+pub struct NewNote {
     #[validate(length(min = 1, message = "Note cannot be empty"))]
     pub message: String,
 }

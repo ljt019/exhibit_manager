@@ -9,6 +9,7 @@ struct ExhibitRow {
     name: String,
     cluster: String,
     location: String,
+    description: String,
     status: String,
     image_url: String,
     sponsor_name: Option<String>,
@@ -37,6 +38,7 @@ pub async fn create_exhibit_tables(pool: &DbPool) -> Result<()> {
             name TEXT NOT NULL,
             cluster TEXT NOT NULL,
             location TEXT NOT NULL,
+            description TEXT NOT NULL,
             status TEXT NOT NULL,
             image_url TEXT NOT NULL,
             sponsor_name TEXT,
@@ -81,7 +83,7 @@ pub async fn create_exhibit_tables(pool: &DbPool) -> Result<()> {
 
 pub async fn get_exhibit(id: i64, pool: &DbPool) -> Result<Option<Exhibit>> {
     let exhibit_row = sqlx::query_as::<_, ExhibitRow>(
-        "SELECT id, name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
+        "SELECT id, name, cluster, location, description, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
          FROM exhibits WHERE id = ?1",
     ).bind(id).fetch_optional(pool).await?;
 
@@ -132,6 +134,7 @@ pub async fn get_exhibit(id: i64, pool: &DbPool) -> Result<Option<Exhibit>> {
             name: exhibit_row.name,
             cluster: exhibit_row.cluster,
             location: exhibit_row.location,
+            description: exhibit_row.description,
             status: exhibit_row.status,
             image_url: exhibit_row.image_url,
             sponsor,
@@ -149,12 +152,13 @@ pub async fn create_exhibit(exhibit: &NewExhibit, pool: &DbPool) -> Result<()> {
     let sponsor_end = exhibit.sponsor.as_ref().map(|s| &s.end_date);
 
     let result = sqlx::query(
-        "INSERT INTO exhibits (name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date) 
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        "INSERT INTO exhibits (name, cluster, location, description, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
     )
     .bind(&exhibit.name)
     .bind(&exhibit.cluster)
     .bind(&exhibit.location)
+    .bind(&exhibit.description)
     .bind(&exhibit.status)
     .bind(&exhibit.image_url)
     .bind(sponsor_name)
@@ -195,13 +199,14 @@ pub async fn update_exhibit(_id: &i64, exhibit: &Exhibit, pool: &DbPool) -> Resu
 
     sqlx::query(
         "UPDATE exhibits 
-         SET name = ?1, cluster = ?2, location = ?3, status = ?4, image_url = ?5, 
-             sponsor_name = ?6, sponsor_start_date = ?7, sponsor_end_date = ?8 
-         WHERE id = ?9",
+         SET name = ?1, cluster = ?2, location = ?3, description = ?4, status = ?5, image_url = ?6, 
+             sponsor_name = ?7, sponsor_start_date = ?8, sponsor_end_date = ?9 
+         WHERE id = ?10",
     )
     .bind(&exhibit.name)
     .bind(&exhibit.cluster)
     .bind(&exhibit.location)
+    .bind(&exhibit.description)
     .bind(&exhibit.status)
     .bind(&exhibit.image_url)
     .bind(sponsor_name)
@@ -255,7 +260,7 @@ pub async fn delete_exhibit(id: i64, pool: &DbPool) -> Result<()> {
 
 pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
     let exhibit_rows = sqlx::query_as::<_, ExhibitRow>(
-        "SELECT id, name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
+        "SELECT id, name, cluster, location, description, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
          FROM exhibits",
     )
     .fetch_all(pool)
@@ -310,6 +315,7 @@ pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
             name: exhibit_row.name,
             cluster: exhibit_row.cluster,
             location: exhibit_row.location,
+            description: exhibit_row.description,
             status: exhibit_row.status,
             image_url: exhibit_row.image_url,
             sponsor,

@@ -8,7 +8,7 @@ const EXHIBIT_DATA: &'static str = include_str!("../exhibit_dev_data/exhibits.js
 #[serde(rename_all = "PascalCase")]
 struct DummyExhibitData {
     exhibit_name: String,
-    _exhibit_description: String,
+    exhibit_description: String,
     building_location: String,
     current_status: String,
     cluster: String,
@@ -23,6 +23,7 @@ pub fn get_random_dummy_exhibit() -> NewExhibit {
         name: dummy_exhibit_data.exhibit_name.clone(),
         cluster: dummy_exhibit_data.cluster.clone(),
         location: dummy_exhibit_data.building_location.clone(),
+        description: dummy_exhibit_data.exhibit_description.clone(),
         status: dummy_exhibit_data.current_status.clone(),
         image_url: format!(
             "https://picsum.photos/seed/{}/200/300",

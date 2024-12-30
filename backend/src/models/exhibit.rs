@@ -46,6 +46,8 @@ pub struct Exhibit {
     ))]
     pub location: String,
 
+    pub description: String,
+
     #[validate(custom(function = "Exhibit::validate_status"))]
     pub status: String,
 

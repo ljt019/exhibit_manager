@@ -51,6 +51,7 @@ pub struct NewExhibit {
     pub name: String,
     pub cluster: String,
     pub location: String,
+    pub description: String,
     pub status: String,
     pub image_url: String,
     pub sponsor: Option<crate::models::Sponsor>,

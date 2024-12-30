@@ -1,7 +1,13 @@
 use super::raw_submission::RawSubmission;
 use crate::models::Jotform;
 use log::info;
+use rocket::async_trait;
 use serde::Deserialize;
+
+#[async_trait]
+pub trait JotformApiTrait {
+    async fn get_submissions(&self) -> Result<Vec<Jotform>, Box<dyn std::error::Error>>;
+}
 
 #[derive(Debug, Clone)]
 pub struct JotformApi {
@@ -22,18 +28,29 @@ impl JotformApi {
             client,
         }
     }
+}
 
-    pub async fn get_submissions(&self) -> Result<Vec<Jotform>, reqwest::Error> {
+#[async_trait]
+impl JotformApiTrait for JotformApi {
+    async fn get_submissions(&self) -> Result<Vec<Jotform>, Box<dyn std::error::Error>> {
         let url = format!(
             "{}/form/{}/submissions?apiKey={}&limit=25",
             self.base_url, self.form_id, self.api_key
         );
 
-        let response = self.client.get(&url).send().await?;
-        let response_body = response.json::<JotFormApiResponse>().await?;
+        let response = self
+            .client
+            .get(&url)
+            .send()
+            .await
+            .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
+
+        let response_body = response
+            .json::<JotFormApiResponse>()
+            .await
+            .map_err(|e| -> Box<dyn std::error::Error> { Box::new(e) })?;
 
         let limit_left = response_body.limit_left;
-
         info!("JotForm API rate limit left: {}", limit_left);
 
         Ok(response_body

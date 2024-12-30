@@ -1,19 +1,19 @@
 use serde::{Deserialize, Serialize};
 use validator::{Validate, ValidationError};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct SubmissionDate {
     pub date: String,
     pub time: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone)]
 pub struct FullName {
     pub first: String,
     pub last: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Validate)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Validate, Clone)]
 pub struct Jotform {
     pub id: String,
     pub submitter_name: FullName,

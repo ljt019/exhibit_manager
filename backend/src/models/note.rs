@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use validator::{Validate, ValidationError};
 
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Validate, Clone)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Validate, Clone, FromRow)]
 pub struct Timestamp {
     #[validate(custom(function = "Timestamp::validate_date_format"))]
     pub date: String,
@@ -18,12 +19,13 @@ impl Timestamp {
 }
 
 // Also need to validate the Note struct
-#[derive(Debug, Serialize, Deserialize, Validate, PartialEq, Eq, Clone)]
+#[derive(Debug, Serialize, Deserialize, Validate, PartialEq, Eq, Clone, FromRow)]
 pub struct Note {
     pub id: i64,
 
     #[validate(length(min = 1, message = "Note cannot be empty"))]
     pub message: String,
 
+    #[sqlx(flatten)]
     pub timestamp: Timestamp,
 }

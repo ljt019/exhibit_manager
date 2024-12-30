@@ -1,55 +1,20 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::Exhibit;
-use log::error;
+use crate::repo::exhibit_repo;
 use rocket::post;
 use rocket::serde::json::Json;
 use rocket::State;
-use rusqlite::Connection;
 
-/// Inserts a new exhibit into the database and returns its ID.
-pub fn create_exhibit(exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<i64> {
-    let sponsor_name = exhibit.sponsor.as_ref().map(|s| &s.name);
-    let sponsor_start = exhibit.sponsor.as_ref().map(|s| &s.start_date);
-    let sponsor_end = exhibit.sponsor.as_ref().map(|s| &s.end_date);
-
-    conn.execute(
-        "INSERT INTO exhibits (name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date) 
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-        rusqlite::params![
-            exhibit.name,
-            exhibit.cluster,
-            exhibit.location,
-            exhibit.status,
-            exhibit.image_url,
-            sponsor_name,
-            sponsor_start,
-            sponsor_end,
-        ],
-    )?;
-    let exhibit_id = conn.last_insert_rowid();
-
-    for part_id in &exhibit.part_ids {
-        conn.execute(
-            "INSERT INTO exhibit_parts (exhibit_id, part_id) VALUES (?1, ?2)",
-            rusqlite::params![exhibit_id, part_id],
-        )?;
-    }
-
-    // Updated to handle new Timestamp structure
-    for note in &exhibit.notes {
-        conn.execute(
-            "INSERT INTO exhibit_notes (exhibit_id, date, time, message) VALUES (?1, ?2, ?3, ?4)",
-            rusqlite::params![
-                exhibit_id,
-                &note.timestamp.date,
-                &note.timestamp.time,
-                &note.message
-            ],
-        )?;
-    }
-
-    Ok(exhibit_id)
+#[derive(serde::Deserialize)]
+pub struct NewExhibit {
+    pub name: String,
+    pub cluster: String,
+    pub location: String,
+    pub status: String,
+    pub image_url: String,
+    pub sponsor: Option<crate::models::Sponsor>,
+    pub part_ids: Vec<i64>,
+    pub notes: Vec<crate::models::Note>,
 }
 
 /// Creates a new exhibit with associated parts and notes.
@@ -67,28 +32,13 @@ pub fn create_exhibit(exhibit: &Exhibit, conn: &Connection) -> rusqlite::Result<
 /// * Input validation fails
 #[post("/exhibits", format = "json", data = "<new_exhibit>")]
 pub async fn create_exhibit_handler(
-    new_exhibit: Json<Exhibit>,
+    new_exhibit: Json<NewExhibit>,
     db_pool: &State<DbPool>,
-) -> Result<Json<i64>, ApiError> {
+) -> Result<(), ApiError> {
     let exhibit = new_exhibit.into_inner();
-    let pool = (*db_pool).clone();
+    let pool = db_pool.inner().clone();
 
-    // Offload the blocking database operation to a separate thread
-    let result = rocket::tokio::task::spawn_blocking(move || {
-        let conn = pool.get().map_err(|_| {
-            error!("Failed to get DB connection from pool");
-            ApiError::DatabaseError("Failed to get DB connection".into())
-        })?;
-        create_exhibit(&exhibit, &conn).map_err(|e| {
-            error!("Database error: {}", e);
-            ApiError::DatabaseError("Database Error".into())
-        })
-    })
-    .await
-    .map_err(|e| {
-        error!("Task panicked: {}", e);
-        ApiError::DatabaseError("Internal Server Error".into())
-    })??;
+    exhibit_repo::create_exhibit(&exhibit, &pool).await?;
 
-    Ok(Json(result))
+    Ok(())
 }

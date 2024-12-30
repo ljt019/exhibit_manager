@@ -1,4 +1,4 @@
-use crate::models::Exhibit;
+use crate::api::exhibits::create_exhibit::NewExhibit;
 use rand::prelude::SliceRandom;
 use rocket::serde;
 
@@ -15,18 +15,19 @@ struct DummyExhibitData {
     _notes: String,
 }
 
-pub fn get_random_dummy_exhibit() -> Exhibit {
+pub fn get_random_dummy_exhibit() -> NewExhibit {
     let exhibits: Vec<DummyExhibitData> = serde::json::serde_json::from_str(EXHIBIT_DATA).unwrap();
     let dummy_exhibit_data = exhibits.choose(&mut rand::thread_rng()).unwrap();
-    let id = rand::random::<i64>();
 
-    let exhibit = Exhibit {
-        id: id,
+    let exhibit = NewExhibit {
         name: dummy_exhibit_data.exhibit_name.clone(),
         cluster: dummy_exhibit_data.cluster.clone(),
         location: dummy_exhibit_data.building_location.clone(),
         status: dummy_exhibit_data.current_status.clone(),
-        image_url: format!("https://picsum.photos/seed/{}/200/300", id),
+        image_url: format!(
+            "https://picsum.photos/seed/{}/200/300",
+            dummy_exhibit_data.exhibit_name
+        ),
         sponsor: None,
         part_ids: vec![],
         notes: vec![],

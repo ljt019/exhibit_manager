@@ -1,82 +1,10 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::{Exhibit, Note, Sponsor, Timestamp};
-use log::error;
+use crate::models::Exhibit;
+use crate::repo::exhibit_repo;
 use rocket::get;
 use rocket::serde::json::Json;
 use rocket::State;
-use rusqlite::Connection;
-use rusqlite::OptionalExtension;
-
-/// Retrieves an exhibit from the database.
-///
-/// # Arguments
-/// * `id` - The ID of the exhibit to retrieve
-/// * `conn` - Database connection
-///
-/// # Returns
-/// * `rusqlite::Result<Option<Exhibit>>` - The exhibit if found
-
-pub fn get_exhibit(id: i64, conn: &Connection) -> rusqlite::Result<Option<Exhibit>> {
-    let exhibit_opt = conn
-        .query_row(
-            "SELECT id, name, cluster, location, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
-             FROM exhibits WHERE id = ?1",
-            rusqlite::params![id],
-            |row| {
-                let sponsor = match (
-                    row.get::<_, Option<String>>(6)?,
-                    row.get::<_, Option<String>>(7)?,
-                    row.get::<_, Option<String>>(8)?,
-                ) {
-                    (Some(name), Some(start_date), Some(end_date)) => Some(Sponsor {
-                        name,
-                        start_date,
-                        end_date,
-                    }),
-                    _ => None,
-                };
-
-                Ok(Exhibit {
-                    id: row.get(0)?,
-                    name: row.get(1)?,
-                    cluster: row.get(2)?,
-                    location: row.get(3)?,
-                    status: row.get(4)?,
-                    image_url: row.get(5)?,
-                    sponsor,
-                    part_ids: Vec::new(),
-                    notes: Vec::new(),
-                })
-            },
-        )
-        .optional()?;
-
-    if let Some(mut exhibit) = exhibit_opt {
-        let mut stmt = conn.prepare("SELECT part_id FROM exhibit_parts WHERE exhibit_id = ?1")?;
-        let part_ids_iter = stmt.query_map(rusqlite::params![id], |row| row.get(0))?;
-        exhibit.part_ids = part_ids_iter.collect::<rusqlite::Result<Vec<i64>>>()?;
-
-        // Updated to handle new Timestamp structure
-        let mut stmt = conn
-            .prepare("SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1")?;
-        let notes_iter = stmt.query_map(rusqlite::params![id], |row| {
-            Ok(Note {
-                id: row.get(0)?,
-                timestamp: Timestamp {
-                    date: row.get(1)?,
-                    time: row.get(2)?,
-                },
-                message: row.get(3)?,
-            })
-        })?;
-        exhibit.notes = notes_iter.collect::<rusqlite::Result<Vec<Note>>>()?;
-
-        Ok(Some(exhibit))
-    } else {
-        Ok(None)
-    }
-}
 
 /// Handles the GET /exhibits/<id> endpoint.
 ///
@@ -88,34 +16,18 @@ pub fn get_exhibit(id: i64, conn: &Connection) -> rusqlite::Result<Option<Exhibi
 /// * `Result<Json<Exhibit>, ApiError>` - The requested exhibit
 ///
 /// # Errors
-/// Returns `ApiError` if:
-/// * Database operations fail
-/// * Exhibit is not found
+/// Returns an `ApiError` if:
+/// - The exhibit is not found.
+/// - A database operation fails.
 #[get("/exhibits/<id>")]
 pub async fn get_exhibit_handler(
     id: i64,
     db_pool: &State<DbPool>,
 ) -> Result<Json<Exhibit>, ApiError> {
-    let pool = (*db_pool).clone();
+    let pool = db_pool.inner();
+    let exhibit = exhibit_repo::get_exhibit(id, &pool).await?;
 
-    // Offload the blocking database operation to a separate thread
-    let result = rocket::tokio::task::spawn_blocking(move || {
-        let conn = pool.get().map_err(|_| {
-            error!("Failed to get DB connection from pool");
-            ApiError::DatabaseError("Failed to get DB connection".into())
-        })?;
-        get_exhibit(id, &conn).map_err(|e| {
-            error!("Database error: {}", e);
-            ApiError::DatabaseError("Database Error".into())
-        })
-    })
-    .await
-    .map_err(|e| {
-        error!("Task panicked: {}", e);
-        ApiError::DatabaseError("Internal Server Error".into())
-    })??;
-
-    match result {
+    match exhibit {
         Some(exhibit) => Ok(Json(exhibit)),
         None => Err(ApiError::NotFound),
     }

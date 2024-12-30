@@ -15,7 +15,6 @@ import type { NewPart } from "@/hooks/data/mutations/parts/useCreatePart";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-import { toast } from "@/hooks/use-toast";
 import {
   Form,
   FormField,
@@ -92,21 +91,13 @@ function CreatePartForm({ onSuccess, exhibitId }: CreatePartFormProps) {
         notes: [],
       };
       await createPartMutation.mutateAsync(newPart);
-      toast({
-        title: "Part created",
-        description: "Your new part has been successfully created.",
-      });
+
       onSuccess();
       form.reset();
     } catch (error) {
       console.error("Failed to create part:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create part. Please try again.",
-        variant: "destructive",
-      });
     } finally {
-      queryClient.invalidateQueries({ queryKey: ["parts"] });
+      queryClient.invalidateQueries({ queryKey: ["parts", exhibitId] });
       setIsSubmitting(false);
     }
   }

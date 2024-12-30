@@ -3,7 +3,6 @@
 use rocket::http::Status;
 use rocket::response::{Responder, Response};
 use rocket::serde::json::Json;
-use rusqlite::Error as RusqliteError;
 use serde::Serialize;
 use std::io::Cursor;
 use thiserror::Error;
@@ -30,6 +29,9 @@ pub enum ApiError {
     #[error("Invalid request body")]
     InvalidRequestBody,
 
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+
     #[error("Not Found")]
     NotFound,
 
@@ -37,9 +39,12 @@ pub enum ApiError {
     Unauthorized,
 }
 
-impl From<RusqliteError> for ApiError {
-    fn from(error: RusqliteError) -> Self {
-        ApiError::DatabaseError(error.to_string())
+impl From<sqlx::Error> for ApiError {
+    fn from(error: sqlx::Error) -> Self {
+        // Log the actual database error for debugging
+        log::error!("Database error: {}", error);
+        // Return a generic database error to avoid exposing internals
+        ApiError::DatabaseError("Database operation failed".into())
     }
 }
 
@@ -63,6 +68,7 @@ impl<'r> Responder<'r, 'static> for ApiError {
             ApiError::GitHubApiError(_) => Status::BadGateway,
             ApiError::InternalServerError => Status::InternalServerError,
             ApiError::InvalidRequestBody => Status::BadRequest,
+            ApiError::InvalidInput(_) => Status::BadRequest,
             ApiError::NotFound => Status::NotFound,
             ApiError::Unauthorized => Status::Unauthorized,
         };

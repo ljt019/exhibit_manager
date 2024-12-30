@@ -4,6 +4,7 @@ mod dev;
 mod errors;
 mod jotform_api;
 mod models;
+mod repo;
 
 use db::{create_pool, setup_database, DbPool};
 use dotenv::dotenv;
@@ -28,10 +29,14 @@ async fn rocket() -> _ {
     }
 
     // Initialize the database connection pool
-    let db_pool = create_pool("exhibits.db").expect("Failed to create database connection pool");
+    let db_pool = create_pool("exhibits.db")
+        .await
+        .expect("Failed to create pool");
 
     // Setup database schema
-    setup_database(&db_pool).expect("Failed to setup database");
+    setup_database(&db_pool)
+        .await
+        .expect("Failed to setup database");
 
     // Configure CORS
     let allowed_methods: AllowedMethods = ["Get", "Post", "Delete"]

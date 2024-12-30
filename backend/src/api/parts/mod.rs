@@ -1,4 +1,4 @@
-mod create_part;
+pub mod create_part;
 mod create_part_note;
 mod delete_part;
 mod delete_part_note;

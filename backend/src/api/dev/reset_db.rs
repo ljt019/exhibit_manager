@@ -6,8 +6,7 @@ use rocket::get;
 use rocket::serde::json::serde_json;
 use rocket::serde::json::Json;
 use rocket::State;
-use rusqlite::Connection;
-use rusqlite::Result as SqliteResult;
+use sqlx::query;
 
 /// Resets the database by wiping all data and setting up tables.
 ///
@@ -15,19 +14,17 @@ use rusqlite::Result as SqliteResult;
 /// and reinitializing the necessary tables.
 ///
 /// # Arguments
-/// * `conn` - A reference to the database connection.
+/// * `pool` - A reference to the database connection pool.
 ///
 /// # Returns
-/// * `rusqlite::Result<()>` - Returns `Ok(())` if the reset is successful.
-/// * `rusqlite::Error` - Returns an error if any database operation fails.
-pub fn reset_database(conn: &Connection) -> rusqlite::Result<()> {
-    wipe_database(conn)?;
-
-    Ok(())
-}
-
-fn setup_database_here(pool: &DbPool) -> SqliteResult<()> {
-    db::setup_database(pool)?;
+/// * `Result<(), ApiError>` - Returns `Ok(())` if the reset is successful.
+/// * `ApiError` - Returns an error if any database operation fails.
+pub async fn reset_database(pool: &DbPool) -> Result<(), ApiError> {
+    wipe_database(pool).await?;
+    db::setup_database(pool).await.map_err(|e| {
+        error!("Failed to setup database: {}", e);
+        ApiError::DatabaseError("Failed to setup database".into())
+    })?;
 
     Ok(())
 }
@@ -45,32 +42,15 @@ fn setup_database_here(pool: &DbPool) -> SqliteResult<()> {
 ///
 /// # Errors
 /// Returns an `ApiError` if:
-/// - The database connection cannot be obtained.
 /// - A database operation fails.
 #[get("/reset")]
 pub async fn handle_reset_db(db_pool: &State<DbPool>) -> Result<Json<serde_json::Value>, ApiError> {
-    let pool = (*db_pool).clone();
+    let pool = db_pool.inner().clone();
 
-    // Offload the blocking database operation to a separate thread
-    let _ = rocket::tokio::task::spawn_blocking(move || {
-        let conn = pool.get().map_err(|_| {
-            error!("Failed to get DB connection from pool");
-            ApiError::DatabaseError("Failed to get DB connection".into())
-        })?;
-        reset_database(&conn).map_err(|e| {
-            error!("Failed to reset database: {}", e);
-            ApiError::DatabaseError("Failed to reset database".into())
-        })?;
-        setup_database_here(&pool).map_err(|e| {
-            error!("Failed to setup database: {}", e);
-            ApiError::DatabaseError("Failed to setup database".into())
-        })
-    })
-    .await
-    .map_err(|e| {
-        error!("Task panicked while resetting database: {}", e);
-        ApiError::DatabaseError("Internal Server Error".into())
-    })??;
+    reset_database(&pool).await.map_err(|e| {
+        error!("Failed to reset database: {}", e);
+        ApiError::DatabaseError("Failed to reset database".into())
+    })?;
 
     Ok(Json(serde_json::json!({
         "message": "Database reset successful"
@@ -78,11 +58,46 @@ pub async fn handle_reset_db(db_pool: &State<DbPool>) -> Result<Json<serde_json:
 }
 
 /// Wipes the database by dropping all tables.
-fn wipe_database(conn: &Connection) -> SqliteResult<()> {
-    conn.execute("DROP TABLE IF EXISTS exhibit_parts", [])?;
-    conn.execute("DROP TABLE IF EXISTS exhibit_notes", [])?;
-    conn.execute("DROP TABLE IF EXISTS part_notes", [])?;
-    conn.execute("DROP TABLE IF EXISTS parts", [])?;
-    conn.execute("DROP TABLE IF EXISTS exhibits", [])?;
+async fn wipe_database(pool: &DbPool) -> Result<(), ApiError> {
+    query("DROP TABLE IF EXISTS exhibit_parts")
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            error!("Failed to drop exhibit_parts table: {}", e);
+            ApiError::DatabaseError("Failed to drop exhibit_parts table".into())
+        })?;
+
+    query("DROP TABLE IF EXISTS exhibit_notes")
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            error!("Failed to drop exhibit_notes table: {}", e);
+            ApiError::DatabaseError("Failed to drop exhibit_notes table".into())
+        })?;
+
+    query("DROP TABLE IF EXISTS part_notes")
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            error!("Failed to drop part_notes table: {}", e);
+            ApiError::DatabaseError("Failed to drop part_notes table".into())
+        })?;
+
+    query("DROP TABLE IF EXISTS parts")
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            error!("Failed to drop parts table: {}", e);
+            ApiError::DatabaseError("Failed to drop parts table".into())
+        })?;
+
+    query("DROP TABLE IF EXISTS exhibits")
+        .execute(pool)
+        .await
+        .map_err(|e| {
+            error!("Failed to drop exhibits table: {}", e);
+            ApiError::DatabaseError("Failed to drop exhibits table".into())
+        })?;
+
     Ok(())
 }

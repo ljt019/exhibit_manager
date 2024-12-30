@@ -64,7 +64,9 @@ impl JotformApiTrait for JotformApi {
 #[derive(Debug, Deserialize)]
 pub struct JotFormApiResponse {
     #[serde(rename = "responseCode")]
+    #[allow(dead_code)]
     pub response_code: u16,
+    #[allow(dead_code)]
     pub message: String,
     pub content: Vec<RawSubmission>,
     #[serde(rename = "limit-left")]

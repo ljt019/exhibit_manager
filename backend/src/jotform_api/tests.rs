@@ -6,7 +6,6 @@ use rocket::async_trait;
 use rocket::tokio;
 use sqlx::SqlitePool;
 
-// Mock JotformApi struct for testing
 struct MockJotformApi {
     submissions: Vec<Jotform>,
 }

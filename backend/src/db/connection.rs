@@ -1,5 +1,3 @@
-// src/db/connection.rs
-
 use crate::repo::{exhibit_repo, jotform_repo, part_repo};
 use sqlx::Result as SqlxResult;
 use sqlx::SqlitePool;

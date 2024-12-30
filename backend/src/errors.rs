@@ -39,6 +39,12 @@ pub enum ApiError {
     Unauthorized,
 }
 
+impl From<validator::ValidationErrors> for ApiError {
+    fn from(errors: validator::ValidationErrors) -> Self {
+        ApiError::InvalidInput(errors.to_string())
+    }
+}
+
 impl From<sqlx::Error> for ApiError {
     fn from(error: sqlx::Error) -> Self {
         // Log the actual database error for debugging

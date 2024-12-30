@@ -37,6 +37,8 @@ pub async fn create_exhibit_note_handler(
     db_pool: &State<DbPool>,
 ) -> Result<(), ApiError> {
     let note = new_note.into_inner();
+    note.validate()?;
+
     let pool = db_pool.inner().clone();
 
     exhibit_repo::create_exhibit_note(id, note.message, &pool).await?;

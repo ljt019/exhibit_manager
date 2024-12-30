@@ -8,6 +8,7 @@ use rocket::serde::json::serde_json;
 use rocket::serde::json::Json;
 use std::env;
 use urlencoding::encode;
+use validator::Validate;
 
 /// Handles the POST /report-bug endpoint.
 ///
@@ -29,6 +30,8 @@ use urlencoding::encode;
 pub async fn report_bug_handler(
     report: Json<BugReport>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
+    report.validate()?;
+
     // Load GitHub credentials from environment variables
     let github_token = env::var("GITHUB_TOKEN")
         .map_err(|_| ApiError::MissingEnvVar("GITHUB_TOKEN".to_string()))?;

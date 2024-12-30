@@ -233,6 +233,7 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
             <TableHead className="w-[30px]"></TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Time</TableHead>
             <TableHead>Location</TableHead>
             <TableHead>Exhibit Name</TableHead>
             <TableHead>Priority</TableHead>
@@ -265,6 +266,15 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {jotform.created_at.date}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {(() => {
+                    const [hours, minutes] = jotform.created_at.time.split(":");
+                    const hour = parseInt(hours);
+                    const ampm = hour >= 12 ? "PM" : "AM";
+                    const hour12 = hour % 12 || 12;
+                    return `${hour12}:${minutes} ${ampm}`;
+                  })()}
                 </TableCell>
                 <TableCell>{jotform.location}</TableCell>
                 <TableCell>{jotform.exhibit_name}</TableCell>

@@ -34,7 +34,7 @@ impl JotformApi {
 impl JotformApiTrait for JotformApi {
     async fn get_submissions(&self) -> Result<Vec<Jotform>, Box<dyn std::error::Error>> {
         let url = format!(
-            "{}/form/{}/submissions?apiKey={}&limit=25",
+            "{}/form/{}/submissions?apiKey={}&limit=100",
             self.base_url, self.form_id, self.api_key
         );
 

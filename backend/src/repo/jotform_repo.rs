@@ -206,3 +206,31 @@ pub async fn change_jotform_status(id: String, status: String, pool: &DbPool) ->
 
     Ok(())
 }
+
+pub async fn change_jotform_department(
+    id: String,
+    department: String,
+    pool: &DbPool,
+) -> Result<()> {
+    sqlx::query("UPDATE jotforms SET department = $1 WHERE id = $2")
+        .bind(&department)
+        .bind(&id)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}
+
+pub async fn change_jotform_priority(
+    id: String,
+    priority: String,
+    pool: &DbPool,
+) -> Result<()> {
+    sqlx::query("UPDATE jotforms SET priority_level = $1 WHERE id = $2")
+        .bind(&priority)
+        .bind(&id)
+        .execute(pool)
+        .await?;
+
+    Ok(())
+}

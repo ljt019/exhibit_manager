@@ -53,6 +53,16 @@ pub struct ChangeStatusRequest {
     pub new_status: String,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct ChangeDepartmentRequest {
+    pub new_department: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChangePriorityRequest {
+    pub new_priority: String,
+}
+
 #[post("/jotforms/<id>/status", data = "<data>")]
 pub async fn change_status_handler(
     db_pool: &State<DbPool>,
@@ -63,6 +73,34 @@ pub async fn change_status_handler(
     let pool = db_pool.inner().clone();
 
     jotform_repo::change_jotform_status(id.to_string(), new_status, &pool).await?;
+
+    Ok(())
+}
+
+#[post("/jotforms/<id>/department", data = "<data>")]
+pub async fn change_department_handler(
+    db_pool: &State<DbPool>,
+    id: i64,
+    data: Json<ChangeDepartmentRequest>,
+) -> Result<(), ApiError> {
+    let new_department = data.new_department.trim().to_string();
+    let pool = db_pool.inner().clone();
+
+    jotform_repo::change_jotform_department(id.to_string(), new_department, &pool).await?;
+
+    Ok(())
+}
+
+#[post("/jotforms/<id>/priority", data = "<data>")]
+pub async fn change_priority_handler(
+    db_pool: &State<DbPool>,
+    id: i64,
+    data: Json<ChangePriorityRequest>,
+) -> Result<(), ApiError> {
+    let new_priority = data.new_priority.trim().to_string();
+    let pool = db_pool.inner().clone();
+
+    jotform_repo::change_jotform_priority(id.to_string(), new_priority, &pool).await?;
 
     Ok(())
 }

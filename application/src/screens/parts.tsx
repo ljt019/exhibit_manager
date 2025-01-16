@@ -12,14 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronRight, Atom } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
 import useGetParts from "@/hooks/data/queries/parts/useGetParts";
 import { FilterSection } from "@/components/filter-section";
-import { Part } from "@/types/types";
 import { CreatePartDialog } from "@/components/create-part-dialog";
 import { Error, Loading } from "@/components/loading-and-error";
 import { NotesDialog } from "@/components/notes-dialog";
-import { MoreActions } from "@/components/more-actions";
+import { MoreActions } from "@/components/more-actions-parts";
 import { LinkDisplay } from "@/components/link-display";
 
 export default function PartsInventory() {

@@ -97,9 +97,10 @@ export function NavUser() {
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem disabled={true}>
                 <Bell />
-                Notifications
+                <p className="line-through">Notifications </p>
+                <p>(coming soon)</p>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

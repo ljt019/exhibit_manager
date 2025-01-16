@@ -1,6 +1,6 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::{Note, Part};
+use crate::models::{Note, Part, UpdatePart};
 use crate::repo::part_repo;
 use log::{error, info};
 use rocket::http::Status;
@@ -295,7 +295,7 @@ pub async fn list_parts_handler(db_pool: &State<DbPool>) -> Result<Json<Vec<Part
 #[put("/parts/<id>", format = "json", data = "<updated_part>")]
 pub async fn update_part_handler(
     id: i64,
-    updated_part: Json<Part>,
+    updated_part: Json<UpdatePart>,
     db_pool: &State<DbPool>,
 ) -> Result<(), ApiError> {
     let pool = db_pool.inner().clone();

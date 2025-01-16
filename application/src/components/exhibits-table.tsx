@@ -14,7 +14,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import type { Exhibit } from "@/types";
-import { MoreActions } from "@/components/more-actions";
+import { MoreActions } from "@/components/more-actions-exhibits";
 import { NotesButton } from "@/components/notes-button";
 import { PartsList } from "@/components/parts-list";
 import { SponsorshipDisplay } from "@/components/sponsorship-display";

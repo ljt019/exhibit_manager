@@ -1,6 +1,6 @@
 use crate::api::part_handlers::NewPart;
 use crate::db::DbPool;
-use crate::models::{Note, Part, Timestamp};
+use crate::models::{Note, Part, Timestamp, UpdatePart};
 use sqlx::Result;
 
 #[derive(sqlx::FromRow)]
@@ -147,43 +147,17 @@ pub async fn create_part(part: &NewPart, pool: &DbPool) -> Result<()> {
     Ok(())
 }
 
-pub async fn update_part(_id: &i64, part: &Part, pool: &DbPool) -> Result<()> {
-    let _result = sqlx::query("UPDATE parts SET name = $1, link = $2 WHERE id = $3")
+pub async fn update_part(id: &i64, part: &UpdatePart, pool: &DbPool) -> Result<()> {
+    // Build the update query
+    let query = "UPDATE parts SET name = ?, link = ? WHERE id = ?";
+
+    // Execute the query with the provided parameters
+    sqlx::query::<sqlx::Sqlite>(query)
         .bind(&part.name)
         .bind(&part.link)
-        .bind(&part.id)
+        .bind(id)
         .execute(pool)
         .await?;
-
-    sqlx::query("DELETE FROM part_exhibits WHERE part_id = $1")
-        .bind(&part.id)
-        .execute(pool)
-        .await?;
-
-    for exhibit_id in &part.exhibit_ids {
-        sqlx::query("INSERT INTO part_exhibits (part_id, exhibit_id) VALUES ($1, $2)")
-            .bind(&part.id)
-            .bind(exhibit_id)
-            .execute(pool)
-            .await?;
-    }
-
-    sqlx::query("DELETE FROM part_notes WHERE part_id = $1")
-        .bind(&part.id)
-        .execute(pool)
-        .await?;
-
-    for note in &part.notes {
-        sqlx::query(
-            "INSERT INTO part_notes (part_id, date, time, message) VALUES ($1, $2, $3, $4)",
-        )
-        .bind(&part.id)
-        .bind(&note.timestamp.date)
-        .bind(&note.timestamp.time)
-        .bind(&note.message)
-        .execute(pool)
-        .await?;
-    }
 
     Ok(())
 }

@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import useGetPart from "@/hooks/data/queries/parts/useGetPart";
-import { EditPartForm } from "@/components/edit-part-form";
+import { EditPartForm } from "@/components/forms/edit-part-form";
 
 interface EditPartDialogProps {
   partId: string;

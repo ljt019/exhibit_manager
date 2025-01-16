@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import { format } from "date-fns";
 import { StickyNote, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -13,68 +11,65 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Note } from "@/types";
+import { NoteForm } from "@/components/forms/create-note-form";
 import useCreatePartNote from "@/hooks/data/mutations/parts/useCreatePartNote";
 import useDeletePartNote from "@/hooks/data/mutations/parts/useDeletePartNote";
-import { Note } from "@/types";
 
 interface NotesDialogProps {
   partId: string;
+  name?: string;
   notes: Note[];
+  onNoteAdded?: () => void;
+  onNoteDeleted?: () => void;
 }
 
-export function NotesDialog({ partId, notes }: NotesDialogProps) {
+export function NotesDialog({
+  partId,
+  name,
+  notes,
+  onNoteAdded,
+  onNoteDeleted,
+}: NotesDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { register, handleSubmit, reset } = useForm<{ message: string }>();
   const createNote = useCreatePartNote();
   const deleteNote = useDeletePartNote();
-
-  const onSubmit = async (data: { message: string }) => {
-    try {
-      await createNote.mutateAsync({
-        partId,
-        note: { message: data.message },
-      });
-      reset();
-    } catch (error) {
-      console.error("Error creating note:", error);
-    }
-  };
 
   const handleDelete = async (noteId: string) => {
     try {
       await deleteNote.mutateAsync({ partId, noteId });
+      if (onNoteDeleted) {
+        onNoteDeleted();
+      }
     } catch (error) {
       console.error("Error deleting note:", error);
+    }
+  };
+
+  const handleNoteAdded = () => {
+    if (onNoteAdded) {
+      onNoteAdded();
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="transition-all duration-200"
+        >
           <StickyNote className="w-4 h-4 mr-2" />
           {notes.length}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Notes</DialogTitle>
+          <DialogTitle>{name || "Notes"}</DialogTitle>
         </DialogHeader>
         <div className="mt-4 space-y-4">
-          <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
-            <Input
-              {...register("message", { required: true })}
-              placeholder="Add a new note..."
-              className="flex-grow"
-            />
-            <Button type="submit" disabled={createNote.isPending}>
-              {createNote.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                "Add"
-              )}
-            </Button>
-          </form>
+          <NoteForm partId={partId} onSuccess={handleNoteAdded} />
           <ScrollArea className="h-[50vh]">
             {notes.length === 0 ? (
               <p className="text-center text-muted-foreground">No notes yet</p>

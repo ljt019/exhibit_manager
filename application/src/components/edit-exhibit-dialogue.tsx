@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import useGetExhibit from "@/hooks/data/queries/exhibits/useGetExhibit";
-import { EditExhibitForm } from "@/components/edit-exhibit-form";
+import { EditExhibitForm } from "@/components/forms/edit-exhibit-form";
 
 interface EditExhibitDialogProps {
   exhibitId: string;

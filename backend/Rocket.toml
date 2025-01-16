@@ -1,4 +1,8 @@
 [default]
+address = "127.0.0.1"
+port = 3030
+
+[production]
 address = "192.168.1.66"
 port = 3030
 

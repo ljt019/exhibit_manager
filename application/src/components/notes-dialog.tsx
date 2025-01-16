@@ -13,36 +13,45 @@ import {
 } from "@/components/ui/dialog";
 import { Note } from "@/types";
 import { NoteForm } from "@/components/forms/create-note-form";
-import useCreatePartNote from "@/hooks/data/mutations/parts/useCreatePartNote";
-import useDeletePartNote from "@/hooks/data/mutations/parts/useDeletePartNote";
 
-interface NotesDialogProps {
-  partId: string;
+interface NotesDialogProps<T extends "part" | "exhibit"> {
+  id: string;
+  type: T;
   name?: string;
   notes: Note[];
   onNoteAdded?: () => void;
   onNoteDeleted?: () => void;
+  createNote: (data: {
+    id: string;
+    note: { message: string };
+  }) => Promise<void>;
+  deleteNote: (data: { id: string; noteId: string }) => Promise<void>;
 }
 
-export function NotesDialog({
-  partId,
+export function NotesDialog<T extends "part" | "exhibit">({
+  id,
+  type,
   name,
   notes,
   onNoteAdded,
   onNoteDeleted,
-}: NotesDialogProps) {
+  createNote,
+  deleteNote,
+}: NotesDialogProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
-  const createNote = useCreatePartNote();
-  const deleteNote = useDeletePartNote();
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async (noteId: string) => {
+    setIsDeleting(true);
     try {
-      await deleteNote.mutateAsync({ partId, noteId });
+      await deleteNote({ id, noteId });
       if (onNoteDeleted) {
         onNoteDeleted();
       }
     } catch (error) {
       console.error("Error deleting note:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -66,10 +75,16 @@ export function NotesDialog({
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{name || "Notes"}</DialogTitle>
+          <DialogTitle>
+            {name || `${type.charAt(0).toUpperCase() + type.slice(1)} Notes`}
+          </DialogTitle>
         </DialogHeader>
         <div className="mt-4 space-y-4">
-          <NoteForm partId={partId} onSuccess={handleNoteAdded} />
+          <NoteForm
+            id={id as string}
+            onSuccess={handleNoteAdded}
+            createNote={createNote}
+          />
           <ScrollArea className="h-[50vh]">
             {notes.length === 0 ? (
               <p className="text-center text-muted-foreground">No notes yet</p>
@@ -93,9 +108,9 @@ export function NotesDialog({
                         variant="ghost"
                         size="icon"
                         onClick={() => handleDelete(note.id)}
-                        disabled={deleteNote.isPending}
+                        disabled={isDeleting}
                       >
-                        {deleteNote.isPending ? (
+                        {isDeleting ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <Trash2 className="w-4 h-4" />

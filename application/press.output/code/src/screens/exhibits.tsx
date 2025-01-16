@@ -18,10 +18,7 @@ export default function ExhibitInventory() {
     filterOptions,
   } = useExhibitFilters(exhibits || []);
 
-  const memoizedFilteredExhibits = useMemo(
-    () => filteredExhibits,
-    [filteredExhibits]
-  );
+  const memoizedFilteredExhibits = useMemo(() => filteredExhibits, [filteredExhibits]);
 
   return (
     <div className="container mx-auto p-4">

@@ -38,7 +38,7 @@ export function FilterSection({
   searchBarName,
 }: FilterSectionProps) {
   const toggleFilters = useCallback(() => {
-    setShowFilters((prev) => !prev);
+    setShowFilters(prev => !prev);
     if (showFilters) clearFilters();
   }, [showFilters, setShowFilters, clearFilters]);
 

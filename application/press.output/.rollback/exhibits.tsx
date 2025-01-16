@@ -1,5 +1,5 @@
-import { useMemo } from "react";
 import useGetExhibits from "@/hooks/data/queries/exhibits/useGetExhibits";
+import { ExhibitList } from "@/components/exhibit-list";
 import { ExhibitsTable } from "@/components/exhibits-table";
 import { FilterSection } from "@/components/filter-section";
 import { CreateExhibitDialog } from "@/components/create-exhibit-dialog";
@@ -18,11 +18,6 @@ export default function ExhibitInventory() {
     filterOptions,
   } = useExhibitFilters(exhibits || []);
 
-  const memoizedFilteredExhibits = useMemo(
-    () => filteredExhibits,
-    [filteredExhibits]
-  );
-
   return (
     <div className="container mx-auto p-4">
       <Header />
@@ -40,11 +35,11 @@ export default function ExhibitInventory() {
       ) : isError || !exhibits ? (
         <Error error={error} name="exhibits" />
       ) : (
-        <ExhibitsTable exhibits={memoizedFilteredExhibits} />
+        <ExhibitsTable exhibits={filteredExhibits} />
       )}
       <Footer
         totalExhibits={exhibits ? exhibits.length : 0}
-        filteredExhibits={memoizedFilteredExhibits.length}
+        filteredExhibits={filteredExhibits.length}
       />
     </div>
   );

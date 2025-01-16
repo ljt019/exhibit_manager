@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { X, Filter } from "lucide-react";
@@ -37,18 +37,16 @@ export function FilterSection({
   filterOptions,
   searchBarName,
 }: FilterSectionProps) {
-  const toggleFilters = useCallback(() => {
-    setShowFilters((prev) => !prev);
-    if (showFilters) clearFilters();
-  }, [showFilters, setShowFilters, clearFilters]);
-
   return (
     <div className="mb-4 flex flex-col md:flex-row gap-4">
       <div className="w-full md:w-[41.5rem]">
         <SearchBar setSearchTerm={setSearchTerm} name={searchBarName} />
       </div>
       <Button
-        onClick={toggleFilters}
+        onClick={() => {
+          setShowFilters(!showFilters);
+          clearFilters();
+        }}
         className={`w-full md:w-auto ${
           showFilters
             ? "text-foreground outline outline-1 outline-foreground"

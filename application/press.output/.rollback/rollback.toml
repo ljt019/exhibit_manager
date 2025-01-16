@@ -1,0 +1,2 @@
+new_files = []
+rollback_files = [["./src-tauri/tauri.conf.json", './press.output\.rollback\tauri.conf.json']]

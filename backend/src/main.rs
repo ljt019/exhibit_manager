@@ -45,7 +45,7 @@ async fn rocket() -> _ {
         .collect();
 
     let cors = CorsOptions::default()
-        .allowed_origins(AllowedOrigins::some_exact(&["http://localhost:1420"]))
+        .allowed_origins(AllowedOrigins::all())
         .allowed_methods(allowed_methods)
         .allowed_headers(AllowedHeaders::some(&[
             "Authorization",

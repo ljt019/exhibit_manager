@@ -19,7 +19,7 @@
       },
       "http": {
         "all": true,
-        "scope": ["http://localhost:3030/*", "https://picsum.photos/*", "http://192.168.1.66:3030/*", "https://accounts.google.com/*", "https://www.googleapis.com/*"]
+        "scope": ["http://localhost:3030/*", "https://picsum.photos/*", "https://accounts.google.com/*", "https://www.googleapis.com/*"]
       }
     },
     "windows": [
@@ -32,12 +32,8 @@
       }
     ],
     "security": {
-      "csp": {
-        "connect-src": "ipc: http://localhost:3030 http://192.168.1.66:3030 https://picsum.photos",
-        "img-src": "'self' asset: http://asset.localhost blob: data: https://picsum.photos https://fastly.picsum.photos http://192.168.1.66:3030 http://localhost:3030 https://lh3.googleusercontent.com"
-      },
-      "dangerousUseHttpScheme": true
-  },
+      "csp": null
+    },
     "bundle": {
       "active": true,
       "targets": ["nsis"],

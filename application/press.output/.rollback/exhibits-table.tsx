@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -30,21 +30,21 @@ export function ExhibitsTable({ exhibits }: { exhibits: Exhibit[] }) {
     return [...exhibits].sort((a, b) => a.name.localeCompare(b.name));
   }, [exhibits]);
 
-  const toggleRow = useCallback((id: string) => {
+  const toggleRow = (id: string) => {
     setExpandedRows((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
-  }, []);
+  };
 
-  const getStatusBadge = useCallback((status: string) => {
+  const getStatusBadge = (status: string) => {
     const variants = {
       Operational: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
       "Needs Repair": "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
       "Out of Service": "bg-red-500/10 text-red-500 hover:bg-red-500/20",
     };
     return variants[status as keyof typeof variants] || variants["Operational"];
-  }, []);
+  };
 
   return (
     <ScrollArea className="h-[calc(100vh-200px)] w-full">

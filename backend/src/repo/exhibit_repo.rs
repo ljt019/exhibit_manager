@@ -1,7 +1,8 @@
 use crate::api::exhibit_handlers::NewExhibit;
 use crate::db::DbPool;
-use crate::models::{Exhibit, Note, Sponsor, Timestamp};
+use crate::models::{Exhibit, Note, Sponsor, Timestamp, UpdateExhibit};
 use sqlx::Result;
+use sqlx::Sqlite;
 
 #[derive(sqlx::FromRow)]
 struct ExhibitRow {
@@ -192,59 +193,64 @@ pub async fn create_exhibit(exhibit: &NewExhibit, pool: &DbPool) -> Result<()> {
     Ok(())
 }
 
-pub async fn update_exhibit(_id: &i64, exhibit: &Exhibit, pool: &DbPool) -> Result<()> {
-    let sponsor_name = exhibit.sponsor.as_ref().map(|s| &s.name);
-    let sponsor_start = exhibit.sponsor.as_ref().map(|s| &s.start_date);
-    let sponsor_end = exhibit.sponsor.as_ref().map(|s| &s.end_date);
+pub async fn update_exhibit(
+    id: &i64,
+    exhibit: &UpdateExhibit,
+    pool: &DbPool,
+) -> Result<(), sqlx::Error> {
+    // Update the exhibit fields if they are provided
+    let mut query = "UPDATE exhibits SET ".to_string();
+    let mut params: Vec<String> = Vec::new();
 
-    sqlx::query(
-        "UPDATE exhibits 
-         SET name = ?1, cluster = ?2, location = ?3, description = ?4, status = ?5, image_url = ?6, 
-             sponsor_name = ?7, sponsor_start_date = ?8, sponsor_end_date = ?9 
-         WHERE id = ?10",
-    )
-    .bind(&exhibit.name)
-    .bind(&exhibit.cluster)
-    .bind(&exhibit.location)
-    .bind(&exhibit.description)
-    .bind(&exhibit.status)
-    .bind(&exhibit.image_url)
-    .bind(sponsor_name)
-    .bind(sponsor_start)
-    .bind(sponsor_end)
-    .bind(exhibit.id)
-    .execute(pool)
-    .await?;
-
-    sqlx::query("DELETE FROM exhibit_parts WHERE exhibit_id = ?1")
-        .bind(exhibit.id)
-        .execute(pool)
-        .await?;
-
-    for part_id in &exhibit.part_ids {
-        sqlx::query("INSERT INTO exhibit_parts (exhibit_id, part_id) VALUES (?1, ?2)")
-            .bind(exhibit.id)
-            .bind(part_id)
-            .execute(pool)
-            .await?;
+    if let Some(_name) = &exhibit.name {
+        params.push("name = ?".to_string());
+    }
+    if let Some(_cluster) = &exhibit.cluster {
+        params.push("cluster = ?".to_string());
+    }
+    if let Some(_location) = &exhibit.location {
+        params.push("location = ?".to_string());
+    }
+    if let Some(_description) = &exhibit.description {
+        params.push("description = ?".to_string());
+    }
+    if let Some(_image_url) = &exhibit.image_url {
+        params.push("image_url = ?".to_string());
     }
 
-    sqlx::query("DELETE FROM exhibit_notes WHERE exhibit_id = ?1")
-        .bind(exhibit.id)
-        .execute(pool)
-        .await?;
-
-    for note in &exhibit.notes {
-        sqlx::query(
-            "INSERT INTO exhibit_notes (exhibit_id, date, time, message) VALUES (?1, ?2, ?3, ?4)",
-        )
-        .bind(exhibit.id)
-        .bind(&note.timestamp.date)
-        .bind(&note.timestamp.time)
-        .bind(&note.message)
-        .execute(pool)
-        .await?;
+    if params.is_empty() {
+        // No fields to update
+        return Ok(());
     }
+
+    query.push_str(&params.join(", "));
+    query.push_str(" WHERE id = ?");
+
+    // Build the query dynamically
+    let mut query_builder = sqlx::query::<Sqlite>(&query);
+
+    // Bind values in the correct order
+    if let Some(name) = &exhibit.name {
+        query_builder = query_builder.bind(name);
+    }
+    if let Some(cluster) = &exhibit.cluster {
+        query_builder = query_builder.bind(cluster);
+    }
+    if let Some(location) = &exhibit.location {
+        query_builder = query_builder.bind(location);
+    }
+    if let Some(description) = &exhibit.description {
+        query_builder = query_builder.bind(description);
+    }
+    if let Some(image_url) = &exhibit.image_url {
+        query_builder = query_builder.bind(image_url);
+    }
+
+    // Bind the ID last (for the WHERE clause)
+    query_builder = query_builder.bind(id);
+
+    // Execute the query
+    query_builder.execute(pool).await?;
 
     Ok(())
 }

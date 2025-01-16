@@ -39,7 +39,7 @@ async fn rocket() -> _ {
         .expect("Failed to setup database");
 
     // Configure CORS
-    let allowed_methods: AllowedMethods = ["Get", "Post", "Delete"]
+    let allowed_methods: AllowedMethods = ["Get", "Post", "Delete", "Put"]
         .iter()
         .map(|s| std::str::FromStr::from_str(s).unwrap())
         .collect();

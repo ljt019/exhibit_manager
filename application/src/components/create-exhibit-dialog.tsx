@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectTrigger,
@@ -16,12 +17,52 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { toast } from "@/hooks/use-toast";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormDescription,
+  FormMessage,
+  FormControl,
+} from "@/components/ui/form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useGetUniqueClustersAndLocations } from "@/hooks/util/useGetUniqueClustersAndLocations";
 import useCreateExhibit from "@/hooks/data/mutations/exhibits/useCreateExhibit";
 import type { Exhibit } from "@/types";
-import { useEffect } from "react";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  cluster: z.string().min(2, {
+    message: "Cluster must be at least 2 characters.",
+  }),
+  location: z.string().min(2, {
+    message: "Location must be at least 2 characters.",
+  }),
+  status: z.enum(["operational", "needs repair", "out of service"]),
+  description: z
+    .string()
+    .min(10, {
+      message: "Description must be at least 10 characters.",
+    })
+    .max(1000, {
+      message: "Description must not exceed 1000 characters.",
+    }),
+  image_url: z.string().url().optional(),
+});
+
+interface CreateExhibitFormProps {
+  onSuccess: () => void;
+}
 
 export function CreateExhibitDialog() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -51,44 +92,6 @@ export function CreateExhibitDialog() {
   );
 }
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { toast } from "@/hooks/use-toast";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormDescription,
-  FormMessage,
-  FormControl,
-} from "@/components/ui/form";
-import { useQueryClient } from "@tanstack/react-query";
-import { useGetUniqueClustersAndLocations } from "@/hooks/util/useGetUniqueClustersAndLocations";
-
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  cluster: z.string().min(2, {
-    message: "Cluster must be at least 2 characters.",
-  }),
-  location: z.string().min(2, {
-    message: "Location must be at least 2 characters.",
-  }),
-  status: z.enum(["operational", "needs repair", "out of service"]),
-  image_url: z.string().url().optional(),
-});
-
-interface CreateExhibitFormProps {
-  onSuccess: () => void;
-}
-
-interface CreateExhibitFormProps {
-  onSuccess: () => void;
-}
-
 export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
   const createExhibitMutation = useCreateExhibit();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,6 +108,7 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
       cluster: "",
       location: "",
       status: "operational",
+      description: "",
       image_url: "",
     },
   });
@@ -341,8 +345,28 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
         />
         <FormField
           control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="Enter a detailed description of the exhibit"
+                  className="min-h-[100px]"
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Provide a detailed description of the exhibit (10-1000
+                characters).
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
           name="image_url"
-          // @ts-ignore
           render={({ field }) => (
             <FormItem>
               <FormLabel>Image</FormLabel>

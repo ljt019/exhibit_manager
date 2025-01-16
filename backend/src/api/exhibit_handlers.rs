@@ -1,6 +1,6 @@
 use crate::db::DbPool;
 use crate::errors::ApiError;
-use crate::models::{Exhibit, Note};
+use crate::models::{Exhibit, Note, UpdateExhibit};
 use crate::repo::exhibit_repo;
 use log::error;
 use rand::prelude::SliceRandom;
@@ -286,7 +286,7 @@ pub async fn handle_random_exhibit(db_pool: &State<DbPool>) -> Result<Json<Exhib
 #[put("/exhibits/<id>", format = "json", data = "<updated_exhibit>")]
 pub async fn update_exhibit_handler(
     id: i64,
-    updated_exhibit: Json<Exhibit>,
+    updated_exhibit: Json<UpdateExhibit>,
     db_pool: &State<DbPool>,
 ) -> Result<(), ApiError> {
     let pool = db_pool.inner().clone();

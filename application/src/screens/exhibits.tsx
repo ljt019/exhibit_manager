@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import useGetExhibits from "@/hooks/data/queries/exhibits/useGetExhibits";
-import { ExhibitsTable } from "@/components/exhibits-table";
+import { ExhibitsTable } from "@/components/tables/exhibits-table";
 import { FilterSection } from "@/components/filter-section";
-import { CreateExhibitDialog } from "@/components/create-exhibit-dialog";
+import { CreateDialog } from "@/components/generic/create-dialog";
 import { Loading, Error } from "@/components/loading-and-error";
 import { useExhibitFilters } from "@/hooks/filters/useExhibitFilters";
 
@@ -54,7 +54,7 @@ function Header() {
   return (
     <div className="flex justify-between items-center mb-6">
       <h1 className="text-2xl font-bold">Exhibit Inventory</h1>
-      <CreateExhibitDialog />
+      <CreateDialog type="exhibit" />
     </div>
   );
 }

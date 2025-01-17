@@ -55,12 +55,13 @@ export function CreatePartForm({ onSuccess, exhibitId }: CreatePartFormProps) {
       };
       await createPartMutation.mutateAsync(newPart);
 
+      queryClient.invalidateQueries({ queryKey: ["parts", exhibitId] });
+      queryClient.invalidateQueries({ queryKey: ["exhibits"] });
       onSuccess();
       form.reset();
     } catch (error) {
       console.error("Failed to create part:", error);
     } finally {
-      queryClient.invalidateQueries({ queryKey: ["parts", exhibitId] });
       setIsSubmitting(false);
     }
   }

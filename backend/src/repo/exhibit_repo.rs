@@ -288,14 +288,25 @@ pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
             _ => None,
         };
 
+        // Corrected join table name to 'part_exhibits'
         let part_rows = sqlx::query_as::<_, ExhibitPartRow>(
-            "SELECT part_id FROM exhibit_parts WHERE exhibit_id = ?1",
+            "SELECT part_id FROM part_exhibits WHERE exhibit_id = ?1",
         )
         .bind(exhibit_row.id)
         .fetch_all(pool)
         .await?;
 
-        let part_ids = part_rows.iter().map(|row| row.part_id).collect();
+        let part_ids: Vec<i64> = part_rows.iter().map(|row| row.part_id).collect();
+
+        if part_ids.is_empty() {
+            log::info!("Exhibit ID {} has no associated parts.", exhibit_row.id);
+        } else {
+            log::info!(
+                "Exhibit ID {} has {} associated parts.",
+                exhibit_row.id,
+                part_ids.len()
+            );
+        }
 
         let note_rows = sqlx::query_as::<_, ExhibitNoteRow>(
             "SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1",

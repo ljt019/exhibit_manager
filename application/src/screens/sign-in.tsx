@@ -49,24 +49,26 @@ export default function SignIn() {
         transition={{ duration: 0.5 }}
       >
         <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <motion.h1
-              className="text-4xl font-bold tracking-tight"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-            >
+          <motion.div
+            className="flex flex-col items-center"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+          >
+            <div className="bg-[#544a5c] rounded-lg mb-4">
+              <img
+                src="/logo_icon.png"
+                alt="App Logo"
+                className="w-24 h-24 shadow-lg"
+              />
+            </div>
+            <h1 className="text-4xl font-bold tracking-tight">
               Exhibit Manager
-            </motion.h1>
-            <motion.p
-              className="mt-2 text-lg text-muted-foreground"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-            >
+            </h1>
+            <p className="mt-2 text-lg text-muted-foreground">
               Curate, Manage, Inspire
-            </motion.p>
-          </div>
+            </p>
+          </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

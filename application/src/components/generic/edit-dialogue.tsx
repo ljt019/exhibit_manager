@@ -6,7 +6,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
-import { EditExhibitForm } from "@/components/forms/edit-exhibit-form";
+import { EditExhibitForm } from "@/components/forms/edit_exhibit_form/edit-exhibit-form";
 import { EditPartForm } from "@/components/forms/edit-part-form";
 import useGetExhibit from "@/hooks/data/queries/exhibits/useGetExhibit";
 import useGetPart from "@/hooks/data/queries/parts/useGetPart";

@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { CreatePartForm } from "@/components/forms/create-part-form";
-import { CreateExhibitForm } from "@/components/forms/create-exhibit-form";
+import { CreateExhibitForm } from "@/components/forms/create_exhibit_form/create-exhibit-form";
 
 interface CreateDialogProps {
   type: "exhibit" | "part";

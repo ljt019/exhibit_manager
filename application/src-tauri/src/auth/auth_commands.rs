@@ -49,7 +49,7 @@ pub fn sign_in(window: tauri::Window) {
         oauth2::RedirectUrl::new(redirect_url.clone()).expect("Invalid redirect URL"),
     );
 
-    // Generate authorization URL
+    // Generate authorization URL with offline access
     let (authorize_url, csrf_state) = client
         .authorize_url(CsrfToken::new_random)
         .add_scope(Scope::new(
@@ -139,9 +139,23 @@ pub fn sign_in(window: tauri::Window) {
 pub fn check_if_signed_in(window: tauri::Window) -> bool {
     let token_manager = window.state::<TokenManager>();
 
-    let response = token_manager.get_token_data().access_token.is_some();
+    let token_data = token_manager.get_token_data();
 
-    response
+    // Check if there's an access token and a refresh token
+    if token_data.access_token.is_none() || token_data.refresh_token.is_none() {
+        return false;
+    }
+
+    // Check if the access token is expired and needs refreshing
+    if let Some(expires_at) = token_data.expires_at {
+        if expires_at <= Utc::now() + chrono::Duration::minutes(5) {
+            if token_manager.refresh_access_token().is_err() {
+                return false;
+            }
+        }
+    }
+
+    true
 }
 
 #[tauri::command]

@@ -35,9 +35,9 @@ impl TokenManager {
     pub fn refresh_access_token(&self) -> Result<(), String> {
         let token_data = self.get_token_data();
 
-        // Check if theres a refresh token
+        // Check if there's a refresh token
         let refresh_token = match token_data.refresh_token {
-            Some(token) => oauth2::RefreshToken::new(token),
+            Some(ref token) => oauth2::RefreshToken::new(token.clone()),
             None => return Err("No refresh token available".to_string()),
         };
 
@@ -74,11 +74,11 @@ impl TokenManager {
         // Create new token data
         let new_token_data = TokenData {
             access_token: Some(access_token),
-            refresh_token: refresh_token,
+            refresh_token: refresh_token.or(token_data.refresh_token), // Retain existing refresh token if new one is None
             expires_at: Some(Utc::now() + expires_in),
         };
 
-        // Store the new tokenss
+        // Store the new tokens
         self.set_token_data(new_token_data);
 
         println!("[OAuth] Successfully refreshed access token");

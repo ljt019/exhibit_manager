@@ -92,12 +92,17 @@ export function ExhibitsTable({
           <TableBody>
             {sortedExhibits.map((exhibit) => (
               <AnimatePresence key={exhibit.id}>
-                <TableRow
-                  className="hover:bg-muted/50 transition-colors"
-                  onClick={() => toggleRow(exhibit.id)}
-                >
+                <TableRow className="hover:bg-muted/50 transition-colors">
                   <TableCell className="w-[30px]">
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleRow(exhibit.id);
+                      }}
+                    >
                       {expandedRows[exhibit.id] ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (

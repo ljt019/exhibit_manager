@@ -268,10 +268,7 @@ pub async fn list_parts_handler(db_pool: &State<DbPool>) -> Result<Json<Vec<Part
 
     match parts {
         Some(parts) => Ok(Json(parts)),
-        None => {
-            error!("No parts found in the database.");
-            Err(ApiError::NotFound)
-        }
+        None => Ok(Json(Vec::new())),
     }
 }
 

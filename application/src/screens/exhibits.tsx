@@ -3,7 +3,7 @@ import useGetExhibits from "@/hooks/data/queries/exhibits/useGetExhibits";
 import { ExhibitsTable } from "@/components/tables/exhibits-table";
 import { FilterSection } from "@/components/filter-section";
 import { CreateDialog } from "@/components/generic/create-dialog";
-import { Loading, Error } from "@/components/loading-and-error";
+import { Loading, Error, NoData } from "@/components/loading-and-error";
 import { useExhibitFilters } from "@/hooks/filters/useExhibitFilters";
 
 export default function ExhibitInventory() {
@@ -43,8 +43,10 @@ export default function ExhibitInventory() {
       />
       {isLoading ? (
         <Loading />
-      ) : isError || !exhibits ? (
-        <Error error={error} name="exhibits" />
+      ) : isError ? (
+        <Error name="exhibits" />
+      ) : !exhibits ? (
+        <NoData name="exhibits" />
       ) : (
         <ExhibitsTable
           exhibits={memoizedFilteredExhibits}

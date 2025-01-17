@@ -1,6 +1,7 @@
 interface UpdatePartPayload {
   name: string;
   link: string;
+  exhibitIds: number[];
 }
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";

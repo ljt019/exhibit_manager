@@ -24,13 +24,20 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 
 interface ExpandedState {
   [key: string]: boolean;
 }
 
-export function ExhibitsTable({ exhibits }: { exhibits: Exhibit[] }) {
+export function ExhibitsTable({
+  exhibits,
+  refetchExhibits,
+}: {
+  exhibits: Exhibit[];
+  refetchExhibits: () => void;
+}) {
   const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
   const [isAddPartModalOpen, setIsAddPartModalOpen] = useState(false);
   const [selectedExhibitId, setSelectedExhibitId] = useState<string | null>(
@@ -159,10 +166,15 @@ export function ExhibitsTable({ exhibits }: { exhibits: Exhibit[] }) {
                                 size="sm"
                                 onClick={() => handleAddPart(exhibit.id)}
                               >
-                                <Plus className="h-4 w-4" />
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Part
                               </Button>
                             </div>
-                            <PartsList partIds={exhibit.part_ids} />
+                            <PartsList
+                              partIds={exhibit.part_ids}
+                              exhibitId={exhibit.id}
+                              refetchPartIds={refetchExhibits}
+                            />
                           </div>
                         </div>
                       </motion.div>

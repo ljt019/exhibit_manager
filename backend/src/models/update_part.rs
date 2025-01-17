@@ -12,4 +12,7 @@ pub struct UpdatePart {
 
     #[validate(url)]
     pub link: String,
+
+    #[serde(rename = "exhibitIds")]
+    pub exhibit_ids: Vec<i64>,
 }

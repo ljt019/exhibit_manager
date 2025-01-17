@@ -7,7 +7,13 @@ import { Loading, Error } from "@/components/loading-and-error";
 import { useExhibitFilters } from "@/hooks/filters/useExhibitFilters";
 
 export default function ExhibitInventory() {
-  const { data: exhibits, isLoading, isError, error } = useGetExhibits();
+  const {
+    data: exhibits,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetExhibits();
   const {
     setSearchTerm,
     showFilters,
@@ -40,7 +46,10 @@ export default function ExhibitInventory() {
       ) : isError || !exhibits ? (
         <Error error={error} name="exhibits" />
       ) : (
-        <ExhibitsTable exhibits={memoizedFilteredExhibits} />
+        <ExhibitsTable
+          exhibits={memoizedFilteredExhibits}
+          refetchExhibits={refetch}
+        />
       )}
       <Footer
         totalExhibits={exhibits ? exhibits.length : 0}

@@ -148,16 +148,34 @@ pub async fn create_part(part: &NewPart, pool: &DbPool) -> Result<()> {
 }
 
 pub async fn update_part(id: &i64, part: &UpdatePart, pool: &DbPool) -> Result<()> {
-    // Build the update query
-    let query = "UPDATE parts SET name = ?, link = ? WHERE id = ?";
+    // Start a transaction since we're making multiple related changes
+    let mut tx = pool.begin().await?;
 
-    // Execute the query with the provided parameters
-    sqlx::query::<sqlx::Sqlite>(query)
+    // Update the main part record
+    sqlx::query("UPDATE parts SET name = ?, link = ? WHERE id = ?")
         .bind(&part.name)
         .bind(&part.link)
         .bind(id)
-        .execute(pool)
+        .execute(&mut *tx)
         .await?;
+
+    // Delete all existing exhibit associations for this part
+    sqlx::query("DELETE FROM part_exhibits WHERE part_id = ?")
+        .bind(id)
+        .execute(&mut *tx)
+        .await?;
+
+    // Insert new exhibit associations
+    for exhibit_id in &part.exhibit_ids {
+        sqlx::query("INSERT INTO part_exhibits (part_id, exhibit_id) VALUES (?, ?)")
+            .bind(id)
+            .bind(exhibit_id)
+            .execute(&mut *tx)
+            .await?;
+    }
+
+    // Commit the transaction
+    tx.commit().await?;
 
     Ok(())
 }

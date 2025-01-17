@@ -303,7 +303,7 @@ pub async fn get_part_note(id: i64, note_id: i64, pool: &DbPool) -> Result<Optio
 
 pub async fn create_part_note(id: i64, message: String, pool: &DbPool) -> Result<()> {
     let _result = sqlx::query(
-        "INSERT INTO part_notes (part_id, date, time, message) VALUES ($1, CURRENT_DATE, CURRENT_TIME, $4)",
+        "INSERT INTO part_notes (part_id, date, time, message) VALUES ($1, CURRENT_DATE, CURRENT_TIME, $2)",
     )
     .bind(id)
     .bind(&message)

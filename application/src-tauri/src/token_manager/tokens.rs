@@ -213,8 +213,31 @@ impl PersistedStore {
     fn new(app_handle: AppHandle) -> Self {
         let appdata_local = tauri::api::path::app_local_data_dir(&app_handle.config()).unwrap();
         let store_path = appdata_local.join("tokens.json");
-        let mut store = tauri_plugin_store::StoreBuilder::new(app_handle, store_path).build();
-        store.load().expect("Failed to load store");
+
+        // Create the directory if it doesn't exist
+        if let Some(parent) = store_path.parent() {
+            if !parent.exists() {
+                std::fs::create_dir_all(parent).expect("Failed to create app data directory");
+            }
+        }
+
+        // Create an empty JSON file if it doesn't exist
+        if !store_path.exists() {
+            println!("No existing token store found. Creating a new empty JSON file.");
+            std::fs::write(&store_path, "{}").expect("Failed to create tokens.json file");
+        }
+
+        // Initialize the store
+        let mut store =
+            tauri_plugin_store::StoreBuilder::new(app_handle, store_path.clone()).build();
+
+        // Load the store (it will contain an empty JSON object if the file was just created)
+        if let Err(e) = store.load() {
+            println!("Failed to load token store: {}", e);
+            // If loading fails, clear the store to ensure it's in a valid state
+            store.clear().expect("Failed to clear store");
+        }
+
         Self { store }
     }
 

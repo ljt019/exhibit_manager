@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -19,9 +19,11 @@ import { useGetUserProfile } from "@/hooks/data/queries/useGetProfileInfo";
 import { invoke } from "@tauri-apps/api";
 import useListen from "@/hooks/util/useListen";
 import { useNavigate } from "react-router-dom";
+import { AccountDialog } from "@/components/nav/account-dialog";
 
 export function NavUser() {
   const navigate = useNavigate();
+  const [isAccountDialogOpen, setIsAccountDialogOpen] = useState(false);
 
   useListen({
     event: "sign_out_complete",
@@ -63,57 +65,63 @@ export function NavUser() {
   );
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              {renderAvatar()}
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                {renderName()}
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
-            </SidebarMenuButton>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            side={"right"}
-            align="end"
-            sideOffset={4}
-          >
-            <DropdownMenuLabel className="p-0 font-normal">
-              <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+    <>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                size="lg"
+                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              >
                 {renderAvatar()}
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   {renderName()}
                 </div>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled={true}>
-                <Bell />
-                <p className="line-through">Notifications </p>
-                <p>(coming soon)</p>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => invoke("sign_out")}
-              className="text-destructive"
+                <ChevronsUpDown className="ml-auto size-4" />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+              side={"right"}
+              align="end"
+              sideOffset={4}
             >
-              <LogOut />
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </SidebarMenuItem>
-    </SidebarMenu>
+              <DropdownMenuLabel className="p-0 font-normal">
+                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                  {renderAvatar()}
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    {renderName()}
+                  </div>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuItem onSelect={() => setIsAccountDialogOpen(true)}>
+                  <BadgeCheck />
+                  Account
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={true}>
+                  <Bell />
+                  <p className="line-through">Notifications </p>
+                  <p>(coming soon)</p>
+                </DropdownMenuItem>
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => invoke("sign_out")}
+                className="text-destructive"
+              >
+                <LogOut />
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      </SidebarMenu>
+      <AccountDialog
+        isOpen={isAccountDialogOpen}
+        onClose={() => setIsAccountDialogOpen(false)}
+      />
+    </>
   );
 }

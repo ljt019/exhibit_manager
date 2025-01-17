@@ -19,11 +19,11 @@ import type { RouteConfig } from "@/routes";
 
 const data = {
   navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: Settings2,
-    },
+    //{
+    //  title: "Settings",
+    //  url: "#",
+    //  icon: Settings2,
+    //},
   ],
 };
 

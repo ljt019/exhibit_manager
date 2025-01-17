@@ -63,6 +63,7 @@ async fn rocket() -> _ {
         .manage(db_pool) // Inject the connection pool into Rocket's state
         .attach(cors) // Attach the CORS fairing
         .attach(JotformFairing)
+        .attach(BackupFairing)
         .mount(
             "/",
             routes![
@@ -158,4 +159,81 @@ impl rocket::fairing::Fairing for JotformFairing {
 
         info!("Jotform synchronization task started");
     }
+}
+
+use chrono::Local;
+use std::fs;
+
+const BACKUP_INTERVAL_IN_HOURS: u64 = 48;
+const NUMBER_OF_BACKUPS_TO_KEEP: usize = 10;
+
+struct BackupFairing;
+
+#[rocket::async_trait]
+impl rocket::fairing::Fairing for BackupFairing {
+    fn info(&self) -> rocket::fairing::Info {
+        rocket::fairing::Info {
+            name: "Database Backup",
+            kind: rocket::fairing::Kind::Liftoff,
+        }
+    }
+
+    async fn on_liftoff(&self, _rocket: &Rocket<Orbit>) {
+        let db_path = "exhibits.db".to_string();
+        let backups_dir = ".backups".to_string();
+
+        rocket::tokio::spawn(async move {
+            loop {
+                // Perform the backup
+                if let Err(e) = backup_database(&db_path, &backups_dir) {
+                    error!("Failed to back up database: {:?}", e);
+                }
+
+                // Sleep for 48 hours (every other day)
+                sleep(Duration::from_secs(BACKUP_INTERVAL_IN_HOURS * 60 * 60)).await;
+            }
+        });
+
+        info!("Database backup task started");
+    }
+}
+
+fn backup_database(db_path: &str, backups_dir: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Ensure the backups directory exists
+    if !Path::new(backups_dir).exists() {
+        fs::create_dir(backups_dir)?;
+    }
+
+    // Create a timestamp for the backup file
+    let timestamp = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
+    let backup_file_name = format!("{}/backup_{}.db", backups_dir, timestamp);
+
+    // Copy the database file to the backup location
+    fs::copy(db_path, &backup_file_name)?;
+    info!("Database backed up to: {}", backup_file_name);
+
+    // Clean up old backups (keep only the last 10)
+    let mut backups: Vec<_> = fs::read_dir(backups_dir)?
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let path = entry.path();
+            if path.is_file() && path.extension().map_or(false, |ext| ext == "db") {
+                Some((entry.metadata().ok()?.modified().ok()?, path))
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Sort backups by modification time (oldest first)
+    backups.sort_by(|a, b| a.0.cmp(&b.0));
+
+    // Delete backups beyond the last NUMBER_OF_BACKUPS_TO_KEEP
+    while backups.len() > NUMBER_OF_BACKUPS_TO_KEEP {
+        let (_, oldest_backup) = backups.remove(0);
+        fs::remove_file(&oldest_backup)?;
+        info!("Deleted old backup: {:?}", oldest_backup);
+    }
+
+    Ok(())
 }

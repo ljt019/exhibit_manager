@@ -159,9 +159,8 @@ pub async fn update_jotform(jotform: &Jotform, pool: &DbPool) -> Result<()> {
             exhibit_name = $6,
             description = $7,
             priority_level = $8,
-            department = $9,
-            status = $10
-        WHERE id = $11
+            department = $9
+        WHERE id = $10
         "#,
     )
     .bind(&jotform.submitter_name.first)
@@ -173,7 +172,6 @@ pub async fn update_jotform(jotform: &Jotform, pool: &DbPool) -> Result<()> {
     .bind(&jotform.description)
     .bind(&jotform.priority_level)
     .bind(&jotform.department)
-    .bind(&jotform.status)
     .bind(&jotform.id)
     .execute(pool)
     .await?;
@@ -221,11 +219,7 @@ pub async fn change_jotform_department(
     Ok(())
 }
 
-pub async fn change_jotform_priority(
-    id: String,
-    priority: String,
-    pool: &DbPool,
-) -> Result<()> {
+pub async fn change_jotform_priority(id: String, priority: String, pool: &DbPool) -> Result<()> {
     sqlx::query("UPDATE jotforms SET priority_level = $1 WHERE id = $2")
         .bind(&priority)
         .bind(&id)

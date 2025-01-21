@@ -32,6 +32,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectSeparator,
 } from "@/components/ui/select";
 import useGetParts from "@/hooks/data/queries/parts/useGetParts";
 import useAddExistingPart from "@/hooks/data/mutations/exhibits/useAddExistingPart";
@@ -62,10 +63,7 @@ export function ExhibitsTable({
   }, [exhibits]);
 
   const toggleRow = useCallback((id: string) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+    setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
   const getStatusBadge = useCallback((status: string) => {
@@ -235,9 +233,19 @@ export function ExhibitsTable({
               <SelectValue placeholder="Select a part" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="new">Create New Part</SelectItem>
+              <SelectItem
+                value="new"
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
+              >
+                Create New Part
+              </SelectItem>
+              <SelectSeparator />
               {allParts?.map((part) => (
-                <SelectItem key={part.id} value={part.id}>
+                <SelectItem
+                  key={part.id}
+                  value={part.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                >
                   {part.name}
                 </SelectItem>
               ))}

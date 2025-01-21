@@ -28,10 +28,15 @@ const formSchema = z.object({
 
 interface CreatePartFormProps {
   onSuccess: () => void;
+  onCancel: () => void;
   exhibitId?: string;
 }
 
-export function CreatePartForm({ onSuccess, exhibitId }: CreatePartFormProps) {
+export function CreatePartForm({
+  onSuccess,
+  onCancel,
+  exhibitId,
+}: CreatePartFormProps) {
   const createPartMutation = useCreatePart();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const queryClient = useQueryClient();
@@ -99,9 +104,14 @@ export function CreatePartForm({ onSuccess, exhibitId }: CreatePartFormProps) {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Creating..." : "Create Part"}
-        </Button>
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Part"}
+          </Button>
+        </div>
       </form>
     </Form>
   );

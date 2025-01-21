@@ -38,6 +38,7 @@ pub async fn get_part_handler(id: i64, db_pool: &State<DbPool>) -> Result<Json<P
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct NewNote {
+    pub submitter: String,
     #[validate(length(min = 1, message = "Note cannot be empty"))]
     pub message: String,
 }
@@ -64,7 +65,7 @@ pub async fn create_part_note_handler(
     let note = new_note.into_inner();
     let pool = db_pool.inner().clone();
 
-    part_repo::create_part_note(id, note.message, &pool).await?;
+    part_repo::create_part_note(id, note.submitter, note.message, &pool).await?;
 
     Ok(())
 }

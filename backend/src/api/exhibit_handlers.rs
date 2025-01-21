@@ -13,6 +13,7 @@ use validator::Validate;
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct NewNote {
+    pub submitter: String,
     #[validate(length(min = 1, message = "Note cannot be empty"))]
     pub message: String,
 }
@@ -41,7 +42,7 @@ pub async fn create_exhibit_note_handler(
 
     let pool = db_pool.inner().clone();
 
-    exhibit_repo::create_exhibit_note(id, note.message, &pool).await?;
+    exhibit_repo::create_exhibit_note(id, note.submitter, note.message, &pool).await?;
 
     Ok(())
 }
@@ -301,4 +302,46 @@ pub async fn update_exhibit_handler(
         })?;
 
     Ok(())
+}
+
+#[derive(serde::Deserialize)]
+pub struct AddExistingPartPayload {
+    pub part_id: i64,
+}
+
+/// Handles the POST /exhibits/<id>/add_part endpoint.
+///
+/// This endpoint adds an existing part to an exhibit.
+///
+/// # Arguments
+/// * `id` - The ID of the exhibit to which the part will be added.
+/// * `part_payload` - JSON payload containing the part ID to be added.
+/// * `db_pool` - Database connection pool.
+///
+/// # Returns
+/// * `Result<Status, ApiError>` - HTTP status indicating the result of the operation.
+///
+/// # Errors
+/// Returns an `ApiError` if:
+/// - The exhibit is not found.
+/// - The part is not found.
+/// - A database operation fails.
+#[post("/exhibits/<id>/add_part", format = "json", data = "<part_payload>")]
+pub async fn add_existing_part_handler(
+    id: i64,
+    part_payload: Json<AddExistingPartPayload>,
+    db_pool: &State<DbPool>,
+) -> Result<Status, ApiError> {
+    let pool = db_pool.inner().clone();
+    let part_id = part_payload.into_inner().part_id;
+
+    // Add the part to the exhibit
+    exhibit_repo::add_part_to_exhibit(id, part_id, &pool)
+        .await
+        .map_err(|e| {
+            error!("Failed to add part to exhibit: {}", e);
+            ApiError::DatabaseError("Failed to add part to exhibit".into())
+        })?;
+
+    Ok(Status::Ok)
 }

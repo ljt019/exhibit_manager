@@ -16,6 +16,7 @@ async function createPartNote(newPartNoteRequest: NewPartNoteRequest) {
 }
 
 type NewPartNote = {
+  submitter: string;
   message: string;
 };
 

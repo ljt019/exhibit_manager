@@ -1,6 +1,7 @@
 use crate::api::exhibit_handlers::NewExhibit;
 use crate::db::DbPool;
 use crate::models::{Exhibit, Note, Sponsor, Timestamp, UpdateExhibit};
+use chrono::{DateTime, FixedOffset, Utc};
 use sqlx::Result;
 use sqlx::Sqlite;
 
@@ -26,6 +27,7 @@ struct ExhibitPartRow {
 #[derive(sqlx::FromRow)]
 struct ExhibitNoteRow {
     id: i64,
+    submitter: String,
     date: String,
     time: String,
     message: String,
@@ -69,6 +71,7 @@ pub async fn create_exhibit_tables(pool: &DbPool) -> Result<()> {
         CREATE TABLE IF NOT EXISTS exhibit_notes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             exhibit_id INTEGER NOT NULL,
+            submitter TEXT NOT NULL,
             date TEXT NOT NULL,
             time TEXT NOT NULL,
             message TEXT NOT NULL,
@@ -84,9 +87,14 @@ pub async fn create_exhibit_tables(pool: &DbPool) -> Result<()> {
 
 pub async fn get_exhibit(id: i64, pool: &DbPool) -> Result<Option<Exhibit>> {
     let exhibit_row = sqlx::query_as::<_, ExhibitRow>(
-        "SELECT id, name, cluster, location, description, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
-         FROM exhibits WHERE id = ?1",
-    ).bind(id).fetch_optional(pool).await?;
+        "SELECT id, name, cluster, location, description, status, image_url,
+                sponsor_name, sponsor_start_date, sponsor_end_date
+         FROM exhibits
+         WHERE id = ?1",
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await?;
 
     if let Some(exhibit_row) = exhibit_row {
         let sponsor = match (
@@ -111,8 +119,11 @@ pub async fn get_exhibit(id: i64, pool: &DbPool) -> Result<Option<Exhibit>> {
 
         let part_ids = part_rows.iter().map(|row| row.part_id).collect();
 
+        // Include submitter in the SELECT query
         let note_rows = sqlx::query_as::<_, ExhibitNoteRow>(
-            "SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1",
+            "SELECT id, submitter, date, time, message
+             FROM exhibit_notes
+             WHERE exhibit_id = ?1",
         )
         .bind(id)
         .fetch_all(pool)
@@ -122,6 +133,7 @@ pub async fn get_exhibit(id: i64, pool: &DbPool) -> Result<Option<Exhibit>> {
             .iter()
             .map(|row| Note {
                 id: row.id,
+                submitter: row.submitter.clone(),
                 timestamp: Timestamp {
                     date: row.date.clone(),
                     time: row.time.clone(),
@@ -153,7 +165,8 @@ pub async fn create_exhibit(exhibit: &NewExhibit, pool: &DbPool) -> Result<()> {
     let sponsor_end = exhibit.sponsor.as_ref().map(|s| &s.end_date);
 
     let result = sqlx::query(
-        "INSERT INTO exhibits (name, cluster, location, description, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date) 
+        "INSERT INTO exhibits (name, cluster, location, description, status, image_url,
+                              sponsor_name, sponsor_start_date, sponsor_end_date)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
     )
     .bind(&exhibit.name)
@@ -178,11 +191,14 @@ pub async fn create_exhibit(exhibit: &NewExhibit, pool: &DbPool) -> Result<()> {
             .await?;
     }
 
+    // Make sure we insert the submitter column too:
     for note in &exhibit.notes {
         sqlx::query(
-            "INSERT INTO exhibit_notes (exhibit_id, date, time, message) VALUES (?1, ?2, ?3, ?4)",
+            "INSERT INTO exhibit_notes (exhibit_id, submitter, date, time, message)
+             VALUES (?1, ?2, ?3, ?4, ?5)",
         )
         .bind(exhibit_id)
+        .bind(&note.submitter)
         .bind(&note.timestamp.date)
         .bind(&note.timestamp.time)
         .bind(&note.message)
@@ -198,7 +214,7 @@ pub async fn update_exhibit(
     exhibit: &UpdateExhibit,
     pool: &DbPool,
 ) -> Result<(), sqlx::Error> {
-    // Update the exhibit fields if they are provided
+    // Update only fields that are provided
     let mut query = "UPDATE exhibits SET ".to_string();
     let mut params: Vec<String> = Vec::new();
 
@@ -266,7 +282,8 @@ pub async fn delete_exhibit(id: i64, pool: &DbPool) -> Result<()> {
 
 pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
     let exhibit_rows = sqlx::query_as::<_, ExhibitRow>(
-        "SELECT id, name, cluster, location, description, status, image_url, sponsor_name, sponsor_start_date, sponsor_end_date 
+        "SELECT id, name, cluster, location, description, status, image_url,
+                sponsor_name, sponsor_start_date, sponsor_end_date
          FROM exhibits",
     )
     .fetch_all(pool)
@@ -288,9 +305,8 @@ pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
             _ => None,
         };
 
-        // Corrected join table name to 'part_exhibits'
         let part_rows = sqlx::query_as::<_, ExhibitPartRow>(
-            "SELECT part_id FROM part_exhibits WHERE exhibit_id = ?1",
+            "SELECT part_id FROM exhibit_parts WHERE exhibit_id = ?1",
         )
         .bind(exhibit_row.id)
         .fetch_all(pool)
@@ -298,18 +314,11 @@ pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
 
         let part_ids: Vec<i64> = part_rows.iter().map(|row| row.part_id).collect();
 
-        if part_ids.is_empty() {
-            log::info!("Exhibit ID {} has no associated parts.", exhibit_row.id);
-        } else {
-            log::info!(
-                "Exhibit ID {} has {} associated parts.",
-                exhibit_row.id,
-                part_ids.len()
-            );
-        }
-
+        // Again, include 'submitter' in the SELECT
         let note_rows = sqlx::query_as::<_, ExhibitNoteRow>(
-            "SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1",
+            "SELECT id, submitter, date, time, message
+             FROM exhibit_notes
+             WHERE exhibit_id = ?1",
         )
         .bind(exhibit_row.id)
         .fetch_all(pool)
@@ -319,6 +328,7 @@ pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
             .iter()
             .map(|row| Note {
                 id: row.id,
+                submitter: row.submitter.clone(),
                 timestamp: Timestamp {
                     date: row.date.clone(),
                     time: row.time.clone(),
@@ -350,8 +360,11 @@ pub async fn get_all_exhibits(pool: &DbPool) -> Result<Option<Vec<Exhibit>>> {
 }
 
 pub async fn get_exhibit_note(id: i64, note_id: i64, pool: &DbPool) -> Result<Option<Note>> {
+    // Include submitter
     let note_row = sqlx::query_as::<_, ExhibitNoteRow>(
-        "SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1 AND id = ?2",
+        "SELECT id, submitter, date, time, message
+         FROM exhibit_notes
+         WHERE exhibit_id = ?1 AND id = ?2",
     )
     .bind(id)
     .bind(note_id)
@@ -360,6 +373,7 @@ pub async fn get_exhibit_note(id: i64, note_id: i64, pool: &DbPool) -> Result<Op
 
     Ok(note_row.map(|row| Note {
         id: row.id,
+        submitter: row.submitter,
         timestamp: Timestamp {
             date: row.date,
             time: row.time,
@@ -368,10 +382,33 @@ pub async fn get_exhibit_note(id: i64, note_id: i64, pool: &DbPool) -> Result<Op
     }))
 }
 
-pub async fn create_exhibit_note(id: i64, message: String, pool: &DbPool) -> Result<()> {
+pub async fn create_exhibit_note(
+    id: i64,
+    submitter: String,
+    message: String,
+    pool: &DbPool,
+) -> Result<()> {
+    // Get the current time in UTC
+    let now_utc: DateTime<Utc> = Utc::now();
+
+    // Convert the time to Central Time (UTC-6)
+    let now_central = now_utc.with_timezone(&FixedOffset::west_opt(6 * 3600).unwrap());
+
+    // Extract the date and time components
+    let date = now_central.date_naive().to_string();
+    let time = now_central.time().to_string();
+
     sqlx::query(
-        "INSERT INTO exhibit_notes (exhibit_id, date, time, message) VALUES (?1, CURRENT_DATE, CURRENT_TIME, ?2)",
-    ).bind(id).bind(message).execute(pool).await?;
+        "INSERT INTO exhibit_notes (exhibit_id, submitter, date, time, message)
+         VALUES (?1, ?2, ?3, ?4, ?5)",
+    )
+    .bind(id)
+    .bind(submitter)
+    .bind(date)
+    .bind(time)
+    .bind(message)
+    .execute(pool)
+    .await?;
 
     Ok(())
 }
@@ -387,8 +424,11 @@ pub async fn delete_exhibit_note(id: i64, note_id: i64, pool: &DbPool) -> Result
 }
 
 pub async fn get_all_exhibit_notes(id: i64, pool: &DbPool) -> Result<Option<Vec<Note>>> {
+    // Include submitter in the SELECT
     let note_rows = sqlx::query_as::<_, ExhibitNoteRow>(
-        "SELECT id, date, time, message FROM exhibit_notes WHERE exhibit_id = ?1",
+        "SELECT id, submitter, date, time, message
+         FROM exhibit_notes
+         WHERE exhibit_id = ?1",
     )
     .bind(id)
     .fetch_all(pool)
@@ -398,6 +438,7 @@ pub async fn get_all_exhibit_notes(id: i64, pool: &DbPool) -> Result<Option<Vec<
         .iter()
         .map(|row| Note {
             id: row.id,
+            submitter: row.submitter.clone(),
             timestamp: Timestamp {
                 date: row.date.clone(),
                 time: row.time.clone(),
@@ -406,10 +447,54 @@ pub async fn get_all_exhibit_notes(id: i64, pool: &DbPool) -> Result<Option<Vec<
         })
         .collect();
 
-    let response = match notes.is_empty() {
-        true => None,
-        false => Some(notes),
-    };
+    let response = if notes.is_empty() { None } else { Some(notes) };
 
     Ok(response)
+}
+
+pub async fn add_part_to_exhibit(exhibit_id: i64, part_id: i64, pool: &DbPool) -> Result<()> {
+    // Check if the exhibit exists
+    let exhibit_exists = sqlx::query("SELECT 1 FROM exhibits WHERE id = ?1")
+        .bind(exhibit_id)
+        .fetch_optional(pool)
+        .await?
+        .is_some();
+
+    if !exhibit_exists {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    // Check if the part exists (assuming you have a parts table)
+    let part_exists = sqlx::query("SELECT 1 FROM parts WHERE id = ?1")
+        .bind(part_id)
+        .fetch_optional(pool)
+        .await?
+        .is_some();
+
+    if !part_exists {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    // Check if the part is already associated with the exhibit
+    let association_exists =
+        sqlx::query("SELECT 1 FROM exhibit_parts WHERE exhibit_id = ?1 AND part_id = ?2")
+            .bind(exhibit_id)
+            .bind(part_id)
+            .fetch_optional(pool)
+            .await?
+            .is_some();
+
+    if association_exists {
+        // The part is already associated with the exhibit, so we don't need to do anything
+        return Ok(());
+    }
+
+    // Add the part to the exhibit
+    sqlx::query("INSERT INTO exhibit_parts (exhibit_id, part_id) VALUES (?1, ?2)")
+        .bind(exhibit_id)
+        .bind(part_id)
+        .execute(pool)
+        .await?;
+
+    Ok(())
 }

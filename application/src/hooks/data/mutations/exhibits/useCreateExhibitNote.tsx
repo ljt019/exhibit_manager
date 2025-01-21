@@ -16,6 +16,7 @@ async function createExhibitNote(newExhibitNoteRequest: NewExhibitNoteRequest) {
 }
 
 type NewExhibitNote = {
+  submitter: string;
   message: string;
 };
 

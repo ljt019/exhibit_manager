@@ -76,6 +76,7 @@ async fn rocket() -> _ {
                 api::exhibit_handlers::create_exhibit_handler,
                 api::exhibit_handlers::create_exhibit_note_handler,
                 api::exhibit_handlers::update_exhibit_handler,
+                api::exhibit_handlers::add_existing_part_handler,
                 api::exhibit_handlers::delete_exhibit_handler,
                 api::exhibit_handlers::delete_exhibit_note_handler,
                 api::part_handlers::get_part_handler,

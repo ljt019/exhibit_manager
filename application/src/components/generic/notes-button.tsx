@@ -29,7 +29,7 @@ export function NotesButton({
 
   const createNote = async (data: {
     id: string;
-    note: { message: string };
+    note: { submitter: string; message: string };
   }) => {
     if (type === "exhibit") {
       await createExhibitNoteMutation.mutateAsync({

@@ -23,6 +23,8 @@ impl Timestamp {
 pub struct Note {
     pub id: i64,
 
+    pub submitter: String,
+
     #[validate(length(min = 1, message = "Note cannot be empty"))]
     pub message: String,
 

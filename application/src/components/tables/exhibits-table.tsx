@@ -26,6 +26,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import useGetParts from "@/hooks/data/queries/parts/useGetParts";
+import useAddExistingPart from "@/hooks/data/mutations/exhibits/useAddExistingPart";
+import React from "react";
 
 interface ExpandedState {
   [key: string]: boolean;
@@ -38,11 +48,14 @@ export function ExhibitsTable({
   exhibits: Exhibit[];
   refetchExhibits: () => void;
 }) {
+  const addExistingPartMutation = useAddExistingPart();
   const [expandedRows, setExpandedRows] = useState<ExpandedState>({});
   const [isAddPartModalOpen, setIsAddPartModalOpen] = useState(false);
   const [selectedExhibitId, setSelectedExhibitId] = useState<string | null>(
     null
   );
+  const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
+  const { data: allParts } = useGetParts();
 
   const sortedExhibits = useMemo(() => {
     return [...exhibits].sort((a, b) => a.name.localeCompare(b.name));
@@ -72,6 +85,22 @@ export function ExhibitsTable({
   const handleAddPartSuccess = () => {
     setIsAddPartModalOpen(false);
     setSelectedExhibitId(null);
+    setSelectedPartId(null);
+    refetchExhibits();
+  };
+
+  const handleAddExistingPart = async () => {
+    if (selectedExhibitId && selectedPartId) {
+      try {
+        await addExistingPartMutation.mutateAsync({
+          exhibitId: selectedExhibitId,
+          partId: selectedPartId,
+        });
+        handleAddPartSuccess();
+      } catch (error) {
+        console.error("Failed to add existing part:", error);
+      }
+    }
   };
 
   return (
@@ -91,50 +120,55 @@ export function ExhibitsTable({
           </TableHeader>
           <TableBody>
             {sortedExhibits.map((exhibit) => (
-              <AnimatePresence key={exhibit.id}>
-                <TableRow className="hover:bg-muted/50 transition-colors">
-                  <TableCell className="w-[30px]">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleRow(exhibit.id);
-                      }}
-                    >
-                      {expandedRows[exhibit.id] ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">{exhibit.name}</TableCell>
-                  <TableCell>{exhibit.location}</TableCell>
-                  <TableCell>{exhibit.cluster}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="secondary"
-                      className={cn(getStatusBadge(exhibit.status))}
-                    >
-                      {exhibit.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <NotesButton
-                      id={exhibit.id}
-                      type="exhibit"
-                      name={exhibit.name}
-                      notes={exhibit.notes}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <MoreActions id={exhibit.id} type="exhibit" />
-                  </TableCell>
-                </TableRow>
+              <React.Fragment key={exhibit.id}>
+                <AnimatePresence>
+                  <TableRow className="hover:bg-muted/50 transition-colors">
+                    <TableCell className="w-[30px]">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleRow(exhibit.id);
+                        }}
+                      >
+                        {expandedRows[exhibit.id] ? (
+                          <ChevronDown className="h-4 w-4" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {exhibit.name}
+                    </TableCell>
+                    <TableCell>{exhibit.location}</TableCell>
+                    <TableCell>{exhibit.cluster}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={cn(getStatusBadge(exhibit.status))}
+                      >
+                        {exhibit.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <NotesButton
+                        id={exhibit.id}
+                        type="exhibit"
+                        name={exhibit.name}
+                        notes={exhibit.notes}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <MoreActions id={exhibit.id} type="exhibit" />
+                    </TableCell>
+                  </TableRow>
+                </AnimatePresence>
                 {expandedRows[exhibit.id] && (
                   <motion.tr
+                    key={`${exhibit.id}-details`}
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
@@ -186,7 +220,7 @@ export function ExhibitsTable({
                     </TableCell>
                   </motion.tr>
                 )}
-              </AnimatePresence>
+              </React.Fragment>
             ))}
           </TableBody>
         </Table>
@@ -194,12 +228,32 @@ export function ExhibitsTable({
       <Dialog open={isAddPartModalOpen} onOpenChange={setIsAddPartModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Part</DialogTitle>
+            <DialogTitle>Add Part to Exhibit</DialogTitle>
           </DialogHeader>
-          <CreatePartForm
-            onSuccess={handleAddPartSuccess}
-            exhibitId={selectedExhibitId || undefined}
-          />
+          <Select onValueChange={(value) => setSelectedPartId(value)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a part" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="new">Create New Part</SelectItem>
+              {allParts?.map((part) => (
+                <SelectItem key={part.id} value={part.id}>
+                  {part.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedPartId === "new" ? (
+            <CreatePartForm
+              onSuccess={handleAddPartSuccess}
+              onCancel={() => setIsAddPartModalOpen(false)}
+              exhibitId={selectedExhibitId || undefined}
+            />
+          ) : (
+            <Button onClick={handleAddExistingPart} disabled={!selectedPartId}>
+              Add Existing Part
+            </Button>
+          )}
         </DialogContent>
       </Dialog>
     </>

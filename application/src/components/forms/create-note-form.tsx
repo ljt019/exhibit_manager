@@ -3,26 +3,33 @@ import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useGetUserProfile } from "@/hooks/data/queries/useGetProfileInfo";
 
 interface NoteFormProps {
   id: string;
   onSuccess: () => void;
   createNote: (data: {
     id: string;
-    note: { message: string };
+    note: { submitter: string; message: string };
   }) => Promise<void>;
 }
 
 export function NoteForm({ id, onSuccess, createNote }: NoteFormProps) {
+  const { data: userData, isLoading, isError } = useGetUserProfile();
   const { register, handleSubmit, reset } = useForm<{ message: string }>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = async (data: { message: string }) => {
+  const onSubmit = async (formData: { message: string }) => {
+    if (isLoading || isError || !userData) {
+      console.error("User data not available");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await createNote({
         id,
-        note: { message: data.message },
+        note: { submitter: userData.name, message: formData.message },
       });
       reset();
       onSuccess();
@@ -33,6 +40,14 @@ export function NoteForm({ id, onSuccess, createNote }: NoteFormProps) {
     }
   };
 
+  if (isLoading) {
+    return <div>Loading user data...</div>;
+  }
+
+  if (isError) {
+    return <div>Error loading user data. Please try again.</div>;
+  }
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex space-x-2">
       <Input
@@ -40,7 +55,7 @@ export function NoteForm({ id, onSuccess, createNote }: NoteFormProps) {
         placeholder="Add a new note..."
         className="flex-grow"
       />
-      <Button type="submit" disabled={isSubmitting}>
+      <Button type="submit" disabled={isSubmitting || !userData}>
         {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
       </Button>
     </form>

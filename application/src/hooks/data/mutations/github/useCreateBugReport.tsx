@@ -10,10 +10,7 @@ interface ReportBugPayload {
 }
 
 async function reportBug(bug_report: ReportBugPayload) {
-  const response = await axiosInstance.post(
-    "http://localhost:3030/report-bug",
-    bug_report
-  );
+  const response = await axiosInstance.post("/report-bug", bug_report);
 
   if (response.status !== 200) {
     throw new Error("Failed to report bug");

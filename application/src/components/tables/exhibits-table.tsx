@@ -42,6 +42,16 @@ import {
 } from "@/components/ui/select";
 import useGetParts from "@/hooks/data/queries/parts/useGetParts";
 import useAddExistingPart from "@/hooks/data/mutations/exhibits/useAddExistingPart";
+import useChangeExhibitStatus, {
+  type ExhibitStatus,
+} from "@/hooks/data/mutations/exhibits/useChangeExhibitStatus";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Check } from "lucide-react";
 
 interface ExpandedState {
   [key: string]: boolean;
@@ -62,6 +72,7 @@ export function ExhibitsTable({
   );
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null);
   const { data: allParts } = useGetParts();
+  const changeStatus = useChangeExhibitStatus();
 
   const sortedExhibits = useMemo(() => {
     return [...exhibits].sort((a, b) => a.name.localeCompare(b.name));
@@ -73,11 +84,14 @@ export function ExhibitsTable({
 
   const getStatusBadge = useCallback((status: string) => {
     const variants = {
-      Operational: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
-      "Needs Repair": "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
-      "Out of Service": "bg-red-500/10 text-red-500 hover:bg-red-500/20",
+      operational: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
+      "needs repair": "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
+      "out of service": "bg-red-500/10 text-red-500 hover:bg-red-500/20",
     };
-    return variants[status as keyof typeof variants] || variants["Operational"];
+    return (
+      variants[status.toLowerCase() as keyof typeof variants] ||
+      variants["operational"]
+    );
   }, []);
 
   const handleAddPart = (exhibitId: string) => {
@@ -104,6 +118,22 @@ export function ExhibitsTable({
         console.error("Failed to add existing part:", error);
       }
     }
+  };
+
+  const handleStatusChange = (exhibitId: string, newStatus: ExhibitStatus) => {
+    if (
+      exhibits.find((exhibit) => exhibit.id === exhibitId)?.status === newStatus
+    )
+      return;
+
+    changeStatus.mutate(
+      { exhibitId, newStatus },
+      {
+        onSuccess: () => {
+          refetchExhibits();
+        },
+      }
+    );
   };
 
   return (
@@ -149,12 +179,58 @@ export function ExhibitsTable({
                     <TableCell>{exhibit.location}</TableCell>
                     <TableCell>{exhibit.cluster}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={cn(getStatusBadge(exhibit.status))}
-                      >
-                        {exhibit.status}
-                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger>
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              getStatusBadge(exhibit.status),
+                              "hover:opacity-80 transition-opacity"
+                            )}
+                          >
+                            {exhibit.status
+                              .split(" ")
+                              .map(
+                                (word) =>
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                              )
+                              .join(" ")}
+                          </Badge>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          className="w-40"
+                          side="bottom"
+                          align="start"
+                        >
+                          {[
+                            "Operational",
+                            "Needs Repair",
+                            "Out of Service",
+                          ].map((status) => (
+                            <DropdownMenuItem
+                              key={status}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleStatusChange(
+                                  exhibit.id,
+                                  status.toLowerCase() as ExhibitStatus
+                                );
+                              }}
+                              className={cn(
+                                "flex items-center text-center justify-between rounded-none",
+                                getStatusBadge(status.toLowerCase()),
+                                "hover:opacity-80 transition-opacity"
+                              )}
+                            >
+                              {status}
+                              {exhibit.status.toLowerCase() ===
+                                status.toLowerCase() && (
+                                <Check className="h-4 w-4 text-current" />
+                              )}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                     <TableCell>
                       <NotesButton
@@ -233,12 +309,26 @@ export function ExhibitsTable({
           <DialogHeader>
             <DialogTitle>Add Part to Exhibit</DialogTitle>
           </DialogHeader>
-          <Select onValueChange={(value) => setSelectedPartId(value)}>
+          <Select
+            onValueChange={(value) => setSelectedPartId(value)}
+            onOpenChange={(open) => {
+              if (open) {
+                setTimeout(() => {
+                  const content = document.querySelector(".select-scroll-area");
+                  if (content) {
+                    content.addEventListener("wheel", (e) => {
+                      e.stopPropagation();
+                    });
+                  }
+                }, 0);
+              }
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Select a part" />
             </SelectTrigger>
             <SelectContent>
-              <ScrollArea className="h-[200px]">
+              <ScrollArea className="h-[200px] select-scroll-area">
                 <SelectItem
                   value="new"
                   className="cursor-pointer hover:bg-muted/50 transition-colors"

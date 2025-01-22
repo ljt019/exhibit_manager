@@ -345,3 +345,33 @@ pub async fn add_existing_part_handler(
 
     Ok(Status::Ok)
 }
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct ChangeStatusRequest {
+    pub new_status: String,
+}
+
+#[post("/exhibits/<id>/status", format = "json", data = "<data>")]
+pub async fn change_exhibit_status_handler(
+    id: i64,
+    data: Json<ChangeStatusRequest>,
+    db_pool: &State<DbPool>,
+) -> Result<(), ApiError> {
+    data.validate()?;
+    let new_status = data.into_inner().new_status;
+    let new_status = new_status.trim().to_lowercase();
+    let pool = db_pool.inner().clone();
+
+    exhibit_repo::change_exhibit_status(id, new_status, &pool)
+        .await
+        .map_err(|e| {
+            if let sqlx::Error::RowNotFound = e {
+                ApiError::NotFound
+            } else {
+                error!("Failed to update exhibit status: {}", e);
+                ApiError::DatabaseError("Failed to update exhibit status".to_string())
+            }
+        })?;
+
+    Ok(())
+}

@@ -498,3 +498,17 @@ pub async fn add_part_to_exhibit(exhibit_id: i64, part_id: i64, pool: &DbPool) -
 
     Ok(())
 }
+
+pub async fn change_exhibit_status(id: i64, new_status: String, pool: &DbPool) -> Result<()> {
+    let result = sqlx::query("UPDATE exhibits SET status = ?1 WHERE id = ?2")
+        .bind(new_status)
+        .bind(id)
+        .execute(pool)
+        .await?;
+
+    if result.rows_affected() == 0 {
+        return Err(sqlx::Error::RowNotFound);
+    }
+
+    Ok(())
+}

@@ -11,7 +11,7 @@ export interface NewStatusRequest {
 
 async function changeStatus(newStatusRequest: NewStatusRequest) {
   const response = await axiosInstance.post(
-    `http://localhost:3030/jotforms/${newStatusRequest.jotformId}/status`,
+    `/jotforms/${newStatusRequest.jotformId}/status`,
     {
       new_status: newStatusRequest.status,
     }

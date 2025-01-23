@@ -277,8 +277,7 @@ export function ExhibitsTable({
                                 size="sm"
                                 onClick={() => handleAddPart(exhibit.id)}
                               >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Add Part
+                                <Plus className="h-4 w-4" />
                               </Button>
                             </div>
                             <PartsList

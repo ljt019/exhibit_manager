@@ -1,6 +1,6 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, X } from "lucide-react";
+import { Loader2, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useGetExhibitParts from "@/hooks/data/queries/exhibits/useGetExhibitParts";
 import useEditPart from "@/hooks/data/mutations/parts/useEditPart";

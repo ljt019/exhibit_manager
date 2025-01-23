@@ -20,6 +20,7 @@ export function MoreActions({ id, type }: MoreActionsProps) {
   const deletePartMutation = useDeletePart();
   const deleteExhibitMutation = useDeleteExhibit();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const handleEdit = () => {
     setIsEditDialogOpen(true);
@@ -29,12 +30,21 @@ export function MoreActions({ id, type }: MoreActionsProps) {
     setIsEditDialogOpen(false);
   };
 
-  const handleDelete = () => {
+  const handleOpenDeleteDialog = () => {
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setIsDeleteDialogOpen(false);
+  };
+
+  const handleConfirmDelete = () => {
     if (type === "part") {
       deletePartMutation.mutate(id);
     } else {
       deleteExhibitMutation.mutate(id);
     }
+    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -51,7 +61,10 @@ export function MoreActions({ id, type }: MoreActionsProps) {
             <Pencil className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+          <DropdownMenuItem
+            onClick={handleOpenDeleteDialog}
+            className="text-destructive"
+          >
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
@@ -63,6 +76,58 @@ export function MoreActions({ id, type }: MoreActionsProps) {
         isOpen={isEditDialogOpen}
         onClose={handleCloseEditDialog}
       />
+      <DeletionConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={handleCloseDeleteDialog}
+        onConfirm={handleConfirmDelete}
+        itemType={type}
+      />
     </>
+  );
+}
+
+interface DeletionConfirmationDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  itemType: "exhibit" | "part";
+}
+
+export function DeletionConfirmationDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  itemType,
+}: DeletionConfirmationDialogProps) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+      <div
+        className="bg-background border border-border rounded-lg shadow-lg p-6 max-w-sm w-full"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dialog-title"
+      >
+        <h2
+          id="dialog-title"
+          className="text-xl font-bold mb-4 text-foreground"
+        >
+          Confirm Deletion
+        </h2>
+        <p className="mb-6 text-muted-foreground">
+          Are you sure you want to delete this {itemType}? This action cannot be
+          undone.
+        </p>
+        <div className="flex justify-end space-x-4">
+          <Button variant="outline" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button variant="destructive" onClick={onConfirm}>
+            Delete
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

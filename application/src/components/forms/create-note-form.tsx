@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useGetUserProfile } from "@/hooks/data/queries/useGetProfileInfo";
@@ -55,8 +55,16 @@ export function NoteForm({ id, onSuccess, createNote }: NoteFormProps) {
         placeholder="Add a new note..."
         className="flex-grow"
       />
-      <Button type="submit" disabled={isSubmitting || !userData}>
-        {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Add"}
+      <Button
+        type="submit"
+        disabled={isSubmitting || !userData}
+        variant="outline"
+      >
+        {isSubmitting ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
       </Button>
     </form>
   );

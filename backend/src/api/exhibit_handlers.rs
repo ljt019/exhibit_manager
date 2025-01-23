@@ -20,7 +20,7 @@ static DEFAULT_IMAGE_BASE64: OnceLock<String> = OnceLock::new();
 fn get_default_image_base64() -> &'static String {
     DEFAULT_IMAGE_BASE64.get_or_init(|| {
         // Read the default image file and encode it as base64
-        let image_data = fs::read(DEFAULT_IMAGE_URL).expect("Failed to read default image file");
+        let image_data = include_bytes!("../../images/DEFAULT_IMAGE.png");
         let base64_data = base64::encode(&image_data);
 
         // Add the data URL prefix
@@ -76,8 +76,6 @@ pub struct NewExhibit {
     pub part_ids: Vec<i64>,
     pub notes: Vec<crate::models::Note>,
 }
-
-const DEFAULT_IMAGE_URL: &str = "./images/DEFAULT_IMAGE.png"; // Replace with your actual default image URL
 
 /// Creates a new exhibit with associated parts and notes.
 ///

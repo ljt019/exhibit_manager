@@ -3,9 +3,10 @@ import type { Exhibit } from "@/types";
 import { axiosInstance } from "@/api/axiosInstance";
 import { toast } from "react-hot-toast";
 
-async function createExhibit(exhibit: Exhibit) {
+async function createExhibit(exhibit: Partial<Exhibit>) {
   exhibit.part_ids = [];
   exhibit.notes = [];
+
   const response = await axiosInstance.post("/exhibits", exhibit);
 
   if (response.status !== 200) {
@@ -20,7 +21,7 @@ export default function useCreateExhibit() {
 
   return useMutation({
     mutationKey: ["createExhibit"],
-    mutationFn: (exhibit: Exhibit) =>
+    mutationFn: (exhibit: Partial<Exhibit>) =>
       toast.promise(createExhibit(exhibit), {
         loading: "Creating exhibit...",
         success: "Exhibit created successfully",

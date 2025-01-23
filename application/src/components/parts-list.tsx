@@ -1,10 +1,11 @@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, ExternalLink, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useGetExhibitParts from "@/hooks/data/queries/exhibits/useGetExhibitParts";
 import useEditPart from "@/hooks/data/mutations/parts/useEditPart";
 import { useState } from "react";
+import { LinkDisplay } from "@/components/link-display";
 
 interface PartsListProps {
   refetchPartIds: () => void;
@@ -38,7 +39,7 @@ export function PartsList({
             link: partToUpdate.link,
             exhibitIds: partToUpdate.exhibit_ids
               .filter((id) => id !== exhibitId)
-              .map((id) => Number(id)), // Convert string IDs to numbers
+              .map((id) => Number(id)),
           },
         });
         refetch();
@@ -53,62 +54,73 @@ export function PartsList({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-24">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
   if (isError) {
     return (
-      <div className="text-sm text-destructive">
-        Error loading parts. Please try again.
-      </div>
+      <Card className="h-48">
+        <CardContent className="h-full flex items-center justify-center">
+          <p className="text-sm text-destructive">
+            Error loading parts. Please try again.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!parts || parts.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-4 text-center text-muted-foreground">
-          No parts connected to this exhibit.
+      <Card className="h-48">
+        <CardContent className="h-full flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">
+            No parts connected to this exhibit.
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <ScrollArea className="h-48 w-full">
-      <div className="space-y-2">
-        {parts.map((part) => (
-          <Card key={part.id}>
-            <CardContent className="p-3 flex justify-between items-center">
-              <h5 className="font-medium">{part.name}</h5>
-              <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="sm" asChild>
-                  <a href={part.link} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Buy
-                  </a>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemovePart(part.id)}
-                  disabled={removingPartId === part.id}
-                >
-                  {removingPartId === part.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <X className="h-4 w-4" />
-                  )}
-                  <span className="sr-only">Remove</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </ScrollArea>
+    <Card className="h-48">
+      <ScrollArea className="h-full w-full px-3 py-2">
+        <div className="space-y-2">
+          {parts.map((part, index) => (
+            <div key={part.id}>
+              {index > 0 && <div className="h-px bg-border my-2" />}
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-3 flex justify-between items-center">
+                  <div className="flex-grow mr-2">
+                    <h5 className="font-medium text-sm truncate">
+                      {part.name}
+                    </h5>
+                  </div>
+                  <div className="flex items-center space-x-2 flex-shrink-0">
+                    <LinkDisplay url={part.link} />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemovePart(part.id)}
+                      disabled={removingPartId === part.id}
+                      className="h-8 w-8"
+                    >
+                      {removingPartId === part.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <X className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">Remove</span>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </Card>
   );
 }

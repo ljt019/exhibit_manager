@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-} from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -30,7 +24,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -264,7 +257,7 @@ export function ExhibitsTable({
                           <img
                             src={exhibit.image_url || "/placeholder.svg"}
                             alt={exhibit.name}
-                            className="w-36 h-36 object-cover rounded-md"
+                            className="w-36 h-36 object-fill rounded-md"
                           />
                           <div className="flex-1">
                             <h4 className="text-sm font-semibold mb-2">

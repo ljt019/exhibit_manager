@@ -2,6 +2,8 @@ use crate::db::DbPool;
 use crate::errors::ApiError;
 use crate::models::{Exhibit, Note, UpdateExhibit};
 use crate::repo::exhibit_repo;
+use base64::engine::general_purpose::STANDARD;
+use base64::Engine;
 use log::error;
 use rand::prelude::SliceRandom;
 use rocket::http::Status;
@@ -9,7 +11,22 @@ use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
 use rocket::State;
 use rocket::{delete, get, post, put};
+use std::fs;
+use std::sync::OnceLock;
 use validator::Validate;
+
+static DEFAULT_IMAGE_BASE64: OnceLock<String> = OnceLock::new();
+
+fn get_default_image_base64() -> &'static String {
+    DEFAULT_IMAGE_BASE64.get_or_init(|| {
+        // Read the default image file and encode it as base64
+        let image_data = fs::read(DEFAULT_IMAGE_URL).expect("Failed to read default image file");
+        let base64_data = base64::encode(&image_data);
+
+        // Add the data URL prefix
+        format!("data:image/jpeg;base64,{}", base64_data)
+    })
+}
 
 #[derive(Debug, Deserialize, Validate)]
 pub struct NewNote {
@@ -54,11 +71,13 @@ pub struct NewExhibit {
     pub location: String,
     pub description: String,
     pub status: String,
-    pub image_url: String,
+    pub image_url: Option<String>,
     pub sponsor: Option<crate::models::Sponsor>,
     pub part_ids: Vec<i64>,
     pub notes: Vec<crate::models::Note>,
 }
+
+const DEFAULT_IMAGE_URL: &str = "./images/DEFAULT_IMAGE.png"; // Replace with your actual default image URL
 
 /// Creates a new exhibit with associated parts and notes.
 ///
@@ -78,8 +97,13 @@ pub async fn create_exhibit_handler(
     new_exhibit: Json<NewExhibit>,
     db_pool: &State<DbPool>,
 ) -> Result<(), ApiError> {
-    let exhibit = new_exhibit.into_inner();
+    let mut exhibit = new_exhibit.into_inner();
     let pool = db_pool.inner().clone();
+
+    // If no image_url is provided, use the precomputed default image base64
+    if exhibit.image_url.is_none() {
+        exhibit.image_url = Some(get_default_image_base64().clone());
+    }
 
     exhibit_repo::create_exhibit(&exhibit, &pool).await?;
 

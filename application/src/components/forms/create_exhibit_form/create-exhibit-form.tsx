@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { toast } from "@/hooks/use-toast";
-import { Form } from "@/components/ui/form";
+import {
+  Form,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetUniqueClustersAndLocations } from "@/hooks/util/useGetUniqueClustersAndLocations";
@@ -31,7 +38,7 @@ const formSchema = z.object({
     .max(1000, {
       message: "Description must not exceed 1000 characters.",
     }),
-  image_url: z.string().url().optional(),
+  image_url: z.string().url().optional().or(z.literal("")),
 });
 
 interface CreateExhibitFormProps {
@@ -57,28 +64,55 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    setIsSubmitting(true);
-    try {
-      await createExhibitMutation.mutateAsync(values);
-      toast({
-        title: "Exhibit created",
-        description: "Your new exhibit has been successfully created.",
-      });
-      onSuccess();
-      form.reset();
-    } catch (error) {
-      console.error("Failed to create exhibit:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create exhibit. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      queryClient.invalidateQueries({ queryKey: ["exhibits"] });
-      setIsSubmitting(false);
-    }
-  }
+  const onSubmit = useCallback(
+    async (values: z.infer<typeof formSchema>) => {
+      setIsSubmitting(true);
+      try {
+        const submitData = {
+          ...values,
+          image_url: values.image_url || undefined,
+        };
+        await createExhibitMutation.mutateAsync(submitData);
+        toast({
+          title: "Exhibit created",
+          description: "Your new exhibit has been successfully created.",
+        });
+        onSuccess();
+        form.reset();
+      } catch (error) {
+        console.error("Failed to create exhibit:", error);
+        toast({
+          title: "Error",
+          description: "Failed to create exhibit. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ["exhibits"] });
+        setIsSubmitting(false);
+      }
+    },
+    [createExhibitMutation, onSuccess, queryClient]
+  );
+
+  const handleNext = useCallback(() => {
+    setStep((prevStep) => Math.min(prevStep + 1, 2));
+  }, []);
+
+  const handlePrevious = useCallback(() => {
+    setStep((prevStep) => Math.max(prevStep - 1, 0));
+  }, []);
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      if (step === 2) {
+        form.handleSubmit(onSubmit)(e);
+      } else {
+        handleNext();
+      }
+    },
+    [step, form, onSubmit, handleNext]
+  );
 
   const steps = [
     <BasicInfoStep
@@ -93,23 +127,21 @@ export function CreateExhibitForm({ onSuccess }: CreateExhibitFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {steps[step]}
         <div className="flex justify-between">
           {step > 0 && (
-            <Button type="button" onClick={() => setStep((prev) => prev - 1)}>
+            <Button type="button" onClick={handlePrevious}>
               Previous
             </Button>
           )}
-          {step < steps.length - 1 ? (
-            <Button type="button" onClick={() => setStep((prev) => prev + 1)}>
-              Next
-            </Button>
-          ) : (
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Creating..." : "Create Exhibit"}
-            </Button>
-          )}
+          <Button type="submit">
+            {step === 2
+              ? isSubmitting
+                ? "Creating..."
+                : "Create Exhibit"
+              : "Next"}
+          </Button>
         </div>
       </form>
     </Form>

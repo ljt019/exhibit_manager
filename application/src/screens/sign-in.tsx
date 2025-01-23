@@ -88,7 +88,7 @@ export default function SignIn() {
 
       {/* Right side - Exhibit Image */}
       <motion.div
-        className="hidden md:block w-1/2 bg-black relative overflow-hidden"
+        className="hidden md:block w-2/3 bg-black relative overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
@@ -97,7 +97,7 @@ export default function SignIn() {
           <motion.img
             src={randomExhibit?.image_url}
             alt="Featured Exhibit"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-fill"
             onLoad={() => setImageLoaded(true)}
             initial={{ scale: 1.1 }}
             animate={{ scale: imageLoaded ? 1 : 1.1 }}

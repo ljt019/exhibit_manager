@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { compareDesc, format } from "date-fns";
 import {
   StickyNote,
@@ -7,6 +7,8 @@ import {
   Calendar,
   User,
   Plus,
+  Search,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,11 +25,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Note } from "@/types";
 import { NoteForm } from "@/components/forms/create-note-form";
+import { Input } from "@/components/ui/input";
 
 interface NotesDialogProps<T extends "part" | "exhibit"> {
   id: string;
@@ -55,6 +57,16 @@ export function NotesDialog<T extends "part" | "exhibit">({
 }: NotesDialogProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isAddingNote, setIsAddingNote] = useState(false);
+  const [cardHeight, setCardHeight] = useState(0);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (cardRef.current) {
+      setCardHeight(cardRef.current.scrollHeight);
+    }
+  }, [isAddingNote]);
 
   const handleDelete = async (noteId: string) => {
     setIsDeleting(true);
@@ -74,7 +86,14 @@ export function NotesDialog<T extends "part" | "exhibit">({
     if (onNoteAdded) {
       onNoteAdded();
     }
+    setIsAddingNote(false);
   };
+
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.submitter.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      note.message.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -97,15 +116,62 @@ export function NotesDialog<T extends "part" | "exhibit">({
             {name || `${type.charAt(0).toUpperCase() + type.slice(1)} Notes`}
           </DialogTitle>
         </DialogHeader>
-        <Separator className="my-4" />
-        <div className="space-y-4">
-          <NoteForm
-            id={id}
-            onSuccess={handleNoteAdded}
-            createNote={createNote}
-          />
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center space-x-2">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Input
+                type="text"
+                placeholder="Search notes..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 w-full"
+              />
+            </div>
+            <Button
+              onClick={() => setIsAddingNote(true)}
+              variant="outline"
+              size="sm"
+              className="px-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="sr-only">Add Note</span>
+            </Button>
+          </div>
+          <div
+            style={{
+              maxHeight: isAddingNote ? `${cardHeight}px` : "0px",
+              opacity: isAddingNote ? 1 : 0,
+              transform: `translateY(${isAddingNote ? "0" : "-20px"})`,
+            }}
+            className="transition-all duration-700 ease-out overflow-hidden"
+          >
+            <Card className="w-full" ref={cardRef}>
+              <CardHeader className="flex flex-col space-y-1.5 pb-3">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">Add a new note</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsAddingNote(false)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <NoteForm
+                  id={id}
+                  onSuccess={handleNoteAdded}
+                  createNote={createNote}
+                />
+              </CardContent>
+            </Card>
+          </div>
           <NotesList
-            notes={notes}
+            notes={filteredNotes}
             handleDelete={handleDelete}
             isDeleting={isDeleting}
           />
@@ -123,13 +189,13 @@ interface NotesListProps {
 
 function NotesList({ notes, handleDelete, isDeleting }: NotesListProps) {
   return (
-    <ScrollArea className="h-[50vh] pr-4">
+    <ScrollArea className="h-[60vh] pr-4">
       {notes.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center">
           <StickyNote className="w-12 h-12 text-muted-foreground mb-2" />
-          <p className="text-muted-foreground">No notes yet</p>
+          <p className="text-muted-foreground">No notes found</p>
           <p className="text-sm text-muted-foreground">
-            Click the "Add Note" button to create one
+            Try adjusting your search or add a new note
           </p>
         </div>
       ) : (

@@ -1,15 +1,26 @@
 import { useState, useMemo } from "react";
 import useGetParts from "@/hooks/data/queries/parts/useGetParts";
+import useGetExhibits from "@/hooks/data/queries/exhibits/useGetExhibits";
 import { FilterSection } from "@/components/filter-section";
 import { CreateDialog } from "@/components/generic/create-dialog";
 import { Error, Loading } from "@/components/loading-and-error";
 import { PartTable } from "@/components/tables/part-table";
+import { FilterOption } from "@/components/filter-section";
 
 export default function PartsInventory() {
-  const { data: parts, isLoading, isError, error } = useGetParts();
-  const [expandedRows, setExpandedRows] = useState<{ [key: string]: boolean }>(
-    {}
-  );
+  const {
+    data: parts,
+    isLoading: isLoadingParts,
+    isError: isErrorParts,
+    error: errorParts,
+  } = useGetParts();
+  const {
+    data: exhibits,
+    isLoading: isLoadingExhibits,
+    isError: isErrorExhibits,
+    error: errorExhibits,
+  } = useGetExhibits();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [exhibitFilter, setExhibitFilter] = useState<string | null>(null);
   const [connectedExhibitFilter, setConnectedExhibitFilter] = useState<
@@ -44,13 +55,6 @@ export default function PartsInventory() {
     return [...filteredParts].sort((a, b) => a.name.localeCompare(b.name));
   }, [filteredParts]);
 
-  const toggleRow = (id: string) => {
-    setExpandedRows((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
-
   const clearFilters = () => {
     setExhibitFilter(null);
     setConnectedExhibitFilter(null);
@@ -63,17 +67,32 @@ export default function PartsInventory() {
     searchTerm !== "";
 
   const uniqueExhibits = useMemo(() => {
-    return [...new Set((parts ?? []).flatMap((p) => p.exhibit_ids))];
-  }, [parts]);
+    if (!parts || !exhibits) return [];
+    const exhibitIds = [...new Set(parts.flatMap((p) => p.exhibit_ids))];
+    return exhibitIds.map((id) => {
+      const exhibit = exhibits.find((e) => e.id === id);
+      return { id, name: exhibit ? exhibit.name : `Unknown (${id})` };
+    });
+  }, [parts, exhibits]);
 
-  const filterOptions = [
+  const filterOptions: FilterOption[] = [
     {
       value: exhibitFilter,
       onChange: setExhibitFilter,
-      options: uniqueExhibits,
+      options: uniqueExhibits.map((e) => e.id),
       placeholder: "Filter by Exhibit",
+      labelFunction: (value) =>
+        uniqueExhibits.find((e) => e.id === value)?.name || value,
     },
   ];
+
+  if (isLoadingParts || isLoadingExhibits) {
+    return <Loading />;
+  }
+
+  if (isErrorParts || isErrorExhibits || !parts || !exhibits) {
+    return <Error name="parts or exhibits" />;
+  }
 
   return (
     <div className="container mx-auto p-4">
@@ -90,15 +109,9 @@ export default function PartsInventory() {
         filterOptions={filterOptions}
         searchBarName="parts"
       />
-      {isLoading ? (
-        <Loading />
-      ) : isError || !parts ? (
-        <Error error={error} name="parts" />
-      ) : (
-        <PartTable parts={sortedParts} />
-      )}
+      <PartTable parts={sortedParts} />
       <div className="mt-4 text-sm text-muted-foreground">
-        Showing {sortedParts.length} of {parts ? parts.length : 0} parts
+        Showing {sortedParts.length} of {parts.length} parts
       </div>
     </div>
   );

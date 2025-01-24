@@ -1,3 +1,6 @@
+import { useState } from "react";
+import type { UseFormReturn } from "react-hook-form";
+import { X } from "lucide-react";
 import {
   FormField,
   FormItem,
@@ -13,11 +16,10 @@ import {
   SelectContent,
   SelectItem,
   SelectValue,
+  SelectSeparator,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
-import { useState } from "react";
-import { UseFormReturn } from "react-hook-form";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export function BasicInfoStep({
   form,
@@ -30,6 +32,19 @@ export function BasicInfoStep({
 }) {
   const [isNewCluster, setIsNewCluster] = useState(false);
   const [isNewLocation, setIsNewLocation] = useState(false);
+
+  const handleSelectChange = (
+    value: string,
+    field: any,
+    setIsNew: (value: boolean) => void
+  ) => {
+    if (value === "new") {
+      setIsNew(true);
+      field.onChange("");
+    } else {
+      field.onChange(value);
+    }
+  };
 
   return (
     <>
@@ -54,7 +69,7 @@ export function BasicInfoStep({
           <FormItem>
             <FormLabel>Cluster</FormLabel>
             <FormControl>
-              {isNewCluster || clusters.length === 0 ? (
+              {isNewCluster ? (
                 <div className="flex items-center space-x-2">
                   <Input
                     placeholder="Enter new cluster name"
@@ -79,26 +94,47 @@ export function BasicInfoStep({
                 </div>
               ) : (
                 <Select
-                  onValueChange={(value) => {
-                    if (value === "new") {
-                      setIsNewCluster(true);
-                      field.onChange("");
-                    } else {
-                      field.onChange(value);
+                  onValueChange={(value) =>
+                    handleSelectChange(value, field, setIsNewCluster)
+                  }
+                  value={field.value}
+                  onOpenChange={(open) => {
+                    if (open) {
+                      setTimeout(() => {
+                        const content = document.querySelector(
+                          ".select-scroll-area"
+                        );
+                        if (content) {
+                          content.addEventListener("wheel", (e) => {
+                            e.stopPropagation();
+                          });
+                        }
+                      }, 0);
                     }
                   }}
-                  value={field.value}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a cluster" />
                   </SelectTrigger>
                   <SelectContent>
-                    {clusters.map((cluster) => (
-                      <SelectItem key={cluster} value={cluster}>
-                        {cluster}
+                    <ScrollArea className="h-[200px] select-scroll-area">
+                      <SelectItem
+                        value="new"
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        Create New Cluster
                       </SelectItem>
-                    ))}
-                    <SelectItem value="new">Create new</SelectItem>
+                      <SelectSeparator />
+                      {clusters.map((cluster) => (
+                        <SelectItem
+                          key={cluster}
+                          value={cluster}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        >
+                          {cluster}
+                        </SelectItem>
+                      ))}
+                    </ScrollArea>
                   </SelectContent>
                 </Select>
               )}
@@ -119,7 +155,7 @@ export function BasicInfoStep({
           <FormItem>
             <FormLabel>Location</FormLabel>
             <FormControl>
-              {isNewLocation || locations.length === 0 ? (
+              {isNewLocation ? (
                 <div className="flex items-center space-x-2">
                   <Input
                     placeholder="Enter new location"
@@ -144,26 +180,47 @@ export function BasicInfoStep({
                 </div>
               ) : (
                 <Select
-                  onValueChange={(value) => {
-                    if (value === "new") {
-                      setIsNewLocation(true);
-                      field.onChange("");
-                    } else {
-                      field.onChange(value);
+                  onValueChange={(value) =>
+                    handleSelectChange(value, field, setIsNewLocation)
+                  }
+                  value={field.value}
+                  onOpenChange={(open) => {
+                    if (open) {
+                      setTimeout(() => {
+                        const content = document.querySelector(
+                          ".select-scroll-area"
+                        );
+                        if (content) {
+                          content.addEventListener("wheel", (e) => {
+                            e.stopPropagation();
+                          });
+                        }
+                      }, 0);
                     }
                   }}
-                  value={field.value}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a location" />
                   </SelectTrigger>
                   <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
+                    <ScrollArea className="h-[200px] select-scroll-area">
+                      <SelectItem
+                        value="new"
+                        className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        Create New Location
                       </SelectItem>
-                    ))}
-                    <SelectItem value="new">Create new</SelectItem>
+                      <SelectSeparator />
+                      {locations.map((location) => (
+                        <SelectItem
+                          key={location}
+                          value={location}
+                          className="cursor-pointer hover:bg-muted/50 transition-colors"
+                        >
+                          {location}
+                        </SelectItem>
+                      ))}
+                    </ScrollArea>
                   </SelectContent>
                 </Select>
               )}

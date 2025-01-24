@@ -1,4 +1,5 @@
-import React, { useCallback } from "react";
+import type React from "react";
+import { useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { X, Filter } from "lucide-react";
@@ -11,11 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface FilterOption {
+export interface FilterOption {
   value: string | null;
   onChange: (value: string | null) => void;
   options: string[];
   placeholder: string;
+  labelFunction?: (value: string) => string;
 }
 
 interface FilterSectionProps {
@@ -74,6 +76,7 @@ export function FilterSection({
                 onChange={option.onChange}
                 options={option.options}
                 placeholder={option.placeholder}
+                labelFunction={option.labelFunction}
               />
             ))}
             <AnimatePresence>
@@ -101,7 +104,13 @@ export function FilterSection({
   );
 }
 
-function FilterSelect({ value, onChange, options, placeholder }: FilterOption) {
+function FilterSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+  labelFunction,
+}: FilterOption) {
   return (
     <Select value={value || ""} onValueChange={(val) => onChange(val || null)}>
       <SelectTrigger className="w-full md:w-[180px]">
@@ -110,7 +119,7 @@ function FilterSelect({ value, onChange, options, placeholder }: FilterOption) {
       <SelectContent>
         {options.map((option) => (
           <SelectItem key={option} value={option}>
-            {option}
+            {labelFunction ? labelFunction(option) : option}
           </SelectItem>
         ))}
       </SelectContent>

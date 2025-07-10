@@ -32,6 +32,7 @@ import type {
   Status,
   NewStatusRequest,
 } from "@/hooks/data/mutations/jotforms/useChangeStatus";
+import { getJotformStatusBadge } from "@/lib/status-badges";
 
 interface ExpandedState {
   [key: string]: boolean;
@@ -118,15 +119,6 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
     return variants[priority as keyof typeof variants] || variants["Medium"];
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      Open: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
-      InProgress: "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20",
-      Closed: "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-      Unplanned: "bg-gray-500/10 text-gray-500 hover:bg-gray-500/20",
-    };
-    return variants[status as keyof typeof variants] || variants["Open"];
-  };
 
   const getDepartmentBadge = (department: string) => {
     const variants = {
@@ -216,7 +208,7 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
                       <Badge
                         variant="secondary"
                         className={cn(
-                          getStatusBadge(jotform.status),
+                          getJotformStatusBadge(jotform.status),
                           "hover:opacity-80 transition-opacity"
                         )}
                       >
@@ -238,7 +230,7 @@ export function JotformsTable({ jotforms }: { jotforms: Array<Jotform> }) {
                             }}
                             className={cn(
                               "flex items-center text-center justify-between rounded-none",
-                              getStatusBadge(status),
+                              getJotformStatusBadge(status),
                               "hover:opacity-80 transition-opacity"
                             )}
                           >

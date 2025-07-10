@@ -38,6 +38,7 @@ import useAddExistingPart from "@/hooks/data/mutations/exhibits/useAddExistingPa
 import useChangeExhibitStatus, {
   type ExhibitStatus,
 } from "@/hooks/data/mutations/exhibits/useChangeExhibitStatus";
+import { getExhibitStatusBadge } from "@/lib/status-badges";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,17 +76,6 @@ export function ExhibitsTable({
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
   }, []);
 
-  const getStatusBadge = useCallback((status: string) => {
-    const variants = {
-      operational: "bg-green-500/10 text-green-500 hover:bg-green-500/20",
-      "needs repair": "bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20",
-      "out of service": "bg-red-500/10 text-red-500 hover:bg-red-500/20",
-    };
-    return (
-      variants[status.toLowerCase() as keyof typeof variants] ||
-      variants["operational"]
-    );
-  }, []);
 
   const handleAddPart = (exhibitId: string) => {
     setSelectedExhibitId(exhibitId);
@@ -177,7 +167,7 @@ export function ExhibitsTable({
                           <Badge
                             variant="secondary"
                             className={cn(
-                              getStatusBadge(exhibit.status),
+                              getExhibitStatusBadge(exhibit.status),
                               "hover:opacity-80 transition-opacity"
                             )}
                           >
@@ -211,7 +201,7 @@ export function ExhibitsTable({
                               }}
                               className={cn(
                                 "flex items-center text-center justify-between rounded-none",
-                                getStatusBadge(status.toLowerCase()),
+                                getExhibitStatusBadge(status),
                                 "hover:opacity-80 transition-opacity"
                               )}
                             >
